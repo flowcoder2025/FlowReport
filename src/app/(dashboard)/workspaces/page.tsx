@@ -64,7 +64,7 @@ export default async function WorkspacesPage() {
           {memberships.map((membership) => (
             <Link
               key={membership.workspace.id}
-              href={`/workspace/${membership.workspace.id}`}
+              href={`/workspaces/${membership.workspace.id}`}
             >
               <Card className="hover:border-primary transition-colors cursor-pointer">
                 <CardHeader>

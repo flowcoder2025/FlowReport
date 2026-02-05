@@ -2,38 +2,84 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { KPICard } from '../kpi-card'
+import { useDashboardMetrics, useDashboardNotes } from '@/lib/hooks/use-dashboard-data'
+import { Skeleton } from '../skeleton'
+import { format } from 'date-fns'
+import { ko } from 'date-fns/locale'
 
 interface SummaryTabProps {
   workspaceId: string
+  periodStart: Date
 }
 
-export function SummaryTab({ workspaceId }: SummaryTabProps) {
-  // Mock data for 1-page summary
+export function SummaryTab({ workspaceId, periodStart }: SummaryTabProps) {
+  const { data: metrics, error: metricsError, isLoading: metricsLoading } = useDashboardMetrics(
+    workspaceId,
+    'MONTHLY',
+    periodStart
+  )
+
+  const { data: notesData, isLoading: notesLoading } = useDashboardNotes(
+    workspaceId,
+    'MONTHLY',
+    periodStart
+  )
+
+  if (metricsLoading || notesLoading) {
+    return <SummarySkeleton />
+  }
+
+  if (metricsError) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        데이터를 불러오는데 실패했습니다.
+      </div>
+    )
+  }
+
+  const overview = metrics?.overview
+  const previous = metrics?.previous
+  const snsChannels = metrics?.sns?.channels ?? []
+  const storeChannels = metrics?.store?.channels ?? []
+  const notes = notesData?.notes
+
   const mainKPIs = [
-    { title: '총 매출', value: 52000000, previousValue: 48000000, format: 'currency' as const },
-    { title: 'MAU', value: 35000, previousValue: 32000 },
-    { title: '총 도달', value: 520000, previousValue: 480000 },
-    { title: '회원가입', value: 620, previousValue: 580 },
+    {
+      title: '총 매출',
+      value: overview?.totalRevenue ?? null,
+      previousValue: previous?.totalRevenue ?? null,
+      format: 'currency' as const,
+    },
+    { title: 'MAU', value: overview?.mau ?? overview?.wau ?? null, previousValue: previous?.mau ?? previous?.wau ?? null },
+    { title: '총 도달', value: overview?.reach ?? null, previousValue: previous?.reach ?? null },
+    { title: '회원가입', value: overview?.signups ?? null, previousValue: previous?.signups ?? null },
   ]
 
-  const channelMix = [
-    { name: '스마트스토어', value: 42, color: 'bg-green-500' },
-    { name: '쿠팡', value: 38, color: 'bg-blue-500' },
-    { name: '자사몰', value: 20, color: 'bg-purple-500' },
-  ]
+  // Calculate channel mix from store data
+  const totalSales = storeChannels.reduce((sum, c) => sum + (c.data.revenue ?? c.data.sales ?? 0), 0)
+  const channelMix = storeChannels.map((channel) => {
+    const sales = channel.data.revenue ?? channel.data.sales ?? 0
+    const percentage = totalSales > 0 ? Math.round((sales / totalSales) * 100) : 0
+    return {
+      name: channel.channelName,
+      value: percentage,
+      color: getChannelColor(channel.channel),
+    }
+  }).filter((c) => c.value > 0)
 
-  const snsPerformance = [
-    { channel: 'Instagram', followers: 12800, engagement: 4.2 },
-    { channel: 'Facebook', followers: 4350, engagement: 1.8 },
-    { channel: 'YouTube', followers: 2300, engagement: 5.1 },
-  ]
+  // SNS performance from channels
+  const snsPerformance = snsChannels.map((channel) => ({
+    channel: channel.channelName,
+    followers: channel.data.followers ?? 0,
+    engagement: channel.data.engagementRate ?? channel.change.engagement ?? 0,
+  }))
 
   return (
     <div id="monthly-summary" className="space-y-6">
       {/* Header */}
       <div className="text-center py-4 border-b">
         <h2 className="text-2xl font-bold">월간 리포트 요약</h2>
-        <p className="text-muted-foreground">2024년 1월</p>
+        <p className="text-muted-foreground">{format(periodStart, 'yyyy년 M월', { locale: ko })}</p>
       </div>
 
       {/* Main KPIs */}
@@ -57,22 +103,28 @@ export function SummaryTab({ workspaceId }: SummaryTabProps) {
             <CardTitle className="text-base">채널 믹스</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {channelMix.map((channel) => (
-                <div key={channel.name} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span>{channel.name}</span>
-                    <span className="font-medium">{channel.value}%</span>
+            {channelMix.length > 0 ? (
+              <div className="space-y-3">
+                {channelMix.map((channel) => (
+                  <div key={channel.name} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span>{channel.name}</span>
+                      <span className="font-medium">{channel.value}%</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${channel.color} rounded-full`}
+                        style={{ width: `${channel.value}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${channel.color} rounded-full`}
-                      style={{ width: `${channel.value}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">
+                스토어 데이터가 없습니다.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -82,19 +134,25 @@ export function SummaryTab({ workspaceId }: SummaryTabProps) {
             <CardTitle className="text-base">SNS 현황</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {snsPerformance.map((sns) => (
-                <div key={sns.channel} className="flex items-center justify-between">
-                  <span className="font-medium">{sns.channel}</span>
-                  <div className="text-right">
-                    <div className="font-medium">{sns.followers.toLocaleString()} 팔로워</div>
-                    <div className="text-sm text-muted-foreground">
-                      참여율 {sns.engagement}%
+            {snsPerformance.length > 0 ? (
+              <div className="space-y-4">
+                {snsPerformance.map((sns) => (
+                  <div key={sns.channel} className="flex items-center justify-between">
+                    <span className="font-medium">{sns.channel}</span>
+                    <div className="text-right">
+                      <div className="font-medium">{sns.followers.toLocaleString()} 팔로워</div>
+                      <div className="text-sm text-muted-foreground">
+                        참여율 {typeof sns.engagement === 'number' ? sns.engagement.toFixed(1) : '0'}%
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">
+                SNS 데이터가 없습니다.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -109,25 +167,37 @@ export function SummaryTab({ workspaceId }: SummaryTabProps) {
             <div>
               <h4 className="font-medium text-green-600 mb-2">성과</h4>
               <ul className="text-sm space-y-1">
-                <li>• 매출 전월 대비 8.3% 증가</li>
-                <li>• 인스타그램 팔로워 2.4% 성장</li>
-                <li>• 전환율 0.2%p 개선</li>
+                {(notes?.causes?.length ?? 0) > 0 ? (
+                  notes!.causes.slice(0, 3).map((cause, index) => (
+                    <li key={index}>• {cause}</li>
+                  ))
+                ) : (
+                  <li className="text-muted-foreground">등록된 내용이 없습니다.</li>
+                )}
               </ul>
             </div>
             <div>
               <h4 className="font-medium text-orange-600 mb-2">개선 필요</h4>
               <ul className="text-sm space-y-1">
-                <li>• 자사몰 매출 비중 하락</li>
-                <li>• 블로그 트래픽 정체</li>
-                <li>• 신규 고객 획득 비용 증가</li>
+                {(notes?.improvements?.length ?? 0) > 0 ? (
+                  notes!.improvements.slice(0, 3).map((improvement, index) => (
+                    <li key={index}>• {improvement}</li>
+                  ))
+                ) : (
+                  <li className="text-muted-foreground">등록된 내용이 없습니다.</li>
+                )}
               </ul>
             </div>
             <div>
               <h4 className="font-medium text-blue-600 mb-2">익월 중점</h4>
               <ul className="text-sm space-y-1">
-                <li>• 자사몰 프로모션 강화</li>
-                <li>• SEO 최적화 진행</li>
-                <li>• 신규 콘텐츠 포맷 테스트</li>
+                {(notes?.bestPractices?.length ?? 0) > 0 ? (
+                  notes!.bestPractices.slice(0, 3).map((practice, index) => (
+                    <li key={index}>• {practice}</li>
+                  ))
+                ) : (
+                  <li className="text-muted-foreground">등록된 내용이 없습니다.</li>
+                )}
               </ul>
             </div>
           </div>
@@ -135,4 +205,32 @@ export function SummaryTab({ workspaceId }: SummaryTabProps) {
       </Card>
     </div>
   )
+}
+
+function SummarySkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-[80px] mx-auto w-[300px]" />
+      <div className="grid gap-4 md:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-[100px]" />
+        ))}
+      </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <Skeleton key={i} className="h-[200px]" />
+        ))}
+      </div>
+      <Skeleton className="h-[200px]" />
+    </div>
+  )
+}
+
+function getChannelColor(channel: string): string {
+  const colors: Record<string, string> = {
+    SMARTSTORE: 'bg-green-500',
+    COUPANG: 'bg-blue-500',
+    GA4: 'bg-purple-500',
+  }
+  return colors[channel] || 'bg-gray-500'
 }

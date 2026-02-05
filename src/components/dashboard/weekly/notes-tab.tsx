@@ -1,12 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Loader2 } from 'lucide-react'
+import { useDashboardNotes, saveDashboardNotes } from '@/lib/hooks/use-dashboard-data'
+import { Skeleton } from '../skeleton'
+import { mutate } from 'swr'
+import { format } from 'date-fns'
 
 interface NotesTabProps {
   workspaceId: string
+  periodStart: Date
 }
 
 interface Note {
@@ -14,22 +19,40 @@ interface Note {
   content: string
 }
 
-export function NotesTab({ workspaceId }: NotesTabProps) {
-  const [causes, setCauses] = useState<Note[]>([
-    { id: '1', content: '신규 프로모션 캠페인 진행으로 트래픽 증가' },
-    { id: '2', content: '인스타그램 릴스 바이럴 콘텐츠' },
-  ])
-  const [improvements, setImprovements] = useState<Note[]>([
-    { id: '1', content: '전환율 개선을 위한 랜딩페이지 A/B 테스트' },
-  ])
+interface ActionItem {
+  id?: string
+  title: string
+  status: string
+}
+
+export function NotesTab({ workspaceId, periodStart }: NotesTabProps) {
+  const { data, error, isLoading } = useDashboardNotes(
+    workspaceId,
+    'WEEKLY',
+    periodStart
+  )
+
+  const [causes, setCauses] = useState<Note[]>([])
+  const [improvements, setImprovements] = useState<Note[]>([])
   const [bestPractices, setBestPractices] = useState<Note[]>([])
-  const [actionItems, setActionItems] = useState<Note[]>([
-    { id: '1', content: '신규 상품 3종 등록' },
-    { id: '2', content: '인스타그램 콘텐츠 5개 업로드' },
-  ])
+  const [actionItems, setActionItems] = useState<ActionItem[]>([])
+  const [isSaving, setIsSaving] = useState(false)
+  const [hasChanges, setHasChanges] = useState(false)
+
+  // Sync state with fetched data
+  useEffect(() => {
+    if (data) {
+      setCauses(data.notes.causes.map((c, i) => ({ id: `cause-${i}`, content: c })))
+      setImprovements(data.notes.improvements.map((c, i) => ({ id: `imp-${i}`, content: c })))
+      setBestPractices(data.notes.bestPractices.map((c, i) => ({ id: `bp-${i}`, content: c })))
+      setActionItems(data.actions.map((a) => ({ id: a.id, title: a.title, status: a.status })))
+      setHasChanges(false)
+    }
+  }, [data])
 
   const addNote = (setter: React.Dispatch<React.SetStateAction<Note[]>>) => {
     setter((prev) => [...prev, { id: crypto.randomUUID(), content: '' }])
+    setHasChanges(true)
   }
 
   const updateNote = (
@@ -38,6 +61,7 @@ export function NotesTab({ workspaceId }: NotesTabProps) {
     content: string
   ) => {
     setter((prev) => prev.map((n) => (n.id === id ? { ...n, content } : n)))
+    setHasChanges(true)
   }
 
   const removeNote = (
@@ -45,6 +69,69 @@ export function NotesTab({ workspaceId }: NotesTabProps) {
     id: string
   ) => {
     setter((prev) => prev.filter((n) => n.id !== id))
+    setHasChanges(true)
+  }
+
+  const addAction = () => {
+    setActionItems((prev) => [...prev, { title: '', status: 'PENDING' }])
+    setHasChanges(true)
+  }
+
+  const updateAction = (index: number, title: string) => {
+    setActionItems((prev) =>
+      prev.map((a, i) => (i === index ? { ...a, title } : a))
+    )
+    setHasChanges(true)
+  }
+
+  const removeAction = (index: number) => {
+    setActionItems((prev) => prev.filter((_, i) => i !== index))
+    setHasChanges(true)
+  }
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      await saveDashboardNotes(
+        workspaceId,
+        'WEEKLY',
+        periodStart,
+        {
+          causes: causes.map((n) => n.content).filter(Boolean),
+          improvements: improvements.map((n) => n.content).filter(Boolean),
+          bestPractices: bestPractices.map((n) => n.content).filter(Boolean),
+        },
+        actionItems
+          .filter((a) => a.title.trim())
+          .map((a) => ({
+            id: a.id?.startsWith('action-') ? undefined : a.id,
+            title: a.title,
+            status: a.status,
+          }))
+      )
+
+      // Revalidate the data
+      const periodStartStr = format(periodStart, 'yyyy-MM-dd')
+      await mutate(`/api/workspaces/${workspaceId}/notes?periodType=WEEKLY&periodStart=${periodStartStr}`)
+      setHasChanges(false)
+    } catch (err) {
+      console.error('Failed to save notes:', err)
+      alert('저장에 실패했습니다.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  if (isLoading) {
+    return <NotesSkeleton />
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        데이터를 불러오는데 실패했습니다.
+      </div>
+    )
   }
 
   const NoteSection = ({
@@ -61,7 +148,7 @@ export function NotesTab({ workspaceId }: NotesTabProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">{title}</CardTitle>
-        {minRequired > 0 && notes.length < minRequired && (
+        {minRequired > 0 && notes.filter((n) => n.content.trim()).length < minRequired && (
           <span className="text-xs text-orange-600">
             최소 {minRequired}개 필요
           </span>
@@ -101,8 +188,20 @@ export function NotesTab({ workspaceId }: NotesTabProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button>저장</Button>
+      <div className="flex justify-end gap-2">
+        {hasChanges && (
+          <span className="text-sm text-muted-foreground self-center">변경사항 있음</span>
+        )}
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              저장 중...
+            </>
+          ) : (
+            '저장'
+          )}
+        </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -123,12 +222,60 @@ export function NotesTab({ workspaceId }: NotesTabProps) {
           notes={bestPractices}
           setNotes={setBestPractices}
         />
-        <NoteSection
-          title="차주 반영사항"
-          notes={actionItems}
-          setNotes={setActionItems}
-          minRequired={1}
-        />
+
+        {/* Action Items */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">차주 반영사항</CardTitle>
+            {actionItems.filter((a) => a.title.trim()).length < 1 && (
+              <span className="text-xs text-orange-600">최소 1개 필요</span>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {actionItems.map((action, index) => (
+              <div key={action.id || `new-${index}`} className="flex gap-2">
+                <input
+                  type="text"
+                  value={action.title}
+                  onChange={(e) => updateAction(index, e.target.value)}
+                  placeholder="액션 아이템을 입력하세요..."
+                  className="flex-1 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeAction(index)}
+                >
+                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </div>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={addAction}
+              className="w-full"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              추가
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+function NotesSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-end">
+        <Skeleton className="h-10 w-20" />
+      </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-[200px]" />
+        ))}
       </div>
     </div>
   )

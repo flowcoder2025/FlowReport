@@ -2,32 +2,64 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { KPICard } from '../kpi-card'
+import { useDashboardMetrics, useDashboardNotes } from '@/lib/hooks/use-dashboard-data'
+import { Skeleton } from '../skeleton'
 
 interface OverviewTabProps {
   workspaceId: string
+  periodStart: Date
 }
 
-export function OverviewTab({ workspaceId }: OverviewTabProps) {
-  // In production, fetch data from API
-  // const { data } = useQuery(['weekly-overview', workspaceId], fetchWeeklyOverview)
+export function OverviewTab({ workspaceId, periodStart }: OverviewTabProps) {
+  const { data: metrics, error: metricsError, isLoading: metricsLoading } = useDashboardMetrics(
+    workspaceId,
+    'WEEKLY',
+    periodStart
+  )
 
-  // Mock data for UI demonstration
-  const mockKPIs = [
-    { title: '총 매출', value: 12500000, previousValue: 11200000, format: 'currency' as const },
-    { title: 'DAU', value: 3420, previousValue: 3100 },
-    { title: 'WAU', value: 8500, previousValue: 8200 },
-    { title: '회원가입', value: 156, previousValue: 142 },
-    { title: '총 도달', value: 125000, previousValue: 110000 },
-    { title: '총 상호작용', value: 8900, previousValue: 7500 },
-    { title: '팔로워 순증', value: 234, previousValue: 180 },
-    { title: '업로드 수', value: 12, previousValue: 10 },
+  const { data: notesData, isLoading: notesLoading } = useDashboardNotes(
+    workspaceId,
+    'WEEKLY',
+    periodStart
+  )
+
+  if (metricsLoading || notesLoading) {
+    return <OverviewSkeleton />
+  }
+
+  if (metricsError) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        데이터를 불러오는데 실패했습니다.
+      </div>
+    )
+  }
+
+  const overview = metrics?.overview
+  const previous = metrics?.previous
+  const notes = notesData?.notes
+
+  const kpis = [
+    {
+      title: '총 매출',
+      value: overview?.totalRevenue ?? null,
+      previousValue: previous?.totalRevenue ?? null,
+      format: 'currency' as const,
+    },
+    { title: 'DAU', value: overview?.dau ?? null, previousValue: previous?.dau ?? null },
+    { title: 'WAU', value: overview?.wau ?? null, previousValue: previous?.wau ?? null },
+    { title: '회원가입', value: overview?.signups ?? null, previousValue: previous?.signups ?? null },
+    { title: '총 도달', value: overview?.reach ?? null, previousValue: previous?.reach ?? null },
+    { title: '총 상호작용', value: overview?.engagement ?? null, previousValue: previous?.engagement ?? null },
+    { title: '팔로워 순증', value: overview?.followers ?? null, previousValue: previous?.followers ?? null },
+    { title: '업로드 수', value: overview?.uploads ?? null, previousValue: previous?.uploads ?? null },
   ]
 
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {mockKPIs.map((kpi, index) => (
+        {kpis.map((kpi, index) => (
           <KPICard
             key={index}
             title={kpi.title}
@@ -46,18 +78,16 @@ export function OverviewTab({ workspaceId }: OverviewTabProps) {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm">
-              <li className="flex items-start gap-2">
-                <span className="text-muted-foreground">1.</span>
-                <span>신규 프로모션 캠페인 진행으로 트래픽 증가</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-muted-foreground">2.</span>
-                <span>인스타그램 릴스 바이럴 콘텐츠</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-muted-foreground">3.</span>
-                <span>시즌 특수 (명절 기간 효과)</span>
-              </li>
+              {(notes?.causes?.length ?? 0) > 0 ? (
+                notes!.causes.slice(0, 3).map((cause, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-muted-foreground">{index + 1}.</span>
+                    <span>{cause}</span>
+                  </li>
+                ))
+              ) : (
+                <li className="text-muted-foreground">아직 등록된 원인이 없습니다.</li>
+              )}
             </ul>
           </CardContent>
         </Card>
@@ -68,18 +98,16 @@ export function OverviewTab({ workspaceId }: OverviewTabProps) {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm">
-              <li className="flex items-start gap-2">
-                <span className="text-muted-foreground">1.</span>
-                <span>전환율 개선을 위한 랜딩페이지 A/B 테스트</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-muted-foreground">2.</span>
-                <span>블로그 SEO 최적화 필요</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-muted-foreground">3.</span>
-                <span>이탈율 높은 상품 상세페이지 개선</span>
-              </li>
+              {(notes?.improvements?.length ?? 0) > 0 ? (
+                notes!.improvements.slice(0, 3).map((improvement, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-muted-foreground">{index + 1}.</span>
+                    <span>{improvement}</span>
+                  </li>
+                ))
+              ) : (
+                <li className="text-muted-foreground">아직 등록된 개선사항이 없습니다.</li>
+              )}
             </ul>
           </CardContent>
         </Card>
@@ -90,21 +118,41 @@ export function OverviewTab({ workspaceId }: OverviewTabProps) {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm">
-              <li className="flex items-center gap-2">
-                <input type="checkbox" className="rounded" />
-                <span>신규 상품 3종 등록</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <input type="checkbox" className="rounded" />
-                <span>인스타그램 콘텐츠 5개 업로드</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <input type="checkbox" className="rounded" />
-                <span>블로그 포스팅 2개 작성</span>
-              </li>
+              {(notesData?.actions?.length ?? 0) > 0 ? (
+                notesData!.actions.slice(0, 3).map((action) => (
+                  <li key={action.id} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      className="rounded"
+                      checked={action.status === 'COMPLETED'}
+                      readOnly
+                    />
+                    <span>{action.title}</span>
+                  </li>
+                ))
+              ) : (
+                <li className="text-muted-foreground">아직 등록된 액션 아이템이 없습니다.</li>
+              )}
             </ul>
           </CardContent>
         </Card>
+      </div>
+    </div>
+  )
+}
+
+function OverviewSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-[100px]" />
+        ))}
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-[200px]" />
+        ))}
       </div>
     </div>
   )

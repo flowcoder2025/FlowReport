@@ -1,9 +1,12 @@
 import { notFound, redirect } from 'next/navigation'
+import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
 import { WeeklyDashboard } from '@/components/dashboard/weekly'
 import { MonthlyDashboard } from '@/components/dashboard/monthly'
+import { Settings } from 'lucide-react'
 
 interface WorkspaceDashboardProps {
   params: { workspaceId: string }
@@ -40,11 +43,19 @@ export default async function WorkspaceDashboard({
 
   return (
     <div className="container mx-auto py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">{membership.workspace.name}</h1>
-        <p className="text-muted-foreground">
-          {membership.workspace.description || '대시보드'}
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">{membership.workspace.name}</h1>
+          <p className="text-muted-foreground">
+            {membership.workspace.description || '대시보드'}
+          </p>
+        </div>
+        <Link href={`/workspaces/${params.workspaceId}/settings`}>
+          <Button variant="outline" size="sm">
+            <Settings className="h-4 w-4 mr-2" />
+            설정
+          </Button>
+        </Link>
       </div>
 
       <Tabs defaultValue={tab} className="space-y-4">

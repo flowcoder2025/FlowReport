@@ -1,37 +1,53 @@
 'use client'
 
+import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PeriodSelector } from '../period-selector'
 import { SummaryTab } from './summary-tab'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Download } from 'lucide-react'
+import { format } from 'date-fns'
+import { generateAndDownloadPNG } from '@/lib/export/png-generator'
 
 interface MonthlyDashboardProps {
   workspaceId: string
 }
 
 export function MonthlyDashboard({ workspaceId }: MonthlyDashboardProps) {
+  const [periodStart, setPeriodStart] = useState(() => new Date())
+
   const handleExportPDF = () => {
     // TODO: Implement PDF export
     console.log('Export PDF')
   }
 
-  const handleExportPNG = () => {
-    // TODO: Implement PNG export
-    console.log('Export PNG')
+  const handleExportPNG = async () => {
+    const filename = `monthly-report-${format(periodStart, 'yyyy-MM')}.png`
+    await generateAndDownloadPNG('monthly-summary', filename)
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={handleExportPNG}>
-          <Download className="h-4 w-4 mr-2" />
-          PNG
-        </Button>
-        <Button onClick={handleExportPDF}>
-          <Download className="h-4 w-4 mr-2" />
-          PDF
-        </Button>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <h2 className="text-lg font-semibold">월간 리포트</h2>
+          <PeriodSelector
+            periodType="MONTHLY"
+            periodStart={periodStart}
+            onPeriodChange={setPeriodStart}
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportPNG}>
+            <Download className="h-4 w-4 mr-2" />
+            PNG
+          </Button>
+          <Button onClick={handleExportPDF}>
+            <Download className="h-4 w-4 mr-2" />
+            PDF
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="summary" className="space-y-4">
@@ -45,7 +61,7 @@ export function MonthlyDashboard({ workspaceId }: MonthlyDashboardProps) {
         </TabsList>
 
         <TabsContent value="summary">
-          <SummaryTab workspaceId={workspaceId} />
+          <SummaryTab workspaceId={workspaceId} periodStart={periodStart} />
         </TabsContent>
 
         <TabsContent value="keyword">

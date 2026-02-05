@@ -2,49 +2,47 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { KPICard } from '../kpi-card'
+import { useDashboardMetrics } from '@/lib/hooks/use-dashboard-data'
+import { Skeleton } from '../skeleton'
 
 interface StoreTabProps {
   workspaceId: string
+  periodStart: Date
 }
 
-export function StoreTab({ workspaceId }: StoreTabProps) {
-  // Mock data
-  const stores = [
-    {
-      name: '스마트스토어',
-      sales: 5200000,
-      orders: 85,
-      aov: 61176,
-      cancels: 3,
-      refunds: 2,
-      change: { sales: 8.5, orders: 12.3 },
-    },
-    {
-      name: '쿠팡',
-      sales: 4800000,
-      orders: 72,
-      aov: 66667,
-      cancels: 5,
-      refunds: 1,
-      change: { sales: 15.2, orders: 18.7 },
-    },
-    {
-      name: '자사몰',
-      sales: 2500000,
-      orders: 45,
-      aov: 55556,
-      cancels: 1,
-      refunds: 0,
-      change: { sales: -3.2, orders: -5.1 },
-    },
-  ]
+export function StoreTab({ workspaceId, periodStart }: StoreTabProps) {
+  const { data: metrics, error, isLoading } = useDashboardMetrics(
+    workspaceId,
+    'WEEKLY',
+    periodStart
+  )
+
+  if (isLoading) {
+    return <StoreSkeleton />
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        데이터를 불러오는데 실패했습니다.
+      </div>
+    )
+  }
+
+  const traffic = metrics?.store?.traffic
+  const channels = metrics?.store?.channels ?? []
 
   const trafficKPIs = [
-    { title: '세션', value: 12500, previousValue: 11200 },
-    { title: '사용자', value: 8900, previousValue: 8100 },
-    { title: 'DAU', value: 3420, previousValue: 3100 },
-    { title: 'WAU', value: 8500, previousValue: 8200 },
-    { title: '전환율', value: 1.8, previousValue: 1.6, format: 'percent' as const },
+    { title: '세션', value: traffic?.sessions ?? null, previousValue: traffic?.previousSessions ?? null },
+    { title: '사용자', value: traffic?.users ?? null, previousValue: traffic?.previousUsers ?? null },
+    { title: 'DAU', value: traffic?.dau ?? null, previousValue: traffic?.previousDau ?? null },
+    { title: 'WAU', value: traffic?.wau ?? null, previousValue: traffic?.previousWau ?? null },
+    {
+      title: '전환율',
+      value: traffic?.conversionRate ?? null,
+      previousValue: traffic?.previousConversionRate ?? null,
+      format: 'percent' as const,
+    },
   ]
 
   return (
@@ -75,60 +73,90 @@ export function StoreTab({ workspaceId }: StoreTabProps) {
           <CardTitle>채널별 매출</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="py-2 px-4 text-left font-medium">스토어</th>
-                  <th className="py-2 px-4 text-right font-medium">매출</th>
-                  <th className="py-2 px-4 text-right font-medium">주문수</th>
-                  <th className="py-2 px-4 text-right font-medium">객단가</th>
-                  <th className="py-2 px-4 text-right font-medium">취소</th>
-                  <th className="py-2 px-4 text-right font-medium">환불</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stores.map((store) => (
-                  <tr key={store.name} className="border-b">
-                    <td className="py-3 px-4 font-medium">{store.name}</td>
-                    <td className="py-3 px-4 text-right">
-                      <div>₩{store.sales.toLocaleString()}</div>
-                      <div className={`text-xs ${store.change.sales >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {store.change.sales >= 0 ? '+' : ''}{store.change.sales}%
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div>{store.orders}</div>
-                      <div className={`text-xs ${store.change.orders >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {store.change.orders >= 0 ? '+' : ''}{store.change.orders}%
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-right">₩{store.aov.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right">{store.cancels}</td>
-                    <td className="py-3 px-4 text-right">{store.refunds}</td>
+          {channels.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="py-2 px-4 text-left font-medium">스토어</th>
+                    <th className="py-2 px-4 text-right font-medium">매출</th>
+                    <th className="py-2 px-4 text-right font-medium">주문수</th>
+                    <th className="py-2 px-4 text-right font-medium">객단가</th>
+                    <th className="py-2 px-4 text-right font-medium">취소</th>
+                    <th className="py-2 px-4 text-right font-medium">환불</th>
                   </tr>
-                ))}
-                <tr className="bg-muted/50 font-medium">
-                  <td className="py-3 px-4">합계</td>
-                  <td className="py-3 px-4 text-right">
-                    ₩{stores.reduce((sum, s) => sum + s.sales, 0).toLocaleString()}
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    {stores.reduce((sum, s) => sum + s.orders, 0)}
-                  </td>
-                  <td className="py-3 px-4 text-right">-</td>
-                  <td className="py-3 px-4 text-right">
-                    {stores.reduce((sum, s) => sum + s.cancels, 0)}
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    {stores.reduce((sum, s) => sum + s.refunds, 0)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {channels.map((store) => {
+                    const sales = store.data.revenue ?? store.data.sales ?? 0
+                    const orders = store.data.orders ?? 0
+                    const aov = orders > 0 ? Math.round(sales / orders) : 0
+                    const cancels = store.data.cancels ?? 0
+                    const refunds = store.data.refunds ?? 0
+
+                    return (
+                      <tr key={store.channel} className="border-b">
+                        <td className="py-3 px-4 font-medium">{store.channelName}</td>
+                        <td className="py-3 px-4 text-right">
+                          <div>₩{sales.toLocaleString()}</div>
+                          {renderChange(store.change.revenue ?? store.change.sales)}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div>{orders}</div>
+                          {renderChange(store.change.orders)}
+                        </td>
+                        <td className="py-3 px-4 text-right">₩{aov.toLocaleString()}</td>
+                        <td className="py-3 px-4 text-right">{cancels}</td>
+                        <td className="py-3 px-4 text-right">{refunds}</td>
+                      </tr>
+                    )
+                  })}
+                  {/* Total Row */}
+                  <tr className="bg-muted/50 font-medium">
+                    <td className="py-3 px-4">합계</td>
+                    <td className="py-3 px-4 text-right">
+                      ₩{channels.reduce((sum, s) => sum + (s.data.revenue ?? s.data.sales ?? 0), 0).toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      {channels.reduce((sum, s) => sum + (s.data.orders ?? 0), 0)}
+                    </td>
+                    <td className="py-3 px-4 text-right">-</td>
+                    <td className="py-3 px-4 text-right">
+                      {channels.reduce((sum, s) => sum + (s.data.cancels ?? 0), 0)}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      {channels.reduce((sum, s) => sum + (s.data.refunds ?? 0), 0)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-center py-4">
+              스토어 데이터가 없습니다. CSV를 업로드하거나 채널을 연동하세요.
+            </p>
+          )}
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function StoreSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-[150px]" />
+      <Skeleton className="h-[300px]" />
+    </div>
+  )
+}
+
+function renderChange(change: number | null | undefined) {
+  if (change === null || change === undefined) return null
+  const isPositive = change >= 0
+  return (
+    <div className={`text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+      {isPositive ? '+' : ''}{change.toFixed(1)}%
     </div>
   )
 }
