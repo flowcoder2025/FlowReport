@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { createConnector, isApiSupported } from '@/lib/connectors'
 import { decryptCredentials } from '@/lib/crypto/credentials'
+import { upsertDailySnapshots, upsertContentItems } from '@/lib/services/metric-snapshot'
 
 /**
  * Cron job to sync all active connectors
@@ -54,7 +55,28 @@ export async function GET(request: Request) {
         const contentResult = await connector.syncContent(startDate, endDate)
 
         if (metricsResult.success) {
-          // TODO: Upsert metric snapshots to database
+          // Upsert metric snapshots to database
+          if (metricsResult.metrics && metricsResult.metrics.length > 0) {
+            await upsertDailySnapshots(
+              {
+                workspaceId: connection.workspaceId,
+                connectionId: connection.id,
+                source: 'CONNECTOR',
+              },
+              metricsResult.metrics
+            )
+          }
+
+          // Upsert content items to database
+          if (contentResult.success && contentResult.contentItems && contentResult.contentItems.length > 0) {
+            await upsertContentItems(
+              connection.workspaceId,
+              connection.id,
+              connection.provider,
+              contentResult.contentItems
+            )
+          }
+
           await prisma.channelConnection.update({
             where: { id: connection.id },
             data: {

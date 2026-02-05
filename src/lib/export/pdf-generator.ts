@@ -1,5 +1,6 @@
-// PDF Generator using @react-pdf/renderer
-// This file provides the structure for PDF generation
+import React from 'react'
+import { pdf, DocumentProps } from '@react-pdf/renderer'
+import { MonthlyReportDocument } from './pdf-components'
 
 /**
  * Monthly report data structure for PDF generation
@@ -40,22 +41,12 @@ export interface MonthlyReportData {
 
 /**
  * Generate PDF buffer for monthly report
- * In production, use @react-pdf/renderer:
- *
- * import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer'
- *
- * const doc = (
- *   <Document>
- *     <Page size="A4">...</Page>
- *   </Document>
- * )
- * return Buffer.from(await pdf(doc).toBlob().then(b => b.arrayBuffer()))
  */
 export async function generateMonthlyPDF(data: MonthlyReportData): Promise<Buffer> {
-  // Placeholder - implement with @react-pdf/renderer
-  // For MVP, return a placeholder buffer
-  const placeholderText = `Monthly Report: ${data.workspace.name} - ${data.period.year}/${data.period.month}`
-  return Buffer.from(placeholderText, 'utf-8')
+  const document = React.createElement(MonthlyReportDocument, { data }) as React.ReactElement<DocumentProps>
+  const blob = await pdf(document).toBlob()
+  const arrayBuffer = await blob.arrayBuffer()
+  return Buffer.from(arrayBuffer)
 }
 
 /**
