@@ -1,0 +1,491 @@
+// ===========================================
+// FlowReport - ReportingOps SaaS
+// Prisma Schema based on fdp-backend-architect
+// ===========================================
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ===========================================
+// NextAuth.js Models
+// ===========================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts             Account[]
+  workspaceMemberships WorkspaceMembership[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ===========================================
+// Multi-Tenant Workspace Models
+// ===========================================
+
+model Workspace {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+  timezone    String  @default("Asia/Seoul")
+  weekStart   Int     @default(1) // 0=Sunday, 1=Monday
+  monthStart  Int     @default(1) // Day of month
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships        WorkspaceMembership[]
+  channelConnections ChannelConnection[]
+  metricDefinitions  MetricDefinition[]
+  metricSnapshots    MetricSnapshot[]
+  snapshotVersions   SnapshotVersion[]
+  contentItems       ContentItem[]
+  insightNotes       InsightNote[]
+  actionItems        ActionItem[]
+  csvUploads         CsvUpload[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMembership {
+  id          String        @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        WorkspaceRole @default(VIEWER)
+
+  joinedAt  DateTime @default(now())
+  invitedBy String?
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
+  @@map("workspace_memberships")
+}
+
+enum WorkspaceRole {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+// ===========================================
+// Channel Connection Models
+// ===========================================
+
+model ChannelConnection {
+  id          String          @id @default(cuid())
+  workspaceId String
+  provider    ChannelProvider
+  accountId   String
+  accountName String?
+
+  // Encrypted credentials (AES-256-GCM)
+  encryptedCredentials String         @db.Text
+  credentialType       CredentialType
+
+  status      ConnectionStatus @default(PENDING)
+  lastSyncAt  DateTime?
+  lastError   String?
+  syncEnabled Boolean          @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace       Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  metricSnapshots MetricSnapshot[]
+  contentItems    ContentItem[]
+  auditLogs       ConnectionAuditLog[]
+
+  @@unique([workspaceId, provider, accountId])
+  @@index([workspaceId])
+  @@index([provider])
+  @@map("channel_connections")
+}
+
+enum ChannelProvider {
+  GA4
+  META_INSTAGRAM
+  META_FACEBOOK
+  YOUTUBE
+  SMARTSTORE
+  COUPANG
+  GOOGLE_SEARCH_CONSOLE
+  NAVER_BLOG
+  NAVER_KEYWORDS
+}
+
+enum CredentialType {
+  SERVICE_ACCOUNT_JSON
+  OAUTH_TOKEN
+  API_KEY
+  CSV_ONLY
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACTIVE
+  ERROR
+  REVOKED
+  EXPIRED
+}
+
+model ConnectionAuditLog {
+  id           String @id @default(cuid())
+  connectionId String
+  action       String // 'CREATED', 'UPDATED', 'ROTATED', 'REVOKED'
+  performedBy  String
+  ipAddress    String?
+  metadata     Json?
+
+  createdAt DateTime @default(now())
+
+  connection ChannelConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId])
+  @@map("connection_audit_logs")
+}
+
+// ===========================================
+// SSOT Metric Definition Models
+// ===========================================
+
+model MetricDefinition {
+  id          String         @id @default(cuid())
+  workspaceId String
+  category    MetricCategory
+  code        String
+  name        String
+  description String?
+
+  // SSOT Configuration (JSON)
+  config Json
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, category, code])
+  @@index([workspaceId])
+  @@map("metric_definitions")
+}
+
+enum MetricCategory {
+  STORE_REVENUE
+  STORE_ORDERS
+  STORE_TRAFFIC
+  SNS_ENGAGEMENT
+  SNS_GROWTH
+  SNS_CONTENT
+  BLOG_TRAFFIC
+  KEYWORD_SEO
+}
+
+// ===========================================
+// Metric Snapshot Models
+// ===========================================
+
+model MetricSnapshot {
+  id           String     @id @default(cuid())
+  workspaceId  String
+  connectionId String?
+  periodType   PeriodType
+  periodStart  DateTime
+  periodEnd    DateTime
+
+  // Metric data (JSON with all metrics for the period)
+  data Json
+
+  // Source tracking
+  source      DataSource
+  csvUploadId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace  Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  connection ChannelConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  csvUpload  CsvUpload?         @relation(fields: [csvUploadId], references: [id], onDelete: SetNull)
+  versions   SnapshotVersion[]
+
+  @@index([workspaceId, periodType, periodStart])
+  @@index([connectionId])
+  @@map("metric_snapshots")
+}
+
+enum PeriodType {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum DataSource {
+  CONNECTOR
+  CSV_UPLOAD
+  MANUAL_ENTRY
+}
+
+model SnapshotVersion {
+  id          String        @id @default(cuid())
+  workspaceId String
+  snapshotId  String
+  status      VersionStatus
+  versionNo   Int
+
+  // Frozen data at this version
+  frozenData Json
+
+  createdAt DateTime  @default(now())
+  createdBy String
+  lockedAt  DateTime?
+  lockedBy  String?
+
+  workspace  Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  snapshot   MetricSnapshot   @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  changeLogs ChangeLog[]
+
+  @@unique([snapshotId, versionNo])
+  @@index([workspaceId])
+  @@map("snapshot_versions")
+}
+
+enum VersionStatus {
+  LIVE
+  SNAPSHOT
+  LOCKED
+}
+
+model ChangeLog {
+  id        String  @id @default(cuid())
+  versionId String
+  field     String
+  oldValue  String?
+  newValue  String?
+  reason    String?
+
+  createdAt DateTime @default(now())
+  createdBy String
+
+  version SnapshotVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@index([versionId])
+  @@map("change_logs")
+}
+
+// ===========================================
+// Content & Notes Models
+// ===========================================
+
+model ContentItem {
+  id           String          @id @default(cuid())
+  workspaceId  String
+  connectionId String?
+  channel      ChannelProvider
+  contentType  ContentType
+
+  externalId  String?
+  url         String
+  title       String?
+  publishedAt DateTime
+  metrics     Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace  Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  connection ChannelConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, channel, publishedAt])
+  @@index([connectionId])
+  @@map("content_items")
+}
+
+enum ContentType {
+  POST
+  REEL
+  STORY
+  SHORT
+  VIDEO
+  ARTICLE
+  PRODUCT
+}
+
+model InsightNote {
+  id          String     @id @default(cuid())
+  workspaceId String
+  periodType  PeriodType
+  periodStart DateTime
+  noteType    NoteType
+
+  content     String @db.Text
+  attachments Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, periodType, periodStart])
+  @@map("insight_notes")
+}
+
+enum NoteType {
+  CAUSE
+  IMPROVEMENT
+  BEST_PRACTICE
+}
+
+model ActionItem {
+  id          String       @id @default(cuid())
+  workspaceId String
+  periodType  PeriodType
+  periodStart DateTime
+
+  title       String
+  description String?      @db.Text
+  status      ActionStatus @default(PENDING)
+  priority    Int          @default(0)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdBy   String
+  completedAt DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, periodType, periodStart])
+  @@map("action_items")
+}
+
+enum ActionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+// ===========================================
+// CSV Upload Models
+// ===========================================
+
+model CsvUpload {
+  id          String          @id @default(cuid())
+  workspaceId String
+  channel     ChannelProvider
+  filename    String
+  fileSize    Int
+  rowCount    Int
+
+  // Mapping configuration
+  columnMapping    Json
+  validationErrors Json?
+
+  status      CsvUploadStatus @default(PENDING)
+  processedAt DateTime?
+
+  createdAt DateTime @default(now())
+  createdBy String
+
+  workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  metricSnapshots MetricSnapshot[]
+
+  @@index([workspaceId])
+  @@map("csv_uploads")
+}
+
+enum CsvUploadStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ===========================================
+// Zanzibar Permission Models
+// ===========================================
+
+model RelationTuple {
+  id          String @id @default(cuid())
+  namespace   String // 'workspace', 'report', 'system'
+  objectId    String
+  relation    String // 'owner', 'admin', 'editor', 'viewer'
+  subjectType String // 'user', 'workspace_role'
+  subjectId   String
+
+  createdAt DateTime @default(now())
+
+  @@unique([namespace, objectId, relation, subjectType, subjectId])
+  @@index([namespace, objectId, relation])
+  @@index([subjectType, subjectId])
+  @@map("relation_tuples")
+}
+
+model RelationDefinition {
+  id           String  @id @default(cuid())
+  namespace    String
+  relation     String
+  inheritsFrom String?
+  description  String?
+
+  @@unique([namespace, relation])
+  @@map("relation_definitions")
+}
