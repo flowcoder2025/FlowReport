@@ -23,6 +23,8 @@ interface RawMetricsResponse {
   endDate: string
   periodType: string
   totalRows: number
+  returnedRows: number
+  truncated: boolean
   availableMetrics: Record<string, { label: string; channel: ChannelProvider | null }>
   rows: RawMetricData[]
 }
@@ -187,6 +189,7 @@ export function AnalyticsView() {
           periodType={periodType}
           selectedChannels={selectedChannels}
           selectedMetrics={selectedMetrics.map((m) => m.key)}
+          maxRows={10000}
           disabled={!data || data.rows.length === 0}
         />
       </div>
@@ -333,10 +336,20 @@ export function AnalyticsView() {
           <h3 className="text-lg font-medium">데이터 테이블</h3>
           {data && (
             <span className="text-sm text-muted-foreground">
-              총 {data.totalRows.toLocaleString()}개 레코드
+              {data.truncated
+                ? `${data.returnedRows.toLocaleString()} / ${data.totalRows.toLocaleString()}개 레코드`
+                : `총 ${data.totalRows.toLocaleString()}개 레코드`
+              }
             </span>
           )}
         </div>
+
+        {data?.truncated && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+            <strong>데이터 제한:</strong> 전체 {data.totalRows.toLocaleString()}개 중 {data.returnedRows.toLocaleString()}개만 표시됩니다.
+            전체 데이터는 Export 기능을 사용하세요.
+          </div>
+        )}
 
         {isLoading ? (
           <div className="space-y-2">

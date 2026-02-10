@@ -20,6 +20,7 @@ interface ExportButtonProps {
   periodType: 'DAILY' | 'WEEKLY' | 'MONTHLY'
   selectedChannels?: string[]
   selectedMetrics?: string[]
+  maxRows?: number
   disabled?: boolean
 }
 
@@ -32,6 +33,7 @@ export function ExportButton({
   periodType,
   selectedChannels,
   selectedMetrics,
+  maxRows,
   disabled = false,
 }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false)
@@ -54,6 +56,10 @@ export function ExportButton({
 
         if (selectedMetrics && selectedMetrics.length > 0) {
           params.set('metrics', selectedMetrics.join(','))
+        }
+
+        if (maxRows) {
+          params.set('maxRows', maxRows.toString())
         }
 
         const response = await fetch(
@@ -101,7 +107,7 @@ export function ExportButton({
         setIsExporting(false)
       }
     },
-    [workspaceId, startDate, endDate, periodType, selectedChannels, selectedMetrics]
+    [workspaceId, startDate, endDate, periodType, selectedChannels, selectedMetrics, maxRows]
   )
 
   return (
