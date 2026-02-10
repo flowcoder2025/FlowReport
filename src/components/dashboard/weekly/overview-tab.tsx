@@ -4,6 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { KPICard } from '../kpi-card'
 import { useDashboardMetrics, useDashboardNotes } from '@/lib/hooks/use-dashboard-data'
 import { Skeleton } from '../skeleton'
+import {
+  HighlightBanner,
+  YouTubeCard,
+  InstagramCard,
+  StoreCard,
+} from '../channel-metrics'
 
 interface OverviewTabProps {
   workspaceId: string
@@ -55,8 +61,16 @@ export function OverviewTab({ workspaceId, periodStart }: OverviewTabProps) {
     { title: '업로드 수', value: overview?.uploads ?? null, previousValue: previous?.uploads ?? null },
   ]
 
+  const channelDetails = metrics?.channelDetails
+  const highlights = metrics?.highlights
+
   return (
     <div className="space-y-6">
+      {/* Highlight Banner */}
+      {highlights && highlights.length > 0 && (
+        <HighlightBanner highlights={highlights} />
+      )}
+
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {kpis.map((kpi, index) => (
@@ -69,6 +83,30 @@ export function OverviewTab({ workspaceId, periodStart }: OverviewTabProps) {
           />
         ))}
       </div>
+
+      {/* Channel Metrics Cards */}
+      {channelDetails && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {channelDetails.YOUTUBE && (
+            <YouTubeCard metrics={channelDetails.YOUTUBE} />
+          )}
+          {channelDetails.META_INSTAGRAM && (
+            <InstagramCard metrics={channelDetails.META_INSTAGRAM} />
+          )}
+        </div>
+      )}
+
+      {/* Store Cards */}
+      {channelDetails && (channelDetails.SMARTSTORE || channelDetails.COUPANG) && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {channelDetails.SMARTSTORE && (
+            <StoreCard metrics={channelDetails.SMARTSTORE} name="스마트스토어" />
+          )}
+          {channelDetails.COUPANG && (
+            <StoreCard metrics={channelDetails.COUPANG} name="쿠팡" />
+          )}
+        </div>
+      )}
 
       {/* Insights Section */}
       <div className="grid gap-4 md:grid-cols-3">

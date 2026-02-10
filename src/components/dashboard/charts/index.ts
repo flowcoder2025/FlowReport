@@ -1,0 +1,6 @@
+export { SparklineChart } from './internal/sparkline-chart'
+export { TrendLineChart } from './internal/trend-line-chart'
+export { HorizontalBarChart } from './internal/horizontal-bar-chart'
+export { PieChart } from './internal/pie-chart'
+export { BubbleChart } from './internal/bubble-chart'
+export { FunnelChart } from './internal/funnel-chart'

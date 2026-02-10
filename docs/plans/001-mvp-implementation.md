@@ -22,7 +22,7 @@ PRD와 fdp-backend-architect 스킬을 기반으로 한 ReportingOps SaaS 플랫
 C:\Team-jane\FlowReport\
 ├── app/
 │   ├── (auth)/login/, signup/
-│   ├── (dashboard)/workspace/, settings/, reports/
+│   ├── (dashboard)/workspaces/, settings/, reports/
 │   └── api/auth/, workspaces/, connectors/, metrics/, exports/
 ├── components/
 │   ├── ui/          # shadcn/ui
@@ -296,7 +296,7 @@ generator client {
 2. `lib/permissions/index.ts` - Zanzibar 권한 시스템
 3. `lib/connectors/base.ts` - 커넥터 추상 인터페이스
 4. `lib/crypto/credentials.ts` - 자격증명 암호화
-5. `app/(dashboard)/workspace/[workspaceId]/page.tsx` - 메인 대시보드
+5. `app/(dashboard)/workspaces/[workspaceId]/page.tsx` - 메인 대시보드
 
 ---
 

@@ -14,6 +14,71 @@ const fetcher = async (url: string) => {
   return res.json()
 }
 
+export interface HighlightItem {
+  channel: string
+  metric: string
+  change: number
+  direction: 'up' | 'down'
+  severity: 'positive' | 'negative' | 'neutral'
+}
+
+export interface YouTubeMetrics {
+  views: number | null
+  estimatedMinutesWatched: number | null
+  subscribers: number | null
+  subscriberGained: number | null
+  engagement: number | null
+  likes: number | null
+  comments: number | null
+  shares: number | null
+  change: {
+    views: number | null
+    estimatedMinutesWatched: number | null
+    subscribers: number | null
+    engagement: number | null
+  }
+  topVideos: Array<{
+    id: string
+    title: string | null
+    url: string
+    views: number | null
+    engagement: number | null
+  }>
+}
+
+export interface InstagramMetrics {
+  reach: number | null
+  impressions: number | null
+  engagement: number | null
+  engagementRate: number | null
+  followers: number | null
+  change: {
+    reach: number | null
+    impressions: number | null
+    engagement: number | null
+    followers: number | null
+  }
+}
+
+export interface StoreMetrics {
+  revenue: number | null
+  orders: number | null
+  conversionRate: number | null
+  avgOrderValue: number | null
+  change: {
+    revenue: number | null
+    orders: number | null
+    conversionRate: number | null
+  }
+}
+
+export interface ChannelDetails {
+  YOUTUBE?: YouTubeMetrics
+  META_INSTAGRAM?: InstagramMetrics
+  SMARTSTORE?: StoreMetrics
+  COUPANG?: StoreMetrics
+}
+
 export interface MetricsData {
   periodType: string
   periodStart: string
@@ -77,6 +142,8 @@ export interface MetricsData {
       change: Record<string, number | null>
     }>
   }
+  highlights: HighlightItem[]
+  channelDetails: ChannelDetails
 }
 
 export interface NotesData {
@@ -99,10 +166,12 @@ export interface NotesData {
 export function useDashboardMetrics(
   workspaceId: string,
   periodType: 'WEEKLY' | 'MONTHLY',
-  periodStart: Date
+  periodStart: Date,
+  channels?: string[]
 ) {
   const periodStartStr = format(periodStart, 'yyyy-MM-dd')
-  const url = `/api/workspaces/${workspaceId}/metrics?periodType=${periodType}&periodStart=${periodStartStr}`
+  const channelsParam = channels && channels.length > 0 ? `&channels=${channels.join(',')}` : ''
+  const url = `/api/workspaces/${workspaceId}/metrics?periodType=${periodType}&periodStart=${periodStartStr}${channelsParam}`
 
   return useSWR<MetricsData>(url, fetcher, {
     revalidateOnFocus: false,
@@ -121,6 +190,42 @@ export function useDashboardNotes(
   return useSWR<NotesData>(url, fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 30000,
+  })
+}
+
+export interface TrendPeriod {
+  period: string
+  periodStart: string
+  periodEnd: string
+  revenue: number
+  reach: number
+  engagement: number
+  [key: string]: string | number
+}
+
+export interface ChannelTrendMetrics {
+  youtube?: Array<{ period: string; subscribers: number; views: number }>
+  instagram?: Array<{ period: string; followers: number; reach: number }>
+}
+
+export interface TrendData {
+  periodType: string
+  periods: TrendPeriod[]
+  channelMetrics?: ChannelTrendMetrics
+}
+
+export function useDashboardTrendData(
+  workspaceId: string,
+  periodType: 'WEEKLY' | 'MONTHLY',
+  periodCount = 8,
+  channels?: string[]
+) {
+  const channelsParam = channels && channels.length > 0 ? `&channels=${channels.join(',')}` : ''
+  const url = `/api/workspaces/${workspaceId}/metrics/trend?periodType=${periodType}&periodCount=${periodCount}${channelsParam}`
+
+  return useSWR<TrendData>(url, fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000, // 1 minute for trend data
   })
 }
 

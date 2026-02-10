@@ -1,100 +1,80 @@
 # FlowReport Project Memory
 
-> 마지막 업데이트: 2026-02-05
+> 마지막 업데이트: 2026-02-10
 
-## 프로젝트 정보
+## 프로젝트 개요
 
-- **프로젝트명**: FlowReport (ReportingOps SaaS)
-- **경로**: `C:\Team-jane\FlowReport`
-- **목적**: 주간/월간 리포트 자동화 플랫폼
-- **저장소**: https://github.com/flowcoder2025/FlowReport.git
+FlowReport는 **ReportingOps SaaS** 플랫폼입니다.
+여러 마케팅/판매 채널의 데이터를 통합하여 주간/월간 리포트를 자동화하는 대시보드 서비스.
 
-## 기술 스택
+### 기술 스택
+- **Frontend**: Next.js 14, React 18, Tailwind CSS, Recharts
+- **Backend**: Next.js API Routes, Prisma ORM
+- **DB**: PostgreSQL
+- **인증**: NextAuth.js
 
-- Next.js 14 (App Router)
-- Supabase PostgreSQL + Prisma ORM
-- NextAuth.js (Google OAuth)
-- Zanzibar-based ReBAC
-- Vercel 배포
+### 연동 채널
+- SNS: YouTube, Instagram, Facebook, 네이버 블로그
+- 스토어: 스마트스토어, 쿠팡
+- 분석: GA4, Google Search Console
 
-**추가 패키지 (Post-MVP):**
-- `@google-analytics/data` - GA4 Data API
-- `@react-pdf/renderer` - PDF 생성
-- Noto Sans KR 웹폰트 - 한글 지원
+## Active Epic
+
+### dashboard-persona-refactoring (진행중)
+- **상태**: ⚠️ 조건부 승인 (P0 해결 필요)
+- **Phase**: 2/5 완료
+- **목표**: 페르소나별 특화 대시보드로 전환
+
+**생성된 모듈:**
+```
+src/components/dashboard/
+├── executive/    # 경영진용 (30초 전략 파악)
+├── marketing/    # 마케팅팀용 (채널+콘텐츠)
+├── commerce/     # 커머스팀용 (매출 중심)
+└── analytics/    # 데이터팀용 (원본 데이터)
+```
+
+## P0 이슈 (배포 전 필수)
+
+| 대시보드 | 이슈 | 해결방안 |
+|----------|------|----------|
+| Executive | 목표값 하드코딩 | config/DB에서 읽기 |
+| Marketing | 트렌드 데이터 빈 배열 | API 연결 |
+| Commerce | 반품/취소 0 하드코딩 | 실제 데이터 연결 |
+| Analytics | API 크기 제한 없음 | maxRows 설정 |
 
 ## 아키텍처 결정
 
-### 1. fdp-backend-architect 적용
-- 6-component architecture (DB + ORM + Auth + Permissions + Adapter + Deployment)
-- Zanzibar 기반 권한 시스템 사용
-- Prisma binaryTargets에 `rhel-openssl-3.0.x` 포함 (Vercel 호환)
+### 폴더 구조 규칙
+```
+module/
+├── index.ts      # Public API (외부 노출)
+└── internal/     # Private (외부 import 금지)
+    └── *.tsx
+```
 
-### 2. 멀티테넌시
-- Workspace 기반 데이터 격리
-- WorkspaceMembership으로 RBAC (Admin/Editor/Viewer)
+### 대시보드 분리 전략
+- **Option A 선택**: 페르소나별 완전 분리
+- **근거**: 점진적 개선보다 명확한 구분이 장기적으로 유리
 
-### 3. 자격증명 보안
-- AES-256-GCM 암호화 (`lib/crypto/credentials.ts`)
-- 환경변수로 32-byte 키 관리
+## 완료된 Epic
 
-### 4. 커넥터 아키텍처
-- BaseConnector 추상 클래스
-- API 커넥터: GA4, Meta, YouTube
-- CSV 전용 커넥터: SmartStore, Coupang
-
-### 5. 데이터 저장 전략
-- MetricSnapshot: 일별/월별 메트릭 저장
-- ContentItem: SNS 콘텐츠 저장
-- upsert 기반 병합 로직
-
-## 완료된 Epics
-
-| Epic | 완료일 | 비고 |
+| Epic | 완료일 | 요약 |
 |------|--------|------|
-| ReportingOps MVP | 2026-02-05 | Phase 1-8 완료 |
-| Post-MVP 백엔드 인프라 | 2026-02-05 | Phase 1-6 완료 |
-
-## 현재 구현 상태
-
-### ✅ 완료
-- 인증/권한 시스템
-- 데이터베이스 스키마 (14개 모델)
-- 커넥터 (GA4, Meta, YouTube, SmartStore, Coupang)
-- 저장 서비스 (MetricSnapshot, ContentItem)
-- API: Cron sync, CSV upload, PDF export
-- 대시보드 UI 레이아웃
-
-### ⚠️ 미완료
-- 대시보드 데이터 연동 (Mock → Real)
-- `GET /api/workspaces/[id]/metrics` API
-- InsightNote/ActionItem 저장 API
-- 채널 연결 관리 UI
-- PNG 내보내기
-
-## 중요 경로
-
-```
-src/
-├── lib/
-│   ├── auth/           # NextAuth 설정
-│   ├── permissions/    # Zanzibar 권한
-│   ├── connectors/     # 데이터 소스 커넥터
-│   ├── crypto/         # 암호화
-│   ├── csv/            # CSV 처리
-│   ├── services/       # 비즈니스 로직 (NEW)
-│   └── export/         # PDF/PNG 생성
-├── app/
-│   ├── (auth)/         # 로그인
-│   ├── (dashboard)/    # 대시보드
-│   └── api/            # API 라우트
-└── components/
-    └── dashboard/      # 대시보드 UI
-```
+| dashboard-refactoring | 2026-02-05 | 사이드패널 + 채널 메트릭 |
+| dashboard-restructure | 2026-02-10 | 목적 기반 4개 뷰 (→페르소나로 전환) |
 
 ## Lessons Learned
 
-- Next.js 14 빌드 시 `headers()` 사용하면 dynamic route 필요
-- Prisma generate는 빌드 전에 실행 필요
-- html-to-image는 클라이언트 전용 (SSR 주의)
-- Prisma JSON 타입은 `Prisma.InputJsonValue`로 캐스팅 필요
-- React-PDF에서 한글 폰트는 CDN URL로 등록
+### 2026-02-10
+1. **페르소나 분석 먼저**: 대시보드 설계 전 각 사용자 그룹의 요구사항 분석 필수
+2. **하드코딩 주의**: placeholder 데이터도 명시적으로 표시 (0 대신 "데이터 없음")
+3. **병렬 개발 효과적**: 에이전트 4명 병렬 투입으로 4개 모듈 동시 개발 성공
+4. **대규모 리팩토링 시 마이그레이션 완전성 검증 필수**
+5. **4개 부서장 페르소나 분석이 문제 발견에 효과적**
+
+## 다음 세션 TODO
+
+1. P0 이슈 해결 (Executive → Marketing → Commerce → Analytics)
+2. 레거시 views 폴더와 라우팅 통합
+3. 프로덕션 배포 (Week 1-3)

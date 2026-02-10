@@ -13,14 +13,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { useToast } from '@/lib/hooks/use-toast'
+import { useOAuthPopup } from '@/lib/hooks/use-oauth-popup'
 import {
   Loader2,
   BarChart3,
@@ -30,7 +24,6 @@ import {
   LineChart,
   ShoppingBag,
   Upload,
-  FileJson,
 } from 'lucide-react'
 
 interface AddChannelModalProps {
@@ -40,12 +33,17 @@ interface AddChannelModalProps {
   onSuccess: () => void
 }
 
+type OAuthProviderType = 'youtube' | 'meta_instagram' | 'meta_facebook'
+
 interface ChannelConfig {
   provider: ChannelProvider
   displayName: string
   icon: React.ReactNode
   credentialType: CredentialType
   isApiSupported: boolean
+  isOAuth?: boolean
+  oAuthProvider?: OAuthProviderType
+  oAuthButtonLabel?: string
   fields: {
     key: string
     label: string
@@ -68,11 +66,23 @@ const CHANNEL_CONFIGS: ChannelConfig[] = [
     ],
   },
   {
+    provider: 'YOUTUBE',
+    displayName: 'YouTube',
+    icon: <Youtube className="h-5 w-5 text-red-500" />,
+    credentialType: 'OAUTH_TOKEN',
+    isApiSupported: true,
+    isOAuth: true,
+    oAuthProvider: 'youtube',
+    oAuthButtonLabel: 'Google 계정으로 연결',
+    fields: [], // OAuth doesn't need manual fields
+  },
+  {
     provider: 'META_INSTAGRAM',
     displayName: 'Instagram',
     icon: <Instagram className="h-5 w-5 text-pink-500" />,
     credentialType: 'OAUTH_TOKEN',
     isApiSupported: true,
+    isOAuth: false, // Meta OAuth - 추후 구현
     fields: [
       { key: 'accountId', label: 'Instagram 계정 ID', type: 'text', required: true },
       { key: 'accessToken', label: 'Access Token', type: 'password', required: true },
@@ -84,20 +94,10 @@ const CHANNEL_CONFIGS: ChannelConfig[] = [
     icon: <Facebook className="h-5 w-5 text-blue-600" />,
     credentialType: 'OAUTH_TOKEN',
     isApiSupported: true,
+    isOAuth: false, // Meta OAuth - 추후 구현
     fields: [
       { key: 'pageId', label: 'Facebook 페이지 ID', type: 'text', required: true },
       { key: 'accessToken', label: 'Access Token', type: 'password', required: true },
-    ],
-  },
-  {
-    provider: 'YOUTUBE',
-    displayName: 'YouTube',
-    icon: <Youtube className="h-5 w-5 text-red-500" />,
-    credentialType: 'OAUTH_TOKEN',
-    isApiSupported: true,
-    fields: [
-      { key: 'channelId', label: '채널 ID', type: 'text', placeholder: 'UC...', required: true },
-      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
     ],
   },
   {
@@ -146,6 +146,28 @@ export function AddChannelModal({
   const [formData, setFormData] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // OAuth popup hook (only used when OAuth channel is selected)
+  const oAuthPopup = useOAuthPopup({
+    provider: selectedChannel?.oAuthProvider || 'youtube',
+    workspaceId,
+    onSuccess: (connectionId, channelName) => {
+      toast({
+        title: '연결 완료',
+        description: `${channelName || selectedChannel?.displayName}가 연결되었습니다.`,
+      })
+      resetModal()
+      onOpenChange(false)
+      onSuccess()
+    },
+    onError: (error) => {
+      toast({
+        title: '연결 실패',
+        description: error,
+        variant: 'destructive',
+      })
+    },
+  })
+
   const resetModal = () => {
     setStep('select')
     setSelectedChannel(null)
@@ -160,6 +182,11 @@ export function AddChannelModal({
 
   const handleInputChange = (key: string, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const handleOAuthConnect = () => {
+    if (!selectedChannel?.isOAuth || !selectedChannel.oAuthProvider) return
+    oAuthPopup.startOAuth()
   }
 
   const handleSubmit = async () => {
@@ -245,6 +272,8 @@ export function AddChannelModal({
     }
   }
 
+  const isOAuthLoading = selectedChannel?.isOAuth && oAuthPopup.isLoading
+
   return (
     <Dialog
       open={open}
@@ -274,7 +303,7 @@ export function AddChannelModal({
                   <div>
                     <div className="font-medium">{config.displayName}</div>
                     <div className="text-xs text-muted-foreground">
-                      {config.isApiSupported ? 'API 연동' : 'CSV 업로드'}
+                      {config.isOAuth ? 'OAuth 연동' : config.isApiSupported ? 'API 연동' : 'CSV 업로드'}
                     </div>
                   </div>
                 </button>
@@ -289,21 +318,52 @@ export function AddChannelModal({
                 {selectedChannel?.displayName} 연결
               </DialogTitle>
               <DialogDescription>
-                {selectedChannel?.isApiSupported
+                {selectedChannel?.isOAuth
+                  ? `${selectedChannel.oAuthButtonLabel?.split(' ')[0] || 'Google'} 계정으로 로그인하여 연결합니다.`
+                  : selectedChannel?.isApiSupported
                   ? '인증 정보를 입력하세요.'
                   : 'CSV 업로드를 위한 기본 정보를 입력하세요.'}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-4">
-              {!selectedChannel?.isApiSupported && (
+              {/* OAuth 채널 */}
+              {selectedChannel?.isOAuth && (
+                <div className="space-y-4">
+                  <div className="p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                    <p className="mb-2">
+                      버튼을 클릭하면 팝업 창에서 {selectedChannel.oAuthButtonLabel?.split(' ')[0] || 'Google'} 로그인 후
+                      {selectedChannel.displayName} 채널이 자동으로 연결됩니다.
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-xs">
+                      <li>팝업 차단이 해제되어 있어야 합니다</li>
+                      <li>연결 후 분석 데이터를 동기화할 수 있습니다</li>
+                    </ul>
+                  </div>
+
+                  <Button
+                    onClick={handleOAuthConnect}
+                    disabled={isOAuthLoading}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {isOAuthLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    {selectedChannel.icon}
+                    <span className="ml-2">{selectedChannel.oAuthButtonLabel || 'OAuth로 연결'}</span>
+                  </Button>
+                </div>
+              )}
+
+              {/* CSV 전용 채널 */}
+              {!selectedChannel?.isApiSupported && !selectedChannel?.isOAuth && (
                 <div className="p-3 bg-yellow-50 rounded-lg text-sm text-yellow-800">
                   <Upload className="h-4 w-4 inline-block mr-2" />
                   이 채널은 CSV 파일 업로드로 데이터를 가져옵니다.
                 </div>
               )}
 
-              {selectedChannel?.fields.map((field) => (
+              {/* 일반 필드 입력 (OAuth 아닌 경우) */}
+              {!selectedChannel?.isOAuth && selectedChannel?.fields.map((field) => (
                 <div key={field.key} className="space-y-2">
                   <Label htmlFor={field.key}>
                     {field.label}
@@ -335,14 +395,17 @@ export function AddChannelModal({
               <Button
                 variant="outline"
                 onClick={() => setStep('select')}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isOAuthLoading}
               >
                 뒤로
               </Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                연결
-              </Button>
+              {/* OAuth가 아닌 경우에만 연결 버튼 표시 */}
+              {!selectedChannel?.isOAuth && (
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  연결
+                </Button>
+              )}
             </DialogFooter>
           </>
         )}

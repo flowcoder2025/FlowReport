@@ -1,10 +1,14 @@
 import { BaseConnector, ConnectorConfig, SyncResult, ConnectionTestResult, MetricData, ContentItemData } from './base'
 import { format, eachDayOfInterval, parseISO } from 'date-fns'
+import { refreshAccessToken } from '@/lib/oauth'
+import { prisma } from '@/lib/db'
+import { encryptCredentials } from '@/lib/crypto/credentials'
 
 export interface YouTubeCredentials {
   accessToken: string
   refreshToken?: string
   channelId?: string
+  expiresAt?: number
 }
 
 interface AnalyticsReportResponse {
@@ -52,6 +56,66 @@ export class YouTubeConnector extends BaseConnector {
     return ['accessToken']
   }
 
+  /**
+   * Ensure we have a valid access token, refreshing if necessary
+   */
+  private async ensureValidToken(): Promise<string> {
+    const { accessToken, refreshToken, expiresAt } = this.credentials
+
+    // Check if token is expired or will expire soon (5 minutes buffer)
+    const isExpired = expiresAt && Date.now() > expiresAt - 5 * 60 * 1000
+
+    if (!isExpired) {
+      return accessToken
+    }
+
+    // Token is expired, try to refresh
+    if (!refreshToken) {
+      throw new Error('Access token expired and no refresh token available')
+    }
+
+    console.log('YouTube: Refreshing access token...')
+
+    try {
+      const tokens = await refreshAccessToken('youtube', refreshToken)
+
+      // Update credentials in memory
+      this.credentials.accessToken = tokens.access_token
+      if (tokens.expires_in) {
+        this.credentials.expiresAt = Date.now() + tokens.expires_in * 1000
+      }
+
+      // Update credentials in database
+      await this.updateStoredCredentials()
+
+      console.log('YouTube: Access token refreshed successfully')
+      return tokens.access_token
+    } catch (error) {
+      console.error('YouTube: Failed to refresh token:', error)
+      throw new Error('Failed to refresh access token. Please reconnect your YouTube account.')
+    }
+  }
+
+  /**
+   * Update stored credentials in database
+   */
+  private async updateStoredCredentials(): Promise<void> {
+    try {
+      const encryptedCredentials = encryptCredentials(JSON.stringify(this.credentials))
+
+      await prisma.channelConnection.update({
+        where: { id: this.config.connectionId },
+        data: {
+          encryptedCredentials,
+          lastError: null,
+        },
+      })
+    } catch (error) {
+      console.error('YouTube: Failed to update stored credentials:', error)
+      // Don't throw - we can still use the refreshed token for this request
+    }
+  }
+
   async testConnection(): Promise<ConnectionTestResult> {
     try {
       if (!this.credentials.accessToken) {
@@ -61,18 +125,29 @@ export class YouTubeConnector extends BaseConnector {
         }
       }
 
+      const accessToken = await this.ensureValidToken()
+
       // Test the token by fetching channel info
       const response = await fetch(
         `${this.baseUrl}/channels?part=snippet&mine=true`,
         {
           headers: {
-            Authorization: `Bearer ${this.credentials.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         }
       )
 
       if (!response.ok) {
         const error = await response.json()
+
+        // Check if it's an auth error that requires reconnection
+        if (error.error?.code === 401) {
+          return {
+            valid: false,
+            error: 'Access token expired. Please reconnect your YouTube account.',
+          }
+        }
+
         return {
           valid: false,
           error: error.error?.message || 'Invalid access token',
@@ -106,6 +181,8 @@ export class YouTubeConnector extends BaseConnector {
 
   async syncMetrics(startDate: Date, endDate: Date): Promise<SyncResult> {
     try {
+      const accessToken = await this.ensureValidToken()
+
       // 채널 ID 확보
       let channelId = this.credentials.channelId
       if (!channelId) {
@@ -113,7 +190,7 @@ export class YouTubeConnector extends BaseConnector {
           `${this.baseUrl}/channels?part=id&mine=true`,
           {
             headers: {
-              Authorization: `Bearer ${this.credentials.accessToken}`,
+              Authorization: `Bearer ${accessToken}`,
             },
           }
         )
@@ -141,7 +218,7 @@ export class YouTubeConnector extends BaseConnector {
 
       const response = await fetch(analyticsUrl, {
         headers: {
-          Authorization: `Bearer ${this.credentials.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       })
 
@@ -200,7 +277,7 @@ export class YouTubeConnector extends BaseConnector {
         `${this.baseUrl}/channels?part=statistics&id=${channelId}`,
         {
           headers: {
-            Authorization: `Bearer ${this.credentials.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         }
       )
@@ -240,6 +317,7 @@ export class YouTubeConnector extends BaseConnector {
 
   async syncContent(startDate: Date, endDate: Date): Promise<SyncResult> {
     try {
+      const accessToken = await this.ensureValidToken()
       const contentItems: ContentItemData[] = []
 
       // 채널 ID 확보
@@ -249,7 +327,7 @@ export class YouTubeConnector extends BaseConnector {
           `${this.baseUrl}/channels?part=id&mine=true`,
           {
             headers: {
-              Authorization: `Bearer ${this.credentials.accessToken}`,
+              Authorization: `Bearer ${accessToken}`,
             },
           }
         )
@@ -278,7 +356,7 @@ export class YouTubeConnector extends BaseConnector {
 
       const searchResponse = await fetch(searchUrl, {
         headers: {
-          Authorization: `Bearer ${this.credentials.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       })
 
@@ -308,7 +386,7 @@ export class YouTubeConnector extends BaseConnector {
 
       const statsResponse = await fetch(statsUrl, {
         headers: {
-          Authorization: `Bearer ${this.credentials.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       })
 

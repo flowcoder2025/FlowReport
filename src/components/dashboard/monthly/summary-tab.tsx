@@ -6,6 +6,12 @@ import { useDashboardMetrics, useDashboardNotes } from '@/lib/hooks/use-dashboar
 import { Skeleton } from '../skeleton'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import {
+  HighlightBanner,
+  YouTubeCard,
+  InstagramCard,
+  StoreCard,
+} from '../channel-metrics'
 
 interface SummaryTabProps {
   workspaceId: string
@@ -74,6 +80,9 @@ export function SummaryTab({ workspaceId, periodStart }: SummaryTabProps) {
     engagement: channel.data.engagementRate ?? channel.change.engagement ?? 0,
   }))
 
+  const channelDetails = metrics?.channelDetails
+  const highlights = metrics?.highlights
+
   return (
     <div id="monthly-summary" className="space-y-6">
       {/* Header */}
@@ -81,6 +90,11 @@ export function SummaryTab({ workspaceId, periodStart }: SummaryTabProps) {
         <h2 className="text-2xl font-bold">월간 리포트 요약</h2>
         <p className="text-muted-foreground">{format(periodStart, 'yyyy년 M월', { locale: ko })}</p>
       </div>
+
+      {/* Highlight Banner */}
+      {highlights && highlights.length > 0 && (
+        <HighlightBanner highlights={highlights} />
+      )}
 
       {/* Main KPIs */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -94,6 +108,30 @@ export function SummaryTab({ workspaceId, periodStart }: SummaryTabProps) {
           />
         ))}
       </div>
+
+      {/* Channel Metrics Cards */}
+      {channelDetails && (channelDetails.YOUTUBE || channelDetails.META_INSTAGRAM) && (
+        <div className="grid gap-6 md:grid-cols-2">
+          {channelDetails.YOUTUBE && (
+            <YouTubeCard metrics={channelDetails.YOUTUBE} />
+          )}
+          {channelDetails.META_INSTAGRAM && (
+            <InstagramCard metrics={channelDetails.META_INSTAGRAM} />
+          )}
+        </div>
+      )}
+
+      {/* Store Cards */}
+      {channelDetails && (channelDetails.SMARTSTORE || channelDetails.COUPANG) && (
+        <div className="grid gap-6 md:grid-cols-2">
+          {channelDetails.SMARTSTORE && (
+            <StoreCard metrics={channelDetails.SMARTSTORE} name="스마트스토어" />
+          )}
+          {channelDetails.COUPANG && (
+            <StoreCard metrics={channelDetails.COUPANG} name="쿠팡" />
+          )}
+        </div>
+      )}
 
       {/* Channel Mix & SNS */}
       <div className="grid gap-6 md:grid-cols-2">

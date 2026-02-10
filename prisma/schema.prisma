@@ -29,6 +29,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   accounts             Account[]
+  sessions             Session[]
   workspaceMemberships WorkspaceMembership[]
 
   @@map("users")
@@ -61,6 +62,9 @@ model Session {
   userId       String
   expires      DateTime
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
   @@map("sessions")
 }
 

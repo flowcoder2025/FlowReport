@@ -16,7 +16,73 @@ import {
 const querySchema = z.object({
   periodType: z.enum(['WEEKLY', 'MONTHLY']),
   periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  channels: z.string().optional(),
 })
+
+interface HighlightItem {
+  channel: string
+  metric: string
+  change: number
+  direction: 'up' | 'down'
+  severity: 'positive' | 'negative' | 'neutral'
+}
+
+interface YouTubeMetrics {
+  views: number | null
+  estimatedMinutesWatched: number | null
+  subscribers: number | null
+  subscriberGained: number | null
+  engagement: number | null
+  likes: number | null
+  comments: number | null
+  shares: number | null
+  change: {
+    views: number | null
+    estimatedMinutesWatched: number | null
+    subscribers: number | null
+    engagement: number | null
+  }
+  topVideos: Array<{
+    id: string
+    title: string | null
+    url: string
+    views: number | null
+    engagement: number | null
+  }>
+}
+
+interface InstagramMetrics {
+  reach: number | null
+  impressions: number | null
+  engagement: number | null
+  engagementRate: number | null
+  followers: number | null
+  change: {
+    reach: number | null
+    impressions: number | null
+    engagement: number | null
+    followers: number | null
+  }
+}
+
+interface StoreMetrics {
+  revenue: number | null
+  orders: number | null
+  conversionRate: number | null
+  avgOrderValue: number | null
+  change: {
+    revenue: number | null
+    orders: number | null
+    conversionRate: number | null
+  }
+}
+
+interface ChannelDetails {
+  YOUTUBE?: YouTubeMetrics
+  META_INSTAGRAM?: InstagramMetrics
+  SMARTSTORE?: StoreMetrics
+  COUPANG?: StoreMetrics
+}
 
 interface MetricData {
   [key: string]: number | null
@@ -50,6 +116,7 @@ export async function GET(
     const parseResult = querySchema.safeParse({
       periodType: searchParams.get('periodType'),
       periodStart: searchParams.get('periodStart'),
+      channels: searchParams.get('channels') ?? undefined,
     })
 
     if (!parseResult.success) {
@@ -59,8 +126,11 @@ export async function GET(
       )
     }
 
-    const { periodType, periodStart: periodStartStr } = parseResult.data
+    const { periodType, periodStart: periodStartStr, channels: channelsParam } = parseResult.data
     const periodStartDate = parseISO(periodStartStr)
+    const channelFilter = channelsParam
+      ? (channelsParam.split(',') as ChannelProvider[])
+      : null
 
     // Calculate period range
     const { start, end, prevStart, prevEnd } = calculatePeriodRange(
@@ -68,15 +138,20 @@ export async function GET(
       periodType as PeriodType
     )
 
-    // Fetch current period snapshots
+    // Fetch current period snapshots (including DAILY for aggregation)
     const currentSnapshots = await prisma.metricSnapshot.findMany({
       where: {
         workspaceId,
-        periodType: periodType as PeriodType,
+        periodType: {
+          in: [periodType as PeriodType, 'DAILY'],
+        },
         periodStart: {
           gte: start,
           lte: end,
         },
+        ...(channelFilter && channelFilter.length > 0 && {
+          connection: { provider: { in: channelFilter } },
+        }),
       },
       include: {
         connection: {
@@ -89,15 +164,20 @@ export async function GET(
       },
     })
 
-    // Fetch previous period snapshots
+    // Fetch previous period snapshots (including DAILY for aggregation)
     const previousSnapshots = await prisma.metricSnapshot.findMany({
       where: {
         workspaceId,
-        periodType: periodType as PeriodType,
+        periodType: {
+          in: [periodType as PeriodType, 'DAILY'],
+        },
         periodStart: {
           gte: prevStart,
           lte: prevEnd,
         },
+        ...(channelFilter && channelFilter.length > 0 && {
+          connection: { provider: { in: channelFilter } },
+        }),
       },
       include: {
         connection: {
@@ -135,6 +215,9 @@ export async function GET(
           gte: start,
           lte: end,
         },
+        ...(channelFilter && channelFilter.length > 0 && {
+          channel: { in: channelFilter },
+        }),
       },
       orderBy: { publishedAt: 'desc' },
       take: 20, // Fetch more to filter by metrics
@@ -166,6 +249,16 @@ export async function GET(
     // Get traffic data from GA4
     const trafficData = extractTrafficData(currentSnapshots, previousSnapshots)
 
+    // Generate highlights
+    const highlights = generateHighlights(overview, previous, snsChannels, storeChannels)
+
+    // Generate channel details
+    const channelDetails = generateChannelDetails(
+      currentSnapshots,
+      previousSnapshots,
+      formattedTopPosts
+    )
+
     return NextResponse.json({
       periodType,
       periodStart: start.toISOString(),
@@ -180,6 +273,8 @@ export async function GET(
         traffic: trafficData,
         channels: storeChannels,
       },
+      highlights,
+      channelDetails,
     })
   } catch (error) {
     if (error instanceof Error) {
@@ -354,4 +449,248 @@ function getChannelDisplayName(provider: ChannelProvider): string {
     NAVER_KEYWORDS: '네이버 키워드',
   }
   return names[provider] || provider
+}
+
+function generateHighlights(
+  overview: MetricData,
+  previous: MetricData,
+  snsChannels: ChannelMetrics[],
+  storeChannels: ChannelMetrics[]
+): HighlightItem[] {
+  const highlights: HighlightItem[] = []
+  const HIGHLIGHT_THRESHOLD = 10
+
+  const metricLabels: Record<string, string> = {
+    views: '조회수',
+    reach: '도달',
+    engagement: '참여',
+    engagements: '참여',
+    followers: '팔로워',
+    subscriberGained: '구독자',
+    revenue: '매출',
+    orders: '주문',
+    sales: '매출',
+    impressions: '노출',
+    estimatedMinutesWatched: '시청시간',
+  }
+
+  for (const channel of [...snsChannels, ...storeChannels]) {
+    for (const [metricKey, changeValue] of Object.entries(channel.change)) {
+      if (changeValue === null || Math.abs(changeValue) < HIGHLIGHT_THRESHOLD) {
+        continue
+      }
+
+      const label = metricLabels[metricKey]
+      if (!label) continue
+
+      highlights.push({
+        channel: channel.channelName,
+        metric: label,
+        change: Math.round(changeValue * 10) / 10,
+        direction: changeValue > 0 ? 'up' : 'down',
+        severity: getSeverity(metricKey, changeValue),
+      })
+    }
+  }
+
+  highlights.sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
+  return highlights.slice(0, 5)
+}
+
+function getSeverity(
+  metricKey: string,
+  change: number
+): 'positive' | 'negative' | 'neutral' {
+  const positiveMetrics = [
+    'views',
+    'reach',
+    'engagement',
+    'engagements',
+    'followers',
+    'subscriberGained',
+    'revenue',
+    'orders',
+    'sales',
+    'impressions',
+    'estimatedMinutesWatched',
+  ]
+
+  if (positiveMetrics.includes(metricKey)) {
+    return change > 0 ? 'positive' : 'negative'
+  }
+  return 'neutral'
+}
+
+function generateChannelDetails(
+  currentSnapshots: Array<{
+    data: unknown
+    connection: { provider: ChannelProvider; accountName?: string | null } | null
+  }>,
+  previousSnapshots: Array<{
+    data: unknown
+    connection: { provider: ChannelProvider } | null
+  }>,
+  topPosts: TopPost[]
+): ChannelDetails {
+  const details: ChannelDetails = {}
+
+  const youtubeSnapshots = currentSnapshots.filter(
+    (s) => s.connection?.provider === 'YOUTUBE'
+  )
+  const youtubePrevSnapshots = previousSnapshots.filter(
+    (s) => s.connection?.provider === 'YOUTUBE'
+  )
+
+  if (youtubeSnapshots.length > 0) {
+    const current = aggregateChannelData(youtubeSnapshots)
+    const prev = aggregateChannelData(youtubePrevSnapshots)
+    const engagement =
+      (current.likes ?? 0) + (current.comments ?? 0) + (current.shares ?? 0)
+    const prevEngagement =
+      (prev.likes ?? 0) + (prev.comments ?? 0) + (prev.shares ?? 0)
+
+    details.YOUTUBE = {
+      views: current.views ?? null,
+      estimatedMinutesWatched: current.estimatedMinutesWatched ?? null,
+      subscribers: current.followers ?? current.subscriberCount ?? null,
+      subscriberGained: current.subscriberGained ?? null,
+      engagement,
+      likes: current.likes ?? null,
+      comments: current.comments ?? null,
+      shares: current.shares ?? null,
+      change: {
+        views: calculateSingleChange(current.views, prev.views),
+        estimatedMinutesWatched: calculateSingleChange(
+          current.estimatedMinutesWatched,
+          prev.estimatedMinutesWatched
+        ),
+        subscribers: calculateSingleChange(
+          current.followers ?? current.subscriberCount,
+          prev.followers ?? prev.subscriberCount
+        ),
+        engagement: calculateSingleChange(engagement, prevEngagement),
+      },
+      topVideos: topPosts
+        .filter((p) => p.channel === 'YOUTUBE')
+        .slice(0, 3)
+        .map((p) => ({
+          id: p.id,
+          title: p.title,
+          url: p.url,
+          views: p.views,
+          engagement: p.engagement,
+        })),
+    }
+  }
+
+  const instagramSnapshots = currentSnapshots.filter(
+    (s) => s.connection?.provider === 'META_INSTAGRAM'
+  )
+  const instagramPrevSnapshots = previousSnapshots.filter(
+    (s) => s.connection?.provider === 'META_INSTAGRAM'
+  )
+
+  if (instagramSnapshots.length > 0) {
+    const current = aggregateChannelData(instagramSnapshots)
+    const prev = aggregateChannelData(instagramPrevSnapshots)
+    const engagementRate =
+      current.reach && current.reach > 0
+        ? ((current.engagements ?? current.engagement ?? 0) / current.reach) * 100
+        : null
+
+    details.META_INSTAGRAM = {
+      reach: current.reach ?? null,
+      impressions: current.impressions ?? null,
+      engagement: current.engagements ?? current.engagement ?? null,
+      engagementRate,
+      followers: current.followers ?? null,
+      change: {
+        reach: calculateSingleChange(current.reach, prev.reach),
+        impressions: calculateSingleChange(current.impressions, prev.impressions),
+        engagement: calculateSingleChange(
+          current.engagements ?? current.engagement,
+          prev.engagements ?? prev.engagement
+        ),
+        followers: calculateSingleChange(current.followers, prev.followers),
+      },
+    }
+  }
+
+  const storeProviders = ['SMARTSTORE', 'COUPANG'] as const
+  for (const provider of storeProviders) {
+    const storeSnapshots = currentSnapshots.filter(
+      (s) => s.connection?.provider === provider
+    )
+    const storePrevSnapshots = previousSnapshots.filter(
+      (s) => s.connection?.provider === provider
+    )
+
+    if (storeSnapshots.length > 0) {
+      const current = aggregateChannelData(storeSnapshots)
+      const prev = aggregateChannelData(storePrevSnapshots)
+      const revenue = current.revenue ?? current.sales ?? null
+      const prevRevenue = prev.revenue ?? prev.sales ?? null
+      const orders = current.orders ?? null
+      const avgOrderValue =
+        revenue !== null && orders !== null && orders > 0
+          ? revenue / orders
+          : null
+
+      const storeMetrics: StoreMetrics = {
+        revenue,
+        orders,
+        conversionRate: current.conversionRate ?? null,
+        avgOrderValue,
+        change: {
+          revenue: calculateSingleChange(revenue, prevRevenue),
+          orders: calculateSingleChange(orders, prev.orders),
+          conversionRate: calculateSingleChange(
+            current.conversionRate,
+            prev.conversionRate
+          ),
+        },
+      }
+
+      if (provider === 'SMARTSTORE') {
+        details.SMARTSTORE = storeMetrics
+      } else if (provider === 'COUPANG') {
+        details.COUPANG = storeMetrics
+      }
+    }
+  }
+
+  return details
+}
+
+function aggregateChannelData(
+  snapshots: Array<{ data: unknown }>
+): Record<string, number | null> {
+  const result: Record<string, number | null> = {}
+
+  for (const snapshot of snapshots) {
+    const data = snapshot.data as Record<string, number | null>
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== null) {
+        result[key] = (result[key] ?? 0) + value
+      }
+    }
+  }
+
+  return result
+}
+
+function calculateSingleChange(
+  current: number | null | undefined,
+  previous: number | null | undefined
+): number | null {
+  if (
+    current === null ||
+    current === undefined ||
+    previous === null ||
+    previous === undefined ||
+    previous === 0
+  ) {
+    return null
+  }
+  return ((current - previous) / previous) * 100
 }

@@ -90,6 +90,7 @@ export function ChannelConnectionCard({
   const [isTesting, setIsTesting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
 
   const statusConfig = STATUS_CONFIG[connection.status]
 
@@ -133,6 +134,47 @@ export function ChannelConnectionCard({
       })
     } finally {
       setIsTesting(false)
+    }
+  }
+
+  const handleSync = async () => {
+    if (connection.isCsvOnly) {
+      toast({
+        title: '정보',
+        description: `${connection.providerDisplayName}는 CSV 업로드 전용입니다.`,
+      })
+      return
+    }
+
+    setIsSyncing(true)
+    try {
+      const response = await fetch(
+        `/api/workspaces/${workspaceId}/connections/${connection.id}/sync`,
+        { method: 'POST' }
+      )
+      const data = await response.json()
+
+      if (data.success) {
+        toast({
+          title: '동기화 완료',
+          description: `메트릭 ${data.metrics?.count || 0}개, 콘텐츠 ${data.content?.count || 0}개가 동기화되었습니다.`,
+        })
+      } else {
+        toast({
+          title: '동기화 실패',
+          description: data.metrics?.error || data.error || '동기화에 실패했습니다.',
+          variant: 'destructive',
+        })
+      }
+      onUpdate()
+    } catch {
+      toast({
+        title: '오류',
+        description: '동기화 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSyncing(false)
     }
   }
 
@@ -257,19 +299,34 @@ export function ChannelConnectionCard({
 
         <div className="mt-4 flex gap-2">
           {connection.isApiSupported && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleTest}
-              disabled={isTesting}
-            >
-              {isTesting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              테스트
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSync}
+                disabled={isSyncing}
+              >
+                {isSyncing ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                동기화
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTest}
+                disabled={isTesting}
+              >
+                {isTesting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                )}
+                테스트
+              </Button>
+            </>
           )}
           <Button
             variant="outline"

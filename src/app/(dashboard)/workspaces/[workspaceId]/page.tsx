@@ -1,16 +1,23 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import { startOfWeek, startOfMonth, parseISO } from 'date-fns'
+import { ChannelProvider } from '@prisma/client'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { WeeklyDashboard } from '@/components/dashboard/weekly'
-import { MonthlyDashboard } from '@/components/dashboard/monthly'
+import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
+import { DashboardView, PeriodType } from '@/lib/contexts/dashboard-context'
+import { DashboardViewRenderer } from '@/components/dashboard/dashboard-view-renderer'
 import { Settings } from 'lucide-react'
 
 interface WorkspaceDashboardProps {
   params: { workspaceId: string }
-  searchParams: { tab?: string }
+  searchParams: {
+    view?: string
+    period?: string
+    date?: string
+    channels?: string
+  }
 }
 
 export default async function WorkspaceDashboard({
@@ -22,7 +29,6 @@ export default async function WorkspaceDashboard({
     redirect('/login')
   }
 
-  // Check membership
   const membership = await prisma.workspaceMembership.findUnique({
     where: {
       userId_workspaceId: {
@@ -39,10 +45,25 @@ export default async function WorkspaceDashboard({
     notFound()
   }
 
-  const tab = searchParams.tab || 'weekly'
+  const view = (searchParams.view as DashboardView) || 'overview'
+  const period = (searchParams.period?.toUpperCase() as PeriodType) || 'WEEKLY'
+  const date = searchParams.date
+    ? parseISO(searchParams.date)
+    : period === 'WEEKLY'
+      ? startOfWeek(new Date(), { weekStartsOn: 1 })
+      : startOfMonth(new Date())
+  const channels = searchParams.channels
+    ? (searchParams.channels.split(',') as ChannelProvider[])
+    : []
 
   return (
-    <div className="container mx-auto py-6">
+    <DashboardLayout
+      workspaceId={params.workspaceId}
+      initialView={view}
+      initialPeriodType={period}
+      initialPeriodStart={date}
+      initialChannels={channels}
+    >
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold">{membership.workspace.name}</h1>
@@ -58,20 +79,7 @@ export default async function WorkspaceDashboard({
         </Link>
       </div>
 
-      <Tabs defaultValue={tab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="weekly">주간</TabsTrigger>
-          <TabsTrigger value="monthly">월간</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="weekly">
-          <WeeklyDashboard workspaceId={params.workspaceId} />
-        </TabsContent>
-
-        <TabsContent value="monthly">
-          <MonthlyDashboard workspaceId={params.workspaceId} />
-        </TabsContent>
-      </Tabs>
-    </div>
+      <DashboardViewRenderer />
+    </DashboardLayout>
   )
 }
