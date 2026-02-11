@@ -6,6 +6,7 @@ import {
   useDashboardMetrics,
   useActionProgress,
   useActionTemplates,
+  useWorkspaceTargets,
   TriggerType,
   ActionTemplate,
 } from '@/lib/hooks/use-dashboard-data'
@@ -57,6 +58,28 @@ export function ExecutiveView() {
   // Fetch action templates for recommended actions
   const { templateMap } = useActionTemplates(workspaceId)
 
+  // Fetch workspace targets with fallback to defaults
+  const { data: targetsData } = useWorkspaceTargets(workspaceId)
+
+  // Compute effective targets: API values -> API defaults -> hardcoded fallback
+  const effectiveTargets = useMemo(() => {
+    const apiConfig = targetsData?.targetConfig ?? {}
+    const apiDefaults = targetsData?.defaults ?? {}
+
+    return {
+      revenueGrowthRate:
+        apiConfig.revenueGrowthRate ??
+        apiDefaults.revenueGrowthRate ??
+        DEFAULT_TARGETS.REVENUE_GROWTH_RATE,
+      revenueGrowthMultiplier:
+        apiConfig.revenueGrowthRate != null
+          ? 1 + apiConfig.revenueGrowthRate / 100
+          : apiDefaults.revenueGrowthRate != null
+            ? 1 + apiDefaults.revenueGrowthRate / 100
+            : DEFAULT_TARGETS.REVENUE_GROWTH_MULTIPLIER,
+    }
+  }, [targetsData])
+
   // Executive KPIs 계산 (매출, 활성사용자, 성장률)
   const executiveKPIs: ExecutiveKPI[] = useMemo(() => {
     if (!metrics) return []
@@ -75,7 +98,11 @@ export function ExecutiveView() {
         title: '총 매출',
         value: overview.totalRevenue,
         previousValue: previous?.totalRevenue ?? null,
-        targetValue: calculateTarget(overview.totalRevenue, previous?.totalRevenue),
+        targetValue: calculateTarget(
+          overview.totalRevenue,
+          previous?.totalRevenue,
+          effectiveTargets.revenueGrowthMultiplier
+        ),
         format: 'currency' as const,
         description: '전 채널 합산',
       },
@@ -91,13 +118,12 @@ export function ExecutiveView() {
         title: '성장률',
         value: revenueGrowthRate !== null ? revenueGrowthRate : null,
         previousValue: null,
-        // TODO: workspace 설정 API 연결 시 동적 값으로 교체
-        targetValue: DEFAULT_TARGETS.REVENUE_GROWTH_RATE,
+        targetValue: effectiveTargets.revenueGrowthRate,
         format: 'percent' as const,
         description: '매출 기준 전기 대비',
       },
     ]
-  }, [metrics, periodType])
+  }, [metrics, periodType, effectiveTargets])
 
   // 위험 신호 분석
   const riskAlerts: RiskAlert[] = useMemo(() => {
@@ -496,10 +522,13 @@ function buildRecommendedAction(
 }
 
 // 헬퍼 함수들
-function calculateTarget(current: number | null, previous: number | null): number | null {
+function calculateTarget(
+  current: number | null,
+  previous: number | null,
+  multiplier: number = DEFAULT_TARGETS.REVENUE_GROWTH_MULTIPLIER
+): number | null {
   if (current === null || previous === null) return null
-  // TODO: workspace 설정 API 연결 시 동적 값으로 교체
-  return previous * DEFAULT_TARGETS.REVENUE_GROWTH_MULTIPLIER
+  return previous * multiplier
 }
 
 function getStatusFromChange(change: number | null): 'good' | 'warning' | 'critical' {

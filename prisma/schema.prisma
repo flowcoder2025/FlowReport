@@ -90,6 +90,10 @@ model Workspace {
   weekStart   Int     @default(1) // 0=Sunday, 1=Monday
   monthStart  Int     @default(1) // Day of month
 
+  // KPI 목표값 설정 (JSON)
+  // { revenueGrowthRate: number, revenueTarget: number, engagementTarget: number, ... }
+  targetConfig Json?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

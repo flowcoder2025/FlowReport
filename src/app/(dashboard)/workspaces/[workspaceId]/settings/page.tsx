@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import useSWR from 'swr'
 import Link from 'next/link'
@@ -13,7 +13,14 @@ import { ChannelConnectionCard } from '@/components/dashboard/channel-connection
 import { AddChannelModal } from '@/components/dashboard/add-channel-modal'
 import { CsvUpload } from '@/components/dashboard/csv-upload'
 import { useToast } from '@/lib/hooks/use-toast'
-import { ArrowLeft, Plus, Loader2, Settings, Link2, Upload } from 'lucide-react'
+import { ArrowLeft, Plus, Loader2, Settings, Link2, Upload, Target } from 'lucide-react'
+
+interface TargetConfig {
+  revenueGrowthRate?: number
+  revenueTarget?: number
+  engagementTarget?: number
+  conversionTarget?: number
+}
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -48,6 +55,7 @@ export default function SettingsPage() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [isUpdatingTargets, setIsUpdatingTargets] = useState(false)
 
   const { data: workspaceData, mutate: mutateWorkspace } = useSWR<{ workspace: Workspace }>(
     `/api/workspaces/${workspaceId}`,
@@ -59,9 +67,24 @@ export default function SettingsPage() {
     fetcher
   )
 
+  const { data: targetsData, mutate: mutateTargets, isLoading: isLoadingTargets } = useSWR<{
+    targetConfig: TargetConfig
+    defaults: TargetConfig
+  }>(
+    `/api/workspaces/${workspaceId}/settings/targets`,
+    fetcher
+  )
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+  })
+
+  const [targetFormData, setTargetFormData] = useState<TargetConfig>({
+    revenueGrowthRate: undefined,
+    revenueTarget: undefined,
+    engagementTarget: undefined,
+    conversionTarget: undefined,
   })
 
   // Initialize form when workspace data loads
@@ -71,6 +94,18 @@ export default function SettingsPage() {
       description: workspaceData.workspace.description || '',
     })
   }
+
+  // Initialize target form when targets data loads
+  useEffect(() => {
+    if (targetsData?.targetConfig) {
+      setTargetFormData({
+        revenueGrowthRate: targetsData.targetConfig.revenueGrowthRate,
+        revenueTarget: targetsData.targetConfig.revenueTarget,
+        engagementTarget: targetsData.targetConfig.engagementTarget,
+        conversionTarget: targetsData.targetConfig.conversionTarget,
+      })
+    }
+  }, [targetsData])
 
   const handleWorkspaceUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,6 +139,44 @@ export default function SettingsPage() {
     }
   }
 
+  const handleTargetsUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsUpdatingTargets(true)
+
+    try {
+      const response = await fetch(`/api/workspaces/${workspaceId}/settings/targets`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(targetFormData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update targets')
+      }
+
+      toast({
+        title: '저장 완료',
+        description: 'KPI 목표값이 업데이트되었습니다.',
+      })
+
+      mutateTargets()
+    } catch (error) {
+      toast({
+        title: '오류',
+        description: error instanceof Error ? error.message : '목표값 저장에 실패했습니다.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsUpdatingTargets(false)
+    }
+  }
+
+  const handleTargetChange = (field: keyof TargetConfig, value: string) => {
+    const numValue = value === '' ? undefined : Number(value)
+    setTargetFormData((prev) => ({ ...prev, [field]: numValue }))
+  }
+
   const workspace = workspaceData?.workspace
   const connections = connectionsData?.connections || []
 
@@ -129,6 +202,10 @@ export default function SettingsPage() {
           <TabsTrigger value="general" className="gap-2">
             <Settings className="h-4 w-4" />
             일반
+          </TabsTrigger>
+          <TabsTrigger value="targets" className="gap-2">
+            <Target className="h-4 w-4" />
+            목표
           </TabsTrigger>
           <TabsTrigger value="connections" className="gap-2">
             <Link2 className="h-4 w-4" />
@@ -188,6 +265,104 @@ export default function SettingsPage() {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* KPI Targets */}
+        <TabsContent value="targets">
+          <Card>
+            <CardHeader>
+              <CardTitle>KPI 목표값</CardTitle>
+              <CardDescription>
+                대시보드에서 비교할 KPI 목표값을 설정합니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingTargets ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-muted-foreground">목표값 불러오는 중...</span>
+                </div>
+              ) : (
+                <form onSubmit={handleTargetsUpdate} className="space-y-6">
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="revenueGrowthRate">성장률 목표 (%)</Label>
+                      <Input
+                        id="revenueGrowthRate"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        placeholder="예: 10"
+                        value={targetFormData.revenueGrowthRate ?? ''}
+                        onChange={(e) => handleTargetChange('revenueGrowthRate', e.target.value)}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        전년 대비 매출 성장률 목표 (0-100%)
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="revenueTarget">매출 목표 (원)</Label>
+                      <Input
+                        id="revenueTarget"
+                        type="number"
+                        min="0"
+                        step="1000"
+                        placeholder="예: 100000000"
+                        value={targetFormData.revenueTarget ?? ''}
+                        onChange={(e) => handleTargetChange('revenueTarget', e.target.value)}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        월간 매출 목표 금액
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="engagementTarget">참여율 목표 (%)</Label>
+                      <Input
+                        id="engagementTarget"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        placeholder="예: 5"
+                        value={targetFormData.engagementTarget ?? ''}
+                        onChange={(e) => handleTargetChange('engagementTarget', e.target.value)}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        콘텐츠 참여율 목표 (좋아요, 댓글, 공유 비율)
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="conversionTarget">전환율 목표 (%)</Label>
+                      <Input
+                        id="conversionTarget"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        placeholder="예: 2"
+                        value={targetFormData.conversionTarget ?? ''}
+                        onChange={(e) => handleTargetChange('conversionTarget', e.target.value)}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        방문자 대비 구매 전환율 목표
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4 border-t">
+                    <Button type="submit" disabled={isUpdatingTargets}>
+                      {isUpdatingTargets && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                      목표값 저장
+                    </Button>
+                  </div>
+                </form>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

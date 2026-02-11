@@ -502,3 +502,42 @@ export function useActionTemplates(workspaceId: string) {
     mutate: () => mutate(url),
   }
 }
+
+// ===========================================
+// Workspace Targets Types & Hook
+// ===========================================
+
+export interface TargetConfig {
+  revenueGrowthRate?: number
+  revenueTarget?: number
+  engagementTarget?: number
+  conversionTarget?: number
+}
+
+export interface WorkspaceTargetsData {
+  targetConfig: TargetConfig
+  defaults: TargetConfig
+}
+
+export function useWorkspaceTargets(workspaceId: string): {
+  data: WorkspaceTargetsData | undefined
+  isLoading: boolean
+  error: Error | undefined
+} {
+  const url = `/api/workspaces/${workspaceId}/settings/targets`
+
+  const { data, error, isLoading } = useSWR<WorkspaceTargetsData>(
+    workspaceId ? url : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000, // 1 minute - targets rarely change
+    }
+  )
+
+  return {
+    data,
+    isLoading,
+    error,
+  }
+}
