@@ -1,6 +1,6 @@
 # FlowReport Project Memory
 
-> 마지막 업데이트: 2026-02-10
+> 마지막 업데이트: 2026-02-11
 
 ## 프로젝트 개요
 
@@ -20,7 +20,21 @@ FlowReport는 **ReportingOps SaaS** 플랫폼입니다.
 
 ## Active Epic
 
-### dashboard-persona-refactoring (P0/P1 해결완료)
+### menu-ux-improvement (83% 완료)
+- **상태**: 🔄 진행중
+- **Phase**: 3.5/4 완료
+- **목표**: 데이터 대시보드 → 의사결정 대시보드 전환
+
+**완료된 작업:**
+- Phase 1-2: 헤드라인 요약, 권장 조치, 경쟁사 비교, 피드백 루프
+- Phase 3: Performance-Content 통합 (메뉴 7→6개), 상관관계 차트
+- Phase 4 일부: Competitor API 연결, Content 메뉴 제거
+
+**남은 작업:**
+- 권장 조치 템플릿 DB화
+- API 스키마 문서화
+
+### dashboard-persona-refactoring (완료)
 - **상태**: ✅ 배포 준비 완료
 - **Phase**: 3/5 완료
 - **목표**: 페르소나별 특화 대시보드로 전환
@@ -68,6 +82,12 @@ module/
 
 ## Lessons Learned
 
+### 2026-02-11
+1. **Business Panel 분석 효과적**: Drucker, Christensen 등 전문가 페르소나로 UX 문제점 발견
+2. **병렬 에이전트 오케스트레이션**: 개발총괄 + 부서별 에이전트 구조로 효율적 개발
+3. **CTO 에이전트 코드 리뷰**: 조건부 승인으로 품질 관리 체계화
+4. **메뉴 통합 시 하위 호환성**: Content 리다이렉트로 기존 URL 유지
+
 ### 2026-02-10
 1. **페르소나 분석 먼저**: 대시보드 설계 전 각 사용자 그룹의 요구사항 분석 필수
 2. **하드코딩 주의**: placeholder 데이터도 명시적으로 표시 (0 대신 "데이터 없음")
@@ -77,8 +97,8 @@ module/
 
 ## 다음 세션 TODO
 
-1. ~~P0 이슈 해결~~ ✅ 완료 (2026-02-10)
-2. 레거시 views 폴더와 라우팅 통합 (Phase 4)
-3. 목표값 관계 문서화 (P2)
-4. Blog 채널 추가
-5. 프로덕션 배포 (Phase 5)
+1. ~~메뉴 UX 개선 Phase 1-3~~ ✅ 완료 (2026-02-11)
+2. Phase 4 완료: 권장 조치 템플릿 DB화, API 문서화
+3. Prisma 마이그레이션: `npx prisma migrate dev --name add-competitor-model`
+4. Phase 3-4 커밋 및 푸시
+5. 프로덕션 배포

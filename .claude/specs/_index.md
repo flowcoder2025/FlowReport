@@ -1,12 +1,13 @@
 # FlowReport 스펙 문서 인덱스
 
-> 마지막 업데이트: 2026-02-10
+> 마지막 업데이트: 2026-02-11
 
 ## Active Epics
 
 | Epic | 상태 | Phase 진행 | 마지막 업데이트 |
 |------|------|------------|-----------------|
-| [dashboard-persona-refactoring](./dashboard-persona-refactoring/README.md) | ✅ P0/P1 해결 | 3/5 완료 | 2026-02-10 |
+| [menu-ux-improvement](./menu-ux-improvement/README.md) | 🔄 진행중 | 3.5/4 완료 (83%) | 2026-02-11 |
+| [dashboard-persona-refactoring](./dashboard-persona-refactoring/README.md) | ✅ 라우팅 연결 완료 | 3/5 완료 | 2026-02-11 |
 
 ## Completed Epics
 
@@ -25,6 +26,10 @@
 ```
 specs/
 ├── _index.md
+├── menu-ux-improvement/             ← 2026-02-11 진행중 (83%)
+│   ├── README.md
+│   ├── 01-02-urgent-important.md
+│   └── 03-04-improvement-stabilization.md
 ├── dashboard-refactoring/           ← 2026-02-05 완료
 │   ├── README.md
 │   └── 01-full-implementation.md

@@ -109,9 +109,24 @@ export const DEFAULT_TARGETS = {
 | 데이터팀 | ✅ 승인 | P1 해결 후 |
 | 공동창업자 | ✅ 배포 승인 | - |
 
+## 라우팅 연결 (추가 수정)
+
+### Task 3.7: 페르소나 뷰 라우팅 연결
+
+**파일:**
+- `src/lib/contexts/dashboard-context.tsx`
+- `src/components/dashboard/layout/internal/top-nav.tsx`
+- `src/components/dashboard/dashboard-view-renderer.tsx`
+
+**변경사항:**
+- DashboardView 타입에 `executive`, `marketing`, `analytics` 추가
+- TopNav에 페르소나 메뉴 추가 (그룹 구분선 포함)
+- DashboardViewRenderer에서 페르소나 뷰 렌더링 연결
+
 ## Git Commits
 
 ```
 7c68f2a feat: 페르소나별 대시보드 리팩토링 및 P0 이슈 해결
 156bbf1 fix: Analytics P1 이슈 해결 - Export maxRows 및 잘림 경고 UI
+524b150 feat: 페르소나별 대시보드 라우팅 연결
 ```
