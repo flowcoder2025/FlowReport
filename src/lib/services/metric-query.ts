@@ -8,6 +8,7 @@ import {
   subWeeks,
   subMonths,
 } from 'date-fns'
+import { CHANNEL_GROUPS } from '@/constants'
 
 /**
  * 메트릭 조회 서비스
@@ -115,13 +116,13 @@ export async function getMetricsForPeriod(
   const snsChannels = aggregateByChannel(
     currentSnapshots,
     previousSnapshots,
-    ['META_INSTAGRAM', 'META_FACEBOOK', 'YOUTUBE', 'NAVER_BLOG']
+    [...CHANNEL_GROUPS.SNS]
   )
 
   const storeChannels = aggregateByChannel(
     currentSnapshots,
     previousSnapshots,
-    ['SMARTSTORE', 'COUPANG']
+    [...CHANNEL_GROUPS.STORE]
   )
 
   // Extract traffic data (GA4)

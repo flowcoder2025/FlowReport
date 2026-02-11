@@ -7,19 +7,7 @@ import { csvToMetrics, getDateRange } from '@/lib/services/csv-to-snapshot'
 import { upsertDailySnapshots } from '@/lib/services/metric-snapshot'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-
-// 유효한 채널 목록
-const VALID_CHANNELS: ChannelProvider[] = [
-  'SMARTSTORE',
-  'COUPANG',
-  'META_INSTAGRAM',
-  'META_FACEBOOK',
-  'YOUTUBE',
-  'GA4',
-  'NAVER_BLOG',
-  'NAVER_KEYWORDS',
-  'GOOGLE_SEARCH_CONSOLE',
-]
+import { VALID_CSV_CHANNELS, isValidCsvChannel } from '@/constants'
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,9 +24,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!channel || !VALID_CHANNELS.includes(channel)) {
+    if (!channel || !isValidCsvChannel(channel)) {
       return NextResponse.json(
-        { error: `Invalid channel. Valid channels: ${VALID_CHANNELS.join(', ')}` },
+        { error: `Invalid channel. Valid channels: ${VALID_CSV_CHANNELS.join(', ')}` },
         { status: 400 }
       )
     }
@@ -202,9 +190,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const channel = searchParams.get('channel') as ChannelProvider | null
 
-    if (!channel || !VALID_CHANNELS.includes(channel)) {
+    if (!channel || !isValidCsvChannel(channel)) {
       return NextResponse.json(
-        { error: `Invalid channel. Valid channels: ${VALID_CHANNELS.join(', ')}` },
+        { error: `Invalid channel. Valid channels: ${VALID_CSV_CHANNELS.join(', ')}` },
         { status: 400 }
       )
     }

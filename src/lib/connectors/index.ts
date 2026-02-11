@@ -5,6 +5,7 @@ import { MetaConnector } from './meta'
 import { YouTubeConnector } from './youtube'
 import { SmartStoreConnector } from './smartstore'
 import { CoupangConnector } from './coupang'
+import { CHANNEL_GROUPS } from '@/constants'
 
 export * from './base'
 export * from './ga4'
@@ -42,21 +43,21 @@ export function createConnector(
  * Get supported connectors (those with API integration)
  */
 export function getSupportedConnectors(): ChannelProvider[] {
-  return ['GA4', 'META_INSTAGRAM', 'META_FACEBOOK', 'YOUTUBE']
+  return [...CHANNEL_GROUPS.API_SUPPORTED]
 }
 
 /**
  * Get connectors that require CSV upload only
  */
 export function getCsvOnlyConnectors(): ChannelProvider[] {
-  return ['SMARTSTORE', 'COUPANG', 'NAVER_BLOG', 'NAVER_KEYWORDS', 'GOOGLE_SEARCH_CONSOLE']
+  return [...CHANNEL_GROUPS.CSV_ONLY]
 }
 
 /**
  * Get all available connectors
  */
 export function getAllConnectors(): ChannelProvider[] {
-  return [...getSupportedConnectors(), ...getCsvOnlyConnectors()]
+  return [...CHANNEL_GROUPS.ALL]
 }
 
 /**

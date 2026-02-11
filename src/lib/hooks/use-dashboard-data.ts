@@ -2,6 +2,10 @@
 
 import useSWR, { mutate } from 'swr'
 import { format } from 'date-fns'
+import { type TargetConfig } from '@/lib/types/targets'
+
+// Re-export TargetConfig for backward compatibility
+export type { TargetConfig } from '@/lib/types/targets'
 
 const fetcher = async (url: string) => {
   const res = await fetch(url)
@@ -492,13 +496,6 @@ export function useActionTemplates(workspaceId: string) {
 // ===========================================
 // Workspace Targets Types & Hook
 // ===========================================
-
-export interface TargetConfig {
-  revenueGrowthRate?: number
-  revenueTarget?: number
-  engagementTarget?: number
-  conversionTarget?: number
-}
 
 export interface WorkspaceTargetsData {
   targetConfig: TargetConfig

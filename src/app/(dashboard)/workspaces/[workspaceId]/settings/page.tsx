@@ -14,13 +14,7 @@ import { AddChannelModal } from '@/components/dashboard/add-channel-modal'
 import { CsvUpload } from '@/components/dashboard/csv-upload'
 import { useToast } from '@/lib/hooks/use-toast'
 import { ArrowLeft, Plus, Loader2, Settings, Link2, Upload, Target } from 'lucide-react'
-
-interface TargetConfig {
-  revenueGrowthRate?: number
-  revenueTarget?: number
-  engagementTarget?: number
-  conversionTarget?: number
-}
+import { type TargetConfig } from '@/lib/types/targets'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 

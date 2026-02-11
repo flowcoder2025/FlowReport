@@ -2,26 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { requireWorkspaceAdmin, requireWorkspaceViewer } from '@/lib/permissions/workspace-middleware'
-
-// 목표값 설정 스키마
-const targetConfigSchema = z.object({
-  revenueGrowthRate: z.number().min(0).max(100).optional(),    // 성장률 목표 (%)
-  revenueTarget: z.number().min(0).optional(),                  // 매출 목표 (원)
-  engagementTarget: z.number().min(0).max(100).optional(),      // 참여율 목표 (%)
-  conversionTarget: z.number().min(0).max(100).optional(),      // 전환율 목표 (%)
-  reachTarget: z.number().min(0).optional(),                    // 도달 목표
-  wauTarget: z.number().min(0).optional(),                      // 주간 활성 사용자 목표
-  mauTarget: z.number().min(0).optional(),                      // 월간 활성 사용자 목표
-})
-
-export type TargetConfig = z.infer<typeof targetConfigSchema>
-
-// 기본 목표값
-const DEFAULT_TARGETS: TargetConfig = {
-  revenueGrowthRate: 10,
-  engagementTarget: 5,
-  conversionTarget: 2,
-}
+import {
+  targetConfigSchema,
+  DEFAULT_TARGET_CONFIG,
+  type TargetConfig,
+} from '@/lib/types/targets'
 
 interface RouteParams {
   params: Promise<{ workspaceId: string }>
@@ -56,11 +41,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // 저장된 값과 기본값 병합
     const targetConfig = {
-      ...DEFAULT_TARGETS,
+      ...DEFAULT_TARGET_CONFIG,
       ...(workspace.targetConfig as TargetConfig || {}),
     }
 
-    return NextResponse.json({ targetConfig, defaults: DEFAULT_TARGETS })
+    return NextResponse.json({ targetConfig, defaults: DEFAULT_TARGET_CONFIG })
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes('Unauthorized')) {
@@ -131,7 +116,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({
       targetConfig: {
-        ...DEFAULT_TARGETS,
+        ...DEFAULT_TARGET_CONFIG,
         ...(updated.targetConfig as TargetConfig),
       },
       message: '목표값이 저장되었습니다.',

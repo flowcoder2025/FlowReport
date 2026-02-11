@@ -12,6 +12,7 @@ import {
   subMonths,
   parseISO,
 } from 'date-fns'
+import { CHANNEL_GROUPS } from '@/constants'
 
 const querySchema = z.object({
   periodType: z.enum(['WEEKLY', 'MONTHLY']),
@@ -197,13 +198,13 @@ export async function GET(
     const snsChannels = aggregateByChannel(
       currentSnapshots,
       previousSnapshots,
-      ['META_INSTAGRAM', 'META_FACEBOOK', 'YOUTUBE', 'NAVER_BLOG']
+      [...CHANNEL_GROUPS.SNS]
     )
 
     const storeChannels = aggregateByChannel(
       currentSnapshots,
       previousSnapshots,
-      ['SMARTSTORE', 'COUPANG', 'GA4']
+      [...CHANNEL_GROUPS.STORE, 'GA4']
     )
 
     // Fetch top posts
