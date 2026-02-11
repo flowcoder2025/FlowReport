@@ -121,7 +121,7 @@ export function getCsvTemplate(channel: ChannelProvider): string {
     YOUTUBE: 'date,uploads_count,views,reach,engagement,followers,likes,comments,shares',
     GA4: 'date,sessions,users,new_users,pageviews,avg_session_duration,bounce_rate',
     GOOGLE_SEARCH_CONSOLE: 'keyword,impressions,clicks,ctr,position',
-    NAVER_BLOG: 'date,posts_count,visitors,pageviews,avg_duration',
+    NAVER_BLOG: 'date,visitors,pageviews,avg_time_on_page,subscribers,new_subscribers,comments,likes,shares,search_visitors,direct_visitors,social_visitors,referral_visitors,posts_published,top_post_url,top_post_views',
     NAVER_KEYWORDS: 'keyword,impressions,clicks,ctr,position',
   }
 

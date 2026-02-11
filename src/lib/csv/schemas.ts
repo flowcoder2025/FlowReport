@@ -34,13 +34,35 @@ export const snsMetricSchema = z.object({
   shares: z.number().int().optional().nullable(),
 })
 
-// Blog metrics schema
+// Blog metrics schema (Naver Blog extended)
 export const blogMetricSchema = z.object({
   date: dateString,
-  posts_count: z.number().int().optional().nullable(),
+
+  // 기본 지표 (Basic Metrics)
   visitors: z.number().int().optional().nullable(),
   pageviews: z.number().int().optional().nullable(),
-  avg_duration: z.number().optional().nullable(), // seconds
+  avg_time_on_page: z.number().optional().nullable(), // seconds
+
+  // 성장 지표 (Growth Metrics)
+  subscribers: z.number().int().optional().nullable(),
+  new_subscribers: z.number().int().optional().nullable(),
+  subscriber_growth_rate: z.number().optional().nullable(), // percentage
+
+  // 참여 지표 (Engagement Metrics)
+  comments: z.number().int().optional().nullable(),
+  likes: z.number().int().optional().nullable(),
+  shares: z.number().int().optional().nullable(),
+
+  // 유입 분석 (Traffic Source Metrics)
+  search_visitors: z.number().int().optional().nullable(),
+  direct_visitors: z.number().int().optional().nullable(),
+  social_visitors: z.number().int().optional().nullable(),
+  referral_visitors: z.number().int().optional().nullable(),
+
+  // 콘텐츠 지표 (Content Metrics)
+  posts_published: z.number().int().optional().nullable(),
+  top_post_url: z.string().url().optional().nullable(),
+  top_post_views: z.number().int().optional().nullable(),
 })
 
 // Keyword/SEO metrics schema

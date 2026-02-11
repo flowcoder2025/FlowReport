@@ -94,12 +94,47 @@ function convertBlogMetrics(records: BlogMetric[]): MetricData[] {
     date: new Date(record.date),
     periodType: 'DAILY' as const,
     metrics: {
-      posts: record.posts_count ?? null,
+      // 기본 지표 (Basic Metrics)
       visitors: record.visitors ?? null,
       pageviews: record.pageviews ?? null,
-      avgDuration: record.avg_duration ?? null,
+      avgTimeOnPage: record.avg_time_on_page ?? null,
+
+      // 성장 지표 (Growth Metrics)
+      subscribers: record.subscribers ?? null,
+      newSubscribers: record.new_subscribers ?? null,
+      subscriberGrowthRate: record.subscriber_growth_rate ?? null,
+
+      // 참여 지표 (Engagement Metrics)
+      comments: record.comments ?? null,
+      likes: record.likes ?? null,
+      shares: record.shares ?? null,
+
+      // 유입 분석 (Traffic Source Metrics)
+      searchVisitors: record.search_visitors ?? null,
+      directVisitors: record.direct_visitors ?? null,
+      socialVisitors: record.social_visitors ?? null,
+      referralVisitors: record.referral_visitors ?? null,
+
+      // 콘텐츠 지표 (Content Metrics)
+      postsPublished: record.posts_published ?? null,
+      topPostUrl: record.top_post_url ?? null,
+      topPostViews: record.top_post_views ?? null,
+
+      // 계산된 지표 (Calculated Metrics)
+      engagementRate: calculateBlogEngagementRate(
+        (record.comments ?? 0) + (record.likes ?? 0) + (record.shares ?? 0),
+        record.visitors ?? 0
+      ),
     },
   }))
+}
+
+/**
+ * 블로그 참여율 계산
+ */
+function calculateBlogEngagementRate(engagements: number, visitors: number): number | null {
+  if (visitors === 0) return null
+  return Math.round((engagements / visitors) * 10000) / 100 // 소수점 2자리까지
 }
 
 /**

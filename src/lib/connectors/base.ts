@@ -9,7 +9,7 @@ export interface ConnectorConfig {
 export interface MetricData {
   date: Date
   periodType: 'DAILY' | 'WEEKLY' | 'MONTHLY'
-  metrics: Record<string, number | null>
+  metrics: Record<string, number | string | null>
 }
 
 export interface ContentItemData {

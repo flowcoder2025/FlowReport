@@ -10,6 +10,7 @@ import { ExecutiveView } from './executive'
 import { MarketingView } from './marketing'
 import { CommerceDashboardView } from './commerce'
 import { AnalyticsView } from './analytics'
+import { BlogView } from './blog'
 
 export function DashboardViewRenderer() {
   const { activeView } = useDashboardContext()
@@ -31,6 +32,8 @@ export function DashboardViewRenderer() {
       return <MarketingView />
     case 'analytics':
       return <AnalyticsView />
+    case 'blog':
+      return <BlogView />
     default:
       return <OverviewView />
   }

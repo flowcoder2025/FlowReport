@@ -20,6 +20,7 @@ export type DashboardView =
   | 'executive'    // 경영진용
   | 'marketing'    // 마케팅팀용
   | 'analytics'    // 데이터팀용
+  | 'blog'         // 블로그 전용
 
 interface DashboardState {
   activeView: DashboardView

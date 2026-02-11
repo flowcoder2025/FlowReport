@@ -223,7 +223,7 @@ export async function GET(request: NextRequest) {
         'date,uploads_count,views,reach,engagement,followers,likes,comments,shares\n2024-01-01,1,10000,8000,1000,5000,800,150,50',
       GA4: 'date,sessions,users,new_users,pageviews,avg_session_duration,bounce_rate\n2024-01-01,1000,800,200,3000,120,45.5',
       NAVER_BLOG:
-        'date,posts_count,visitors,pageviews,avg_duration\n2024-01-01,1,500,800,180',
+        'date,visitors,pageviews,avg_time_on_page,subscribers,new_subscribers,comments,likes,shares,search_visitors,direct_visitors,social_visitors,referral_visitors,posts_published,top_post_url,top_post_views\n2026-02-10,1500,3200,180,5000,50,25,100,15,800,400,200,100,3,https://blog.naver.com/example/123,500',
       NAVER_KEYWORDS:
         'keyword,impressions,clicks,ctr,position\n브랜드명,10000,500,5.0,3.5',
       GOOGLE_SEARCH_CONSOLE:

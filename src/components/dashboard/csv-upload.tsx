@@ -101,7 +101,7 @@ export function CsvUpload({ workspaceId, onSuccess }: CsvUploadProps) {
       return
     }
 
-    window.open(`/api/csv/upload?channel=${channel}`, '_blank')
+    window.open(`/api/workspaces/${workspaceId}/csv-templates?channel=${channel}`, '_blank')
   }
 
   const handleUpload = async () => {
