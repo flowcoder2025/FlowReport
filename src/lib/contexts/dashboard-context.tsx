@@ -12,7 +12,14 @@ import { ChannelProvider } from '@prisma/client'
 import { startOfWeek, startOfMonth } from 'date-fns'
 
 export type PeriodType = 'WEEKLY' | 'MONTHLY'
-export type DashboardView = 'overview' | 'performance' | 'content' | 'commerce'
+export type DashboardView =
+  | 'overview'
+  | 'performance'
+  | 'content'
+  | 'commerce'
+  | 'executive'    // 경영진용
+  | 'marketing'    // 마케팅팀용
+  | 'analytics'    // 데이터팀용
 
 interface DashboardState {
   activeView: DashboardView

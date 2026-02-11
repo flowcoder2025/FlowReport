@@ -20,9 +20,9 @@ FlowReport는 **ReportingOps SaaS** 플랫폼입니다.
 
 ## Active Epic
 
-### dashboard-persona-refactoring (진행중)
-- **상태**: ⚠️ 조건부 승인 (P0 해결 필요)
-- **Phase**: 2/5 완료
+### dashboard-persona-refactoring (P0/P1 해결완료)
+- **상태**: ✅ 배포 준비 완료
+- **Phase**: 3/5 완료
 - **목표**: 페르소나별 특화 대시보드로 전환
 
 **생성된 모듈:**
@@ -34,14 +34,16 @@ src/components/dashboard/
 └── analytics/    # 데이터팀용 (원본 데이터)
 ```
 
-## P0 이슈 (배포 전 필수)
+## P0/P1 이슈 - ✅ 모두 해결 (2026-02-10)
 
-| 대시보드 | 이슈 | 해결방안 |
-|----------|------|----------|
-| Executive | 목표값 하드코딩 | config/DB에서 읽기 |
-| Marketing | 트렌드 데이터 빈 배열 | API 연결 |
-| Commerce | 반품/취소 0 하드코딩 | 실제 데이터 연결 |
-| Analytics | API 크기 제한 없음 | maxRows 설정 |
+| 대시보드 | 이슈 | 해결방안 | 상태 |
+|----------|------|----------|------|
+| Executive | 목표값 하드코딩 | `constants/targets.ts` 분리 | ✅ |
+| Marketing | 트렌드 빈 배열 | `useDashboardTrendData` 훅 | ✅ |
+| Commerce | 반품/취소 0 | `null` + "-" 표시 | ✅ |
+| Analytics | API 크기 제한 | `maxRows` 파라미터 | ✅ |
+| Analytics P1 | Export maxRows | 10000개 전달 | ✅ |
+| Analytics P1 | 잘림 경고 | amber 배너 UI | ✅ |
 
 ## 아키텍처 결정
 
@@ -75,6 +77,8 @@ module/
 
 ## 다음 세션 TODO
 
-1. P0 이슈 해결 (Executive → Marketing → Commerce → Analytics)
-2. 레거시 views 폴더와 라우팅 통합
-3. 프로덕션 배포 (Week 1-3)
+1. ~~P0 이슈 해결~~ ✅ 완료 (2026-02-10)
+2. 레거시 views 폴더와 라우팅 통합 (Phase 4)
+3. 목표값 관계 문서화 (P2)
+4. Blog 채널 추가
+5. 프로덕션 배포 (Phase 5)

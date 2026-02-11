@@ -7,6 +7,10 @@ import {
   ContentView,
   CommerceView,
 } from './views'
+import { ExecutiveView } from './executive'
+import { MarketingView } from './marketing'
+import { CommerceDashboardView } from './commerce'
+import { AnalyticsView } from './analytics'
 
 export function DashboardViewRenderer() {
   const { activeView } = useDashboardContext()
@@ -20,6 +24,13 @@ export function DashboardViewRenderer() {
       return <ContentView />
     case 'commerce':
       return <CommerceView />
+    // 페르소나 뷰
+    case 'executive':
+      return <ExecutiveView />
+    case 'marketing':
+      return <MarketingView />
+    case 'analytics':
+      return <AnalyticsView />
     default:
       return <OverviewView />
   }
