@@ -500,6 +500,49 @@ export function useActionTemplates(workspaceId: string) {
 }
 
 // ===========================================
+// Content Analytics Types & Hook
+// ===========================================
+
+export interface ContentTypeStats {
+  contentType: string
+  count: number
+  avgViews: number
+  avgEngagement: number
+  avgEngagementRate: number
+  totalViews: number
+  totalEngagement: number
+}
+
+export interface ChannelTypeStats {
+  channel: string
+  types: ContentTypeStats[]
+}
+
+export interface ContentAnalyticsData {
+  periodType: string
+  periodStart: string
+  periodEnd: string
+  byType: ContentTypeStats[]
+  byChannel: ChannelTypeStats[]
+  bestPerformer: {
+    contentType: string
+    reason: string
+  } | null
+  totalContent: number
+}
+
+export function useContentAnalytics(
+  workspaceId: string,
+  periodType: 'WEEKLY' | 'MONTHLY',
+  periodStart: Date
+) {
+  const periodStartStr = format(periodStart, 'yyyy-MM-dd')
+  const url = `/api/workspaces/${workspaceId}/content/analytics?periodType=${periodType}&periodStart=${periodStartStr}`
+
+  return useSWR<ContentAnalyticsData>(workspaceId ? url : null, fetcher)
+}
+
+// ===========================================
 // Product Ranking Types & Hook
 // ===========================================
 

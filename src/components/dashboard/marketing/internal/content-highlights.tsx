@@ -7,10 +7,10 @@ import {
   TrendingUp,
   Eye,
   Heart,
-  MessageCircle,
   Clock,
   Flame,
 } from 'lucide-react'
+import { PublishTimeAnalysis } from './publish-time-analysis'
 import { cn } from '@/lib/utils'
 
 interface ContentItem {
@@ -94,8 +94,8 @@ export function ContentHighlights({ items, maxItems = 6 }: ContentHighlightsProp
         </Card>
       )}
 
-      {/* 발행 시간대별 성과 요약 */}
-      <PublishTimeInsight items={items} />
+      {/* 채널별 최적 발행 시간 분석 */}
+      <PublishTimeAnalysis items={items} />
     </div>
   )
 }
@@ -223,69 +223,6 @@ function MetricItem({ icon, label, value, isHero, highlight }: MetricItemProps) 
       {isHero && <span className="text-muted-foreground">{label}</span>}
       <span className={cn(isHero && 'font-semibold')}>{value}</span>
     </div>
-  )
-}
-
-interface PublishTimeInsightProps {
-  items: ContentItem[]
-}
-
-function PublishTimeInsight({ items }: PublishTimeInsightProps) {
-  const itemsWithTime = items.filter((item) => item.publishedAt)
-  if (itemsWithTime.length === 0) return null
-
-  // 시간대별 분석
-  const hourBuckets: Record<string, { count: number; totalViews: number }> = {
-    '오전 (6-12시)': { count: 0, totalViews: 0 },
-    '오후 (12-18시)': { count: 0, totalViews: 0 },
-    '저녁 (18-24시)': { count: 0, totalViews: 0 },
-    '새벽 (0-6시)': { count: 0, totalViews: 0 },
-  }
-
-  itemsWithTime.forEach((item) => {
-    const hour = new Date(item.publishedAt!).getHours()
-    let bucket: string
-    if (hour >= 6 && hour < 12) bucket = '오전 (6-12시)'
-    else if (hour >= 12 && hour < 18) bucket = '오후 (12-18시)'
-    else if (hour >= 18 && hour < 24) bucket = '저녁 (18-24시)'
-    else bucket = '새벽 (0-6시)'
-
-    hourBuckets[bucket].count++
-    hourBuckets[bucket].totalViews += item.views
-  })
-
-  // 최적 시간대 찾기
-  const bestTime = Object.entries(hourBuckets)
-    .filter(([, data]) => data.count > 0)
-    .sort((a, b) => b[1].totalViews / b[1].count - a[1].totalViews / a[1].count)[0]
-
-  if (!bestTime) return null
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Clock className="h-4 w-4" />
-          발행 시간대 인사이트
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-            <Clock className="h-5 w-5 text-blue-600" />
-          </div>
-          <div>
-            <p className="font-medium text-blue-900">
-              {bestTime[0]} 발행 콘텐츠 성과가 가장 좋습니다
-            </p>
-            <p className="text-sm text-blue-700">
-              평균 조회수 {formatNumber(Math.round(bestTime[1].totalViews / bestTime[1].count))}
-              {' '}({bestTime[1].count}개 콘텐츠 기준)
-            </p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   )
 }
 

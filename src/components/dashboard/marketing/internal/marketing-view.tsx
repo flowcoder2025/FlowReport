@@ -8,6 +8,7 @@ import { YouTubeDetailCard } from '../../cards'
 import { InstagramCard, HighlightBanner } from '../../channel-metrics'
 import { Skeleton } from '../../skeleton'
 import { ChannelGrowth } from './channel-growth'
+import { ContentTypeAnalysis } from './content-type-analysis'
 import { ContentHighlights } from './content-highlights'
 import { CompetitorComparison } from './competitor-comparison'
 import { Megaphone } from 'lucide-react'
@@ -146,6 +147,9 @@ export function MarketingView() {
           <InstagramCard metrics={channelDetails.META_INSTAGRAM} />
         )}
       </div>
+
+      {/* 콘텐츠 타입별 성과 분석 */}
+      <ContentTypeAnalysis />
 
       {/* 콘텐츠 하이라이트 */}
       <ContentHighlights items={contentItems} maxItems={6} />

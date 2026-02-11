@@ -4,6 +4,8 @@
 
 export { MarketingView } from './internal/marketing-view'
 export { ChannelGrowth } from './internal/channel-growth'
+export { ContentTypeAnalysis } from './internal/content-type-analysis'
 export { ContentHighlights } from './internal/content-highlights'
+export { PublishTimeAnalysis } from './internal/publish-time-analysis'
 export { CompetitorPlaceholder } from './internal/competitor-placeholder'
 export { CompetitorComparison } from './internal/competitor-comparison'

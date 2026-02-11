@@ -12,6 +12,7 @@
 
 | Epic | 완료일 | Phase 수 |
 |------|--------|----------|
+| [content-analytics](./content-analytics/README.md) | 2026-02-12 | 2 |
 | [commerce-enhancement](./commerce-enhancement/README.md) | 2026-02-11 | 2 |
 | [blog-channel](./blog-channel/README.md) | 2026-02-11 | 2 |
 | [menu-ux-improvement](./menu-ux-improvement/README.md) | 2026-02-11 | 4 |
@@ -29,6 +30,10 @@
 ```
 specs/
 ├── _index.md
+├── content-analytics/                  ← 2026-02-12 완료
+│   ├── README.md
+│   ├── 01-content-type-analysis.md
+│   └── 02-publish-time-optimization.md
 ├── commerce-enhancement/               ← 2026-02-11 완료
 │   ├── README.md
 │   ├── 01-refund-cancel-analysis.md
@@ -57,6 +62,9 @@ specs/
 ```
 
 ## 최근 변경사항
+
+### 2026-02-12
+- **content-analytics Epic 완료** (Phase 1: 콘텐츠 타입별 분석, Phase 2: 채널별 발행 시간)
 
 ### 2026-02-11
 - **commerce-enhancement Epic 완료** (Phase 1: 반품/취소 분석, Phase 2: 상품 TOP 5)
