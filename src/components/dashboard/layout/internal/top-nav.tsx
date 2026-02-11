@@ -8,7 +8,7 @@ const NAV_ITEMS: { value: DashboardView; label: string; group?: 'default' | 'per
   // 기본 뷰
   { value: 'overview', label: 'Overview', group: 'default' },
   { value: 'performance', label: 'Performance', group: 'default' },
-  { value: 'content', label: 'Content', group: 'default' },
+  // Content는 Performance에 통합됨 (?tab=content)
   { value: 'commerce', label: 'Commerce', group: 'default' },
   // 페르소나 뷰
   { value: 'executive', label: '경영진', group: 'persona' },

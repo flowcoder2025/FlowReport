@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,8 +32,16 @@ import {
   Youtube,
   Instagram,
   Building2,
+  Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  useCompetitors,
+  createCompetitor,
+  deleteCompetitor,
+  type Competitor as CompetitorType,
+  type CompetitorPlatform,
+} from '@/lib/hooks/use-dashboard-data'
 
 // Types
 type Platform = 'YOUTUBE' | 'META_INSTAGRAM'
@@ -44,15 +52,9 @@ interface CompetitorMetrics {
   uploads: number
 }
 
-interface Competitor {
-  id: string
-  name: string
-  platform: Platform
-  channelId: string
-  metrics?: CompetitorMetrics
-}
-
 interface CompetitorComparisonProps {
+  /** Workspace ID for API calls */
+  workspaceId: string
   /** 내 채널 정보 (비교 기준) */
   myChannel?: {
     name: string
@@ -61,50 +63,13 @@ interface CompetitorComparisonProps {
   }
 }
 
-// Mock Data - 실제 구현 시 API로 대체
-const MOCK_COMPETITORS: Competitor[] = [
-  {
-    id: 'comp-1',
-    name: '경쟁사 A',
-    platform: 'YOUTUBE',
-    channelId: 'UC_competitor_a',
-    metrics: {
-      followers: 125000,
-      engagementRate: 4.2,
-      uploads: 48,
-    },
-  },
-  {
-    id: 'comp-2',
-    name: '경쟁사 B',
-    platform: 'YOUTUBE',
-    channelId: 'UC_competitor_b',
-    metrics: {
-      followers: 89000,
-      engagementRate: 5.8,
-      uploads: 32,
-    },
-  },
-  {
-    id: 'comp-3',
-    name: '경쟁사 C',
-    platform: 'META_INSTAGRAM',
-    channelId: '@competitor_c',
-    metrics: {
-      followers: 203000,
-      engagementRate: 3.5,
-      uploads: 96,
-    },
-  },
-]
-
-const MY_CHANNEL_MOCK = {
+const MY_CHANNEL_DEFAULT = {
   name: '내 채널',
   platform: 'YOUTUBE' as Platform,
   metrics: {
-    followers: 156000,
-    engagementRate: 4.8,
-    uploads: 52,
+    followers: 0,
+    engagementRate: 0,
+    uploads: 0,
   },
 }
 
@@ -120,41 +85,67 @@ const METRIC_LABELS = {
   uploads: { label: '콘텐츠 업로드', icon: Upload, unit: '개' },
 }
 
-export function CompetitorComparison({ myChannel = MY_CHANNEL_MOCK }: CompetitorComparisonProps) {
-  const [competitors, setCompetitors] = useState<Competitor[]>(MOCK_COMPETITORS)
+export function CompetitorComparison({ workspaceId, myChannel = MY_CHANNEL_DEFAULT }: CompetitorComparisonProps) {
+  const { competitors: apiCompetitors, isLoading, error, mutate } = useCompetitors(workspaceId)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null)
   const [newCompetitor, setNewCompetitor] = useState({
     name: '',
     platform: 'YOUTUBE' as Platform,
     channelId: '',
   })
 
+  // API 데이터를 컴포넌트 형식으로 변환
+  const competitors = useMemo(() => {
+    return apiCompetitors.map((c) => ({
+      id: c.id,
+      name: c.name,
+      platform: c.platform as Platform,
+      channelId: c.channelId,
+      metrics: {
+        followers: c.followers ?? 0,
+        engagementRate: c.engagementRate ?? 0,
+        uploads: c.uploads ?? 0,
+      },
+    }))
+  }, [apiCompetitors])
+
   // 경쟁사 추가
-  const handleAddCompetitor = () => {
+  const handleAddCompetitor = useCallback(async () => {
     if (!newCompetitor.name || !newCompetitor.channelId) return
 
-    const competitor: Competitor = {
-      id: `comp-${Date.now()}`,
-      name: newCompetitor.name,
-      platform: newCompetitor.platform,
-      channelId: newCompetitor.channelId,
-      // Mock metrics - 실제 구현 시 API에서 가져옴
-      metrics: {
-        followers: Math.floor(Math.random() * 200000) + 50000,
-        engagementRate: Math.round((Math.random() * 5 + 2) * 10) / 10,
-        uploads: Math.floor(Math.random() * 80) + 20,
-      },
+    setIsSubmitting(true)
+    try {
+      await createCompetitor(workspaceId, {
+        name: newCompetitor.name,
+        platform: newCompetitor.platform as CompetitorPlatform,
+        channelId: newCompetitor.channelId,
+      })
+      setNewCompetitor({ name: '', platform: 'YOUTUBE', channelId: '' })
+      setIsAddDialogOpen(false)
+      mutate()
+    } catch (err) {
+      console.error('Failed to add competitor:', err)
+      alert(err instanceof Error ? err.message : '경쟁사 추가에 실패했습니다.')
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setCompetitors((prev) => [...prev, competitor])
-    setNewCompetitor({ name: '', platform: 'YOUTUBE', channelId: '' })
-    setIsAddDialogOpen(false)
-  }
+  }, [workspaceId, newCompetitor, mutate])
 
   // 경쟁사 삭제
-  const handleDeleteCompetitor = (id: string) => {
-    setCompetitors((prev) => prev.filter((c) => c.id !== id))
-  }
+  const handleDeleteCompetitor = useCallback(async (id: string) => {
+    setDeleteLoadingId(id)
+    try {
+      await deleteCompetitor(workspaceId, id)
+      mutate()
+    } catch (err) {
+      console.error('Failed to delete competitor:', err)
+      alert(err instanceof Error ? err.message : '경쟁사 삭제에 실패했습니다.')
+    } finally {
+      setDeleteLoadingId(null)
+    }
+  }, [workspaceId, mutate])
 
   // 비교 데이터 생성
   const comparisonData = useMemo(() => {
@@ -271,13 +262,14 @@ export function CompetitorComparison({ myChannel = MY_CHANNEL_MOCK }: Competitor
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isSubmitting}>
                   취소
                 </Button>
                 <Button
                   onClick={handleAddCompetitor}
-                  disabled={!newCompetitor.name || !newCompetitor.channelId}
+                  disabled={!newCompetitor.name || !newCompetitor.channelId || isSubmitting}
                 >
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   추가
                 </Button>
               </DialogFooter>
@@ -286,7 +278,25 @@ export function CompetitorComparison({ myChannel = MY_CHANNEL_MOCK }: Competitor
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* 로딩 상태 */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
+
+        {/* 에러 상태 */}
+        {error && !isLoading && (
+          <div className="py-8 text-center text-destructive">
+            <p>데이터를 불러오는데 실패했습니다.</p>
+            <Button variant="outline" size="sm" className="mt-2" onClick={() => mutate()}>
+              다시 시도
+            </Button>
+          </div>
+        )}
+
         {/* 경쟁사 목록 */}
+        {!isLoading && !error && (
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-muted-foreground">등록된 경쟁사</h4>
           <div className="flex flex-wrap gap-2">
@@ -303,12 +313,15 @@ export function CompetitorComparison({ myChannel = MY_CHANNEL_MOCK }: Competitor
                 name={competitor.name}
                 platform={competitor.platform}
                 onDelete={() => handleDeleteCompetitor(competitor.id)}
+                isDeleting={deleteLoadingId === competitor.id}
               />
             ))}
           </div>
         </div>
+        )}
 
         {/* 순위 요약 */}
+        {!isLoading && !error && (
         <div className="grid gap-3 md:grid-cols-3">
           <RankingCard
             label="팔로워/구독자"
@@ -329,9 +342,10 @@ export function CompetitorComparison({ myChannel = MY_CHANNEL_MOCK }: Competitor
             icon={<Upload className="h-4 w-4" />}
           />
         </div>
+        )}
 
         {/* 비교 차트 */}
-        {competitors.length > 0 && (
+        {!isLoading && !error && competitors.length > 0 && (
           <div className="space-y-6">
             <MetricComparisonChart
               title="팔로워/구독자 비교"
@@ -353,7 +367,7 @@ export function CompetitorComparison({ myChannel = MY_CHANNEL_MOCK }: Competitor
           </div>
         )}
 
-        {competitors.length === 0 && (
+        {!isLoading && !error && competitors.length === 0 && (
           <div className="py-8 text-center text-muted-foreground">
             <Building2 className="mx-auto h-12 w-12 mb-4 opacity-50" />
             <p>등록된 경쟁사가 없습니다.</p>
@@ -371,9 +385,10 @@ interface CompetitorChipProps {
   platform: Platform
   isMyChannel?: boolean
   onDelete?: () => void
+  isDeleting?: boolean
 }
 
-function CompetitorChip({ name, platform, isMyChannel, onDelete }: CompetitorChipProps) {
+function CompetitorChip({ name, platform, isMyChannel, onDelete, isDeleting }: CompetitorChipProps) {
   const PlatformIcon = platform === 'YOUTUBE' ? Youtube : Instagram
   const platformColor = platform === 'YOUTUBE' ? 'text-red-500' : 'text-pink-500'
 
@@ -383,7 +398,8 @@ function CompetitorChip({ name, platform, isMyChannel, onDelete }: CompetitorChi
         'flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm',
         isMyChannel
           ? 'bg-blue-50 border-blue-200 text-blue-700'
-          : 'bg-muted/50 border-border'
+          : 'bg-muted/50 border-border',
+        isDeleting && 'opacity-50'
       )}
     >
       <PlatformIcon className={cn('h-3.5 w-3.5', platformColor)} />
@@ -394,10 +410,15 @@ function CompetitorChip({ name, platform, isMyChannel, onDelete }: CompetitorChi
       {!isMyChannel && onDelete && (
         <button
           onClick={onDelete}
-          className="ml-1 p-0.5 hover:bg-muted rounded-full transition-colors"
+          className="ml-1 p-0.5 hover:bg-muted rounded-full transition-colors disabled:opacity-50"
           aria-label={`${name} 삭제`}
+          disabled={isDeleting}
         >
-          <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+          {isDeleting ? (
+            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+          ) : (
+            <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+          )}
         </button>
       )}
     </div>

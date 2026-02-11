@@ -4,7 +4,6 @@ import { useDashboardContext } from '@/lib/contexts/dashboard-context'
 import {
   OverviewView,
   PerformanceView,
-  ContentView,
   CommerceView,
 } from './views'
 import { ExecutiveView } from './executive'
@@ -21,7 +20,8 @@ export function DashboardViewRenderer() {
     case 'performance':
       return <PerformanceView />
     case 'content':
-      return <ContentView />
+      // 하위 호환성: content 뷰는 Performance 뷰의 콘텐츠 분석 탭으로 리다이렉트
+      return <PerformanceView defaultTab="content" />
     case 'commerce':
       return <CommerceView />
     // 페르소나 뷰

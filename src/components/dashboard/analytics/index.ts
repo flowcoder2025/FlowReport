@@ -14,6 +14,7 @@ export { AnalyticsView } from './internal/analytics-view'
 export { MetricSelector } from './internal/metric-selector'
 export { DataExplorer } from './internal/data-explorer'
 export { ExportButton } from './internal/export-button'
+export { CorrelationChart } from './internal/correlation-chart'
 
 // Types
 export type { MetricOption, SelectedMetric } from './internal/metric-selector'

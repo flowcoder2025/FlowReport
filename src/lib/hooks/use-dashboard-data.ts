@@ -1,6 +1,6 @@
 'use client'
 
-import useSWR from 'swr'
+import useSWR, { mutate } from 'swr'
 import { format } from 'date-fns'
 
 const fetcher = async (url: string) => {
@@ -304,4 +304,133 @@ export async function saveDashboardNotes(
   }
 
   return res.json()
+}
+
+// ===========================================
+// Competitor Types & Hooks
+// ===========================================
+
+export type CompetitorPlatform = 'YOUTUBE' | 'META_INSTAGRAM' | 'META_FACEBOOK' | 'NAVER_BLOG'
+
+export interface CompetitorMetrics {
+  followers: number | null
+  engagementRate: number | null
+  uploads: number | null
+}
+
+export interface Competitor {
+  id: string
+  name: string
+  platform: CompetitorPlatform
+  channelId: string
+  channelUrl: string | null
+  followers: number | null
+  engagementRate: number | null
+  uploads: number | null
+  lastSyncAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CompetitorsData {
+  competitors: Competitor[]
+}
+
+export interface CreateCompetitorData {
+  name: string
+  platform: CompetitorPlatform
+  channelId: string
+  channelUrl?: string | null
+  followers?: number | null
+  engagementRate?: number | null
+  uploads?: number | null
+}
+
+export interface UpdateCompetitorData {
+  name?: string
+  platform?: CompetitorPlatform
+  channelId?: string
+  channelUrl?: string | null
+  followers?: number | null
+  engagementRate?: number | null
+  uploads?: number | null
+}
+
+export function useCompetitors(workspaceId: string) {
+  const url = `/api/workspaces/${workspaceId}/competitors`
+
+  const { data, error, isLoading, isValidating } = useSWR<CompetitorsData>(
+    workspaceId ? url : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 30000,
+    }
+  )
+
+  return {
+    competitors: data?.competitors ?? [],
+    isLoading,
+    isValidating,
+    error,
+    mutate: () => mutate(url),
+  }
+}
+
+export async function createCompetitor(
+  workspaceId: string,
+  data: CreateCompetitorData
+): Promise<Competitor> {
+  const res = await fetch(`/api/workspaces/${workspaceId}/competitors`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to create competitor')
+  }
+
+  const result = await res.json()
+  // Revalidate competitors list
+  mutate(`/api/workspaces/${workspaceId}/competitors`)
+  return result.competitor
+}
+
+export async function updateCompetitor(
+  workspaceId: string,
+  competitorId: string,
+  data: UpdateCompetitorData
+): Promise<Competitor> {
+  const res = await fetch(`/api/workspaces/${workspaceId}/competitors/${competitorId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to update competitor')
+  }
+
+  const result = await res.json()
+  mutate(`/api/workspaces/${workspaceId}/competitors`)
+  return result.competitor
+}
+
+export async function deleteCompetitor(
+  workspaceId: string,
+  competitorId: string
+): Promise<void> {
+  const res = await fetch(`/api/workspaces/${workspaceId}/competitors/${competitorId}`, {
+    method: 'DELETE',
+  })
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to delete competitor')
+  }
+
+  mutate(`/api/workspaces/${workspaceId}/competitors`)
 }

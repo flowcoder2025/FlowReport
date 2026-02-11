@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils'
 import { MetricSelector, type SelectedMetric } from './metric-selector'
 import { DataExplorer, type RawMetricData } from './data-explorer'
 import { ExportButton } from './export-button'
+import { CorrelationChart } from './correlation-chart'
 
 interface RawMetricsResponse {
   startDate: string
@@ -302,7 +303,7 @@ export function AnalyticsView() {
         </div>
       )}
 
-      {/* Correlation Chart Placeholder */}
+      {/* Correlation Chart */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -316,17 +317,11 @@ export function AnalyticsView() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed">
-            <div className="text-center">
-              <TrendingUp className="mx-auto h-8 w-8 text-muted-foreground/50" />
-              <p className="mt-2 text-sm text-muted-foreground">
-                2개 이상의 메트릭을 선택하면 상관관계 차트가 표시됩니다
-              </p>
-              <p className="text-xs text-muted-foreground/70">
-                (개발 예정)
-              </p>
-            </div>
-          </div>
+          <CorrelationChart
+            data={data?.rows || []}
+            selectedMetrics={selectedMetrics}
+            height={300}
+          />
         </CardContent>
       </Card>
 

@@ -144,7 +144,7 @@ export function MarketingView() {
       <ContentHighlights items={contentItems} maxItems={6} />
 
       {/* 경쟁사 비교 분석 */}
-      <CompetitorComparison />
+      <CompetitorComparison workspaceId={workspaceId} />
     </div>
   )
 }

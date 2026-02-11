@@ -102,6 +102,7 @@ model Workspace {
   insightNotes       InsightNote[]
   actionItems        ActionItem[]
   csvUploads         CsvUpload[]
+  competitors        Competitor[]
 
   @@map("workspaces")
 }
@@ -461,6 +462,32 @@ enum CsvUploadStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+// ===========================================
+// Competitor Models
+// ===========================================
+
+model Competitor {
+  id             String          @id @default(cuid())
+  workspaceId    String
+  name           String
+  platform       ChannelProvider
+  channelId      String
+  channelUrl     String?
+  followers      Int?
+  engagementRate Float?
+  uploads        Int?
+  lastSyncAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, platform, channelId])
+  @@index([workspaceId])
+  @@map("competitors")
 }
 
 // ===========================================
