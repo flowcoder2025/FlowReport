@@ -20,44 +20,41 @@ FlowReport는 **ReportingOps SaaS** 플랫폼입니다.
 
 ## Active Epic
 
-### menu-ux-improvement (83% 완료)
-- **상태**: 🔄 진행중
-- **Phase**: 3.5/4 완료
+### blog-channel (50% 완료)
+- **상태**: 🔄 Phase 1 완료
+- **Phase**: 1/2 완료
+- **목표**: 블로그 채널 데이터 수집 및 분석 강화
+
+**Phase 1: 네이버 블로그 CSV 고도화 ✅ (완료)**
+- blogMetricSchema 16개 필드로 확장
+- CSV 템플릿 다운로드 API
+- 블로그 대시보드 뷰 구현
+
+**Phase 2: 티스토리 API 연동 (다음 스프린트)**
+- 티스토리 Open API 연동
+- OAuth 인증 구현
+
+### menu-ux-improvement (100% 완료)
+- **상태**: ✅ 완료
+- **Phase**: 4/4 완료
 - **목표**: 데이터 대시보드 → 의사결정 대시보드 전환
 
 **완료된 작업:**
 - Phase 1-2: 헤드라인 요약, 권장 조치, 경쟁사 비교, 피드백 루프
 - Phase 3: Performance-Content 통합 (메뉴 7→6개), 상관관계 차트
-- Phase 4 일부: Competitor API 연결, Content 메뉴 제거
+- Phase 4: 권장 조치 템플릿 DB화, OpenAPI 문서화
 
-**남은 작업:**
-- 권장 조치 템플릿 DB화
-- API 스키마 문서화
+## 최근 완료된 스프린트
 
-### dashboard-persona-refactoring (완료)
-- **상태**: ✅ 배포 준비 완료
-- **Phase**: 3/5 완료
-- **목표**: 페르소나별 특화 대시보드로 전환
+### 목표값 관리 UI (2026-02-11)
+- Workspace에 targetConfig JSON 필드 추가
+- 목표값 설정 API (GET/PATCH /settings/targets)
+- Settings 페이지에 "목표" 탭 추가
+- Executive Dashboard에서 API 목표값 연동
 
-**생성된 모듈:**
-```
-src/components/dashboard/
-├── executive/    # 경영진용 (30초 전략 파악)
-├── marketing/    # 마케팅팀용 (채널+콘텐츠)
-├── commerce/     # 커머스팀용 (매출 중심)
-└── analytics/    # 데이터팀용 (원본 데이터)
-```
-
-## P0/P1 이슈 - ✅ 모두 해결 (2026-02-10)
-
-| 대시보드 | 이슈 | 해결방안 | 상태 |
-|----------|------|----------|------|
-| Executive | 목표값 하드코딩 | `constants/targets.ts` 분리 | ✅ |
-| Marketing | 트렌드 빈 배열 | `useDashboardTrendData` 훅 | ✅ |
-| Commerce | 반품/취소 0 | `null` + "-" 표시 | ✅ |
-| Analytics | API 크기 제한 | `maxRows` 파라미터 | ✅ |
-| Analytics P1 | Export maxRows | 10000개 전달 | ✅ |
-| Analytics P1 | 잘림 경고 | amber 배너 UI | ✅ |
+**TODO (다음 스프린트):**
+- TargetConfig 타입 통합 (4곳 → 1곳)
+- 에러 처리 클래스화
 
 ## 아키텍처 결정
 
@@ -69,36 +66,55 @@ module/
     └── *.tsx
 ```
 
-### 대시보드 분리 전략
-- **Option A 선택**: 페르소나별 완전 분리
-- **근거**: 점진적 개선보다 명확한 구분이 장기적으로 유리
+### 에이전트 모델 정책
+| 업무 유형 | 모델 |
+|----------|------|
+| 탐색/검색 | haiku |
+| 코드 작성 | **opus** |
+| 판단/의사결정 | **opus** |
+
+### 스프린트 워크플로우
+```
+부서 의견 수렴 (opus)
+    ↓
+개발총괄 종합
+    ↓
+CTO 기술 리뷰 (opus)
+    ↓
+공동창업자 승인 (opus)
+    ↓
+개발 (opus)
+    ↓
+CTO 코드 리뷰 (opus)
+    ↓
+배포
+```
 
 ## 완료된 Epic
 
 | Epic | 완료일 | 요약 |
 |------|--------|------|
+| menu-ux-improvement | 2026-02-11 | 의사결정 대시보드 전환, 메뉴 7→6개 |
+| dashboard-persona-refactoring | 2026-02-10 | 페르소나별 특화 대시보드 |
 | dashboard-refactoring | 2026-02-05 | 사이드패널 + 채널 메트릭 |
-| dashboard-restructure | 2026-02-10 | 목적 기반 4개 뷰 (→페르소나로 전환) |
 
 ## Lessons Learned
 
 ### 2026-02-11
-1. **Business Panel 분석 효과적**: Drucker, Christensen 등 전문가 페르소나로 UX 문제점 발견
-2. **병렬 에이전트 오케스트레이션**: 개발총괄 + 부서별 에이전트 구조로 효율적 개발
-3. **CTO 에이전트 코드 리뷰**: 조건부 승인으로 품질 관리 체계화
-4. **메뉴 통합 시 하위 호환성**: Content 리다이렉트로 기존 URL 유지
+1. **에이전트 모델 정책 중요**: 판단/의사결정에 haiku 사용 시 품질 저하
+2. **부서별 의견 수렴 효과적**: 4개 부서 관점으로 요구사항 명확화
+3. **CTO 코드 리뷰 필수**: 보안/타입 이슈 사전 발견
 
 ### 2026-02-10
-1. **페르소나 분석 먼저**: 대시보드 설계 전 각 사용자 그룹의 요구사항 분석 필수
-2. **하드코딩 주의**: placeholder 데이터도 명시적으로 표시 (0 대신 "데이터 없음")
-3. **병렬 개발 효과적**: 에이전트 4명 병렬 투입으로 4개 모듈 동시 개발 성공
-4. **대규모 리팩토링 시 마이그레이션 완전성 검증 필수**
-5. **4개 부서장 페르소나 분석이 문제 발견에 효과적**
+1. **페르소나 분석 먼저**: 대시보드 설계 전 사용자 그룹 요구사항 분석 필수
+2. **병렬 개발 효과적**: 에이전트 4명 병렬 투입으로 동시 개발 성공
 
 ## 다음 세션 TODO
 
-1. ~~메뉴 UX 개선 Phase 1-3~~ ✅ 완료 (2026-02-11)
-2. Phase 4 완료: 권장 조치 템플릿 DB화, API 문서화
-3. Prisma 마이그레이션: `npx prisma migrate dev --name add-competitor-model`
-4. Phase 3-4 커밋 및 푸시
-5. 프로덕션 배포
+1. **Blog 채널 Phase 2: 티스토리 API 연동**
+   - 티스토리 Open API 연동
+   - OAuth 인증 구현
+   - 자동 동기화 커넥터
+2. **기술 부채 해결**
+   - CSV 템플릿 상수 통합
+   - 채널명 하드코딩 제거
