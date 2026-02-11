@@ -6,12 +6,13 @@
 
 | Epic | 상태 | Phase 진행 | 마지막 업데이트 |
 |------|------|------------|-----------------|
-| [blog-channel](./blog-channel/README.md) | 🔄 진행중 | 1/2 (Phase 1 완료) | 2026-02-11 |
+| (없음) | - | - | - |
 
 ## Completed Epics
 
 | Epic | 완료일 | Phase 수 |
 |------|--------|----------|
+| [blog-channel](./blog-channel/README.md) | 2026-02-11 | 2 |
 | [menu-ux-improvement](./menu-ux-improvement/README.md) | 2026-02-11 | 4 |
 | [dashboard-persona-refactoring](./dashboard-persona-refactoring/README.md) | 2026-02-10 | 3 |
 | [dashboard-refactoring](./dashboard-refactoring/README.md) | 2026-02-05 | 5 |
@@ -19,7 +20,7 @@
 
 ## Drift Tracking
 
-- Last Reviewed Commit: `0d365db`
+- Last Reviewed Commit: `dfe3c67`
 - Last Review Date: 2026-02-11
 
 ## 파일 구조
@@ -27,9 +28,10 @@
 ```
 specs/
 ├── _index.md
-├── blog-channel/                       ← 2026-02-11 Phase 1 완료
+├── blog-channel/                       ← 2026-02-11 완료
 │   ├── README.md
-│   └── 01-naver-blog-csv.md
+│   ├── 01-naver-blog-csv.md
+│   └── 02-tistory-ga4-guide.md
 ├── menu-ux-improvement/                ← 2026-02-11 완료
 │   ├── README.md
 │   ├── 01-02-urgent-important.md
@@ -53,11 +55,12 @@ specs/
 
 ### 2026-02-11
 - menu-ux-improvement Epic 완료 (Phase 4: 템플릿 DB화, OpenAPI 문서)
-- blog-channel Epic Phase 1 완료 (CSV 스키마 확장, 블로그 대시보드)
+- blog-channel Epic 완료 (Phase 1: CSV 확장, Phase 2: GA4 가이드)
 - 목표값 관리 UI 스프린트 완료
 
 ### Git Commits
 ```
+dfe3c67 feat: 블로그 채널 Phase 2 - 티스토리 GA4 연동 가이드 및 UI 개선
 0d365db feat: 블로그 채널 Phase 1 - CSV 스키마 확장 및 대시보드 구현
 339e53c feat: 목표값 관리 UI 추가
 bd2af66 feat: 권장 조치 템플릿 DB화 및 OpenAPI 문서 추가

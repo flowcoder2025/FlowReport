@@ -20,19 +20,20 @@ FlowReport는 **ReportingOps SaaS** 플랫폼입니다.
 
 ## Active Epic
 
-### blog-channel (50% 완료)
-- **상태**: 🔄 Phase 1 완료
-- **Phase**: 1/2 완료
+### blog-channel (100% 완료)
+- **상태**: ✅ 완료
+- **Phase**: 2/2 완료
 - **목표**: 블로그 채널 데이터 수집 및 분석 강화
 
-**Phase 1: 네이버 블로그 CSV 고도화 ✅ (완료)**
+**Phase 1: 네이버 블로그 CSV 고도화 ✅**
 - blogMetricSchema 16개 필드로 확장
 - CSV 템플릿 다운로드 API
 - 블로그 대시보드 뷰 구현
 
-**Phase 2: 티스토리 API 연동 (다음 스프린트)**
-- 티스토리 Open API 연동
-- OAuth 인증 구현
+**Phase 2: 티스토리 GA4 연동 가이드 ✅**
+- 티스토리 Open API 종료(2024.02)로 스코프 변경
+- GA4 연동 가이드 문서 작성
+- 블로그 연동 안내 UI 개선
 
 ### menu-ux-improvement (100% 완료)
 - **상태**: ✅ 완료
@@ -94,6 +95,7 @@ CTO 코드 리뷰 (opus)
 
 | Epic | 완료일 | 요약 |
 |------|--------|------|
+| blog-channel | 2026-02-11 | 블로그 CSV 확장, GA4 연동 가이드 |
 | menu-ux-improvement | 2026-02-11 | 의사결정 대시보드 전환, 메뉴 7→6개 |
 | dashboard-persona-refactoring | 2026-02-10 | 페르소나별 특화 대시보드 |
 | dashboard-refactoring | 2026-02-05 | 사이드패널 + 채널 메트릭 |
@@ -111,10 +113,9 @@ CTO 코드 리뷰 (opus)
 
 ## 다음 세션 TODO
 
-1. **Blog 채널 Phase 2: 티스토리 API 연동**
-   - 티스토리 Open API 연동
-   - OAuth 인증 구현
-   - 자동 동기화 커넥터
+1. **새 Epic 선정**
+   - 다음 스프린트 기획
 2. **기술 부채 해결**
    - CSV 템플릿 상수 통합
    - 채널명 하드코딩 제거
+   - TargetConfig 타입 통합
