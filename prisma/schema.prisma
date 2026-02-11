@@ -103,6 +103,7 @@ model Workspace {
   actionItems        ActionItem[]
   csvUploads         CsvUpload[]
   competitors        Competitor[]
+  actionTemplates    ActionTemplate[]
 
   @@map("workspaces")
 }
@@ -462,6 +463,64 @@ enum CsvUploadStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+// ===========================================
+// Action Template Models
+// ===========================================
+
+model ActionTemplate {
+  id          String          @id @default(cuid())
+  workspaceId String
+  triggerType TriggerType
+  triggerLevel AlertLevel     @default(WARNING)
+
+  title       String
+  description String
+  priority    ActionPriority  @default(MEDIUM)
+  department  Department
+  departmentUrl String
+  steps       Json            @default("[]") // String[]
+
+  isActive    Boolean         @default(true)
+  isDefault   Boolean         @default(false) // 시스템 기본 템플릿
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, triggerType, triggerLevel])
+  @@index([workspaceId])
+  @@map("action_templates")
+}
+
+enum TriggerType {
+  REVENUE_DECLINE_CRITICAL
+  REVENUE_DECLINE_WARNING
+  ENGAGEMENT_DECLINE_CRITICAL
+  ENGAGEMENT_DECLINE_WARNING
+  CONVERSION_LOW_CRITICAL
+  CONVERSION_LOW_WARNING
+  CHANNEL_METRIC_DECLINE
+}
+
+enum AlertLevel {
+  CRITICAL
+  WARNING
+  INFO
+}
+
+enum ActionPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum Department {
+  MARKETING
+  COMMERCE
+  OVERALL
 }
 
 // ===========================================

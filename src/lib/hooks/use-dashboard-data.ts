@@ -434,3 +434,71 @@ export async function deleteCompetitor(
 
   mutate(`/api/workspaces/${workspaceId}/competitors`)
 }
+
+// ===========================================
+// Action Template Types & Hooks
+// ===========================================
+
+export type TriggerType =
+  | 'REVENUE_DECLINE_CRITICAL'
+  | 'REVENUE_DECLINE_WARNING'
+  | 'ENGAGEMENT_DECLINE_CRITICAL'
+  | 'ENGAGEMENT_DECLINE_WARNING'
+  | 'CONVERSION_LOW_CRITICAL'
+  | 'CONVERSION_LOW_WARNING'
+  | 'CHANNEL_METRIC_DECLINE'
+
+export type AlertLevel = 'CRITICAL' | 'WARNING' | 'INFO'
+export type ActionPriority = 'HIGH' | 'MEDIUM' | 'LOW'
+export type Department = 'MARKETING' | 'COMMERCE' | 'OVERALL'
+
+export interface ActionTemplate {
+  id: string
+  workspaceId: string
+  triggerType: TriggerType
+  triggerLevel: AlertLevel
+  title: string
+  description: string
+  priority: ActionPriority
+  department: Department
+  departmentUrl: string
+  steps: string[]
+  isActive: boolean
+  isDefault: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ActionTemplatesData {
+  templates: ActionTemplate[]
+}
+
+export function useActionTemplates(workspaceId: string) {
+  const url = `/api/workspaces/${workspaceId}/action-templates`
+
+  const { data, error, isLoading, isValidating } = useSWR<ActionTemplatesData>(
+    workspaceId ? url : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000, // 1 minute
+    }
+  )
+
+  // TriggerType을 키로 하는 Map 생성 (빠른 조회용)
+  const templateMap = new Map<TriggerType, ActionTemplate>()
+  if (data?.templates) {
+    for (const template of data.templates) {
+      templateMap.set(template.triggerType, template)
+    }
+  }
+
+  return {
+    templates: data?.templates ?? [],
+    templateMap,
+    isLoading,
+    isValidating,
+    error,
+    mutate: () => mutate(url),
+  }
+}

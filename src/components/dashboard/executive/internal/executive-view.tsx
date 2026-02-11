@@ -2,7 +2,13 @@
 
 import { useMemo } from 'react'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
-import { useDashboardMetrics, useActionProgress } from '@/lib/hooks/use-dashboard-data'
+import {
+  useDashboardMetrics,
+  useActionProgress,
+  useActionTemplates,
+  TriggerType,
+  ActionTemplate,
+} from '@/lib/hooks/use-dashboard-data'
 import { Skeleton } from '../../skeleton'
 import { ExecutiveSummary } from './executive-summary'
 import { RiskAlerts } from './risk-alerts'
@@ -47,6 +53,9 @@ export function ExecutiveView() {
     data: actionProgressData,
     isLoading: isActionProgressLoading,
   } = useActionProgress(workspaceId, periodType, periodStart)
+
+  // Fetch action templates for recommended actions
+  const { templateMap } = useActionTemplates(workspaceId)
 
   // Executive KPIs 계산 (매출, 활성사용자, 성장률)
   const executiveKPIs: ExecutiveKPI[] = useMemo(() => {
@@ -104,6 +113,20 @@ export function ExecutiveView() {
       const revenueChange = ((overview.totalRevenue - previous.totalRevenue) / previous.totalRevenue) * 100
 
       if (revenueChange <= THRESHOLDS.REVENUE_DECLINE_CRITICAL) {
+        const fallbackAction: RecommendedAction = {
+          id: 'action-revenue-critical',
+          title: '긴급 매출 회복 조치',
+          description: '급격한 매출 하락에 대응하기 위한 즉각적인 조치가 필요합니다.',
+          priority: 'high',
+          department: 'commerce',
+          departmentUrl: '/dashboard?view=commerce',
+          steps: [
+            '채널별 매출 상세 분석 확인',
+            '주요 상품 재고 및 가격 점검',
+            '경쟁사 프로모션 현황 파악',
+            '긴급 할인 또는 프로모션 검토',
+          ],
+        }
         alerts.push({
           id: 'revenue-critical',
           level: 'critical',
@@ -114,22 +137,26 @@ export function ExecutiveView() {
           threshold: THRESHOLDS.REVENUE_DECLINE_CRITICAL,
           department: 'commerce',
           actionUrl: '/dashboard?view=commerce',
-          recommendedAction: {
-            id: 'action-revenue-critical',
-            title: '긴급 매출 회복 조치',
-            description: '급격한 매출 하락에 대응하기 위한 즉각적인 조치가 필요합니다.',
-            priority: 'high',
-            department: 'commerce',
-            departmentUrl: '/dashboard?view=commerce',
-            steps: [
-              '채널별 매출 상세 분석 확인',
-              '주요 상품 재고 및 가격 점검',
-              '경쟁사 프로모션 현황 파악',
-              '긴급 할인 또는 프로모션 검토',
-            ],
-          },
+          recommendedAction: buildRecommendedAction(
+            'REVENUE_DECLINE_CRITICAL',
+            templateMap.get('REVENUE_DECLINE_CRITICAL'),
+            fallbackAction
+          ),
         })
       } else if (revenueChange <= THRESHOLDS.REVENUE_DECLINE_WARNING) {
+        const fallbackAction: RecommendedAction = {
+          id: 'action-revenue-warning',
+          title: '매출 추이 모니터링 강화',
+          description: '매출 하락 추세를 면밀히 관찰하고 대응책을 준비하세요.',
+          priority: 'medium',
+          department: 'commerce',
+          departmentUrl: '/dashboard?view=commerce',
+          steps: [
+            '일별 매출 추이 모니터링',
+            '하락 채널 집중 분석',
+            '고객 이탈 원인 파악',
+          ],
+        }
         alerts.push({
           id: 'revenue-warning',
           level: 'warning',
@@ -140,19 +167,11 @@ export function ExecutiveView() {
           threshold: THRESHOLDS.REVENUE_DECLINE_WARNING,
           department: 'commerce',
           actionUrl: '/dashboard?view=commerce',
-          recommendedAction: {
-            id: 'action-revenue-warning',
-            title: '매출 추이 모니터링 강화',
-            description: '매출 하락 추세를 면밀히 관찰하고 대응책을 준비하세요.',
-            priority: 'medium',
-            department: 'commerce',
-            departmentUrl: '/dashboard?view=commerce',
-            steps: [
-              '일별 매출 추이 모니터링',
-              '하락 채널 집중 분석',
-              '고객 이탈 원인 파악',
-            ],
-          },
+          recommendedAction: buildRecommendedAction(
+            'REVENUE_DECLINE_WARNING',
+            templateMap.get('REVENUE_DECLINE_WARNING'),
+            fallbackAction
+          ),
         })
       }
     }
@@ -162,6 +181,20 @@ export function ExecutiveView() {
       const engagementChange = ((overview.engagement - previous.engagement) / previous.engagement) * 100
 
       if (engagementChange <= THRESHOLDS.ENGAGEMENT_DECLINE_CRITICAL) {
+        const fallbackAction: RecommendedAction = {
+          id: 'action-engagement-critical',
+          title: '긴급 참여도 회복 전략',
+          description: '콘텐츠 전략 및 채널 운영 방식의 즉각적인 검토가 필요합니다.',
+          priority: 'high',
+          department: 'marketing',
+          departmentUrl: '/dashboard?view=performance',
+          steps: [
+            '최근 콘텐츠 성과 분석',
+            '타겟 오디언스 반응 확인',
+            '경쟁 콘텐츠 벤치마킹',
+            '콘텐츠 포맷 및 발행 시간 최적화',
+          ],
+        }
         alerts.push({
           id: 'engagement-critical',
           level: 'critical',
@@ -172,22 +205,26 @@ export function ExecutiveView() {
           threshold: THRESHOLDS.ENGAGEMENT_DECLINE_CRITICAL,
           department: 'marketing',
           actionUrl: '/dashboard?view=performance',
-          recommendedAction: {
-            id: 'action-engagement-critical',
-            title: '긴급 참여도 회복 전략',
-            description: '콘텐츠 전략 및 채널 운영 방식의 즉각적인 검토가 필요합니다.',
-            priority: 'high',
-            department: 'marketing',
-            departmentUrl: '/dashboard?view=performance',
-            steps: [
-              '최근 콘텐츠 성과 분석',
-              '타겟 오디언스 반응 확인',
-              '경쟁 콘텐츠 벤치마킹',
-              '콘텐츠 포맷 및 발행 시간 최적화',
-            ],
-          },
+          recommendedAction: buildRecommendedAction(
+            'ENGAGEMENT_DECLINE_CRITICAL',
+            templateMap.get('ENGAGEMENT_DECLINE_CRITICAL'),
+            fallbackAction
+          ),
         })
       } else if (engagementChange <= THRESHOLDS.ENGAGEMENT_DECLINE_WARNING) {
+        const fallbackAction: RecommendedAction = {
+          id: 'action-engagement-warning',
+          title: '콘텐츠 성과 점검',
+          description: '참여도 하락 추세를 분석하고 개선 방안을 마련하세요.',
+          priority: 'medium',
+          department: 'marketing',
+          departmentUrl: '/dashboard?view=performance',
+          steps: [
+            '채널별 참여 지표 비교',
+            '고성과 콘텐츠 유형 분석',
+            'A/B 테스트 계획 수립',
+          ],
+        }
         alerts.push({
           id: 'engagement-warning',
           level: 'warning',
@@ -198,19 +235,11 @@ export function ExecutiveView() {
           threshold: THRESHOLDS.ENGAGEMENT_DECLINE_WARNING,
           department: 'marketing',
           actionUrl: '/dashboard?view=performance',
-          recommendedAction: {
-            id: 'action-engagement-warning',
-            title: '콘텐츠 성과 점검',
-            description: '참여도 하락 추세를 분석하고 개선 방안을 마련하세요.',
-            priority: 'medium',
-            department: 'marketing',
-            departmentUrl: '/dashboard?view=performance',
-            steps: [
-              '채널별 참여 지표 비교',
-              '고성과 콘텐츠 유형 분석',
-              'A/B 테스트 계획 수립',
-            ],
-          },
+          recommendedAction: buildRecommendedAction(
+            'ENGAGEMENT_DECLINE_WARNING',
+            templateMap.get('ENGAGEMENT_DECLINE_WARNING'),
+            fallbackAction
+          ),
         })
       }
     }
@@ -220,6 +249,20 @@ export function ExecutiveView() {
       const convRate = channelDetails.SMARTSTORE.conversionRate
 
       if (convRate < THRESHOLDS.CONVERSION_CRITICAL) {
+        const fallbackAction: RecommendedAction = {
+          id: 'action-conversion-critical',
+          title: '전환율 긴급 개선',
+          description: '구매 전환 과정의 심각한 문제를 즉시 해결해야 합니다.',
+          priority: 'high',
+          department: 'commerce',
+          departmentUrl: '/dashboard?view=commerce',
+          steps: [
+            '결제 프로세스 오류 점검',
+            '상품 상세페이지 UX 검토',
+            '가격 경쟁력 분석',
+            '배송/반품 정책 재검토',
+          ],
+        }
         alerts.push({
           id: 'conversion-critical',
           level: 'critical',
@@ -230,22 +273,26 @@ export function ExecutiveView() {
           threshold: THRESHOLDS.CONVERSION_CRITICAL,
           department: 'commerce',
           actionUrl: '/dashboard?view=commerce',
-          recommendedAction: {
-            id: 'action-conversion-critical',
-            title: '전환율 긴급 개선',
-            description: '구매 전환 과정의 심각한 문제를 즉시 해결해야 합니다.',
-            priority: 'high',
-            department: 'commerce',
-            departmentUrl: '/dashboard?view=commerce',
-            steps: [
-              '결제 프로세스 오류 점검',
-              '상품 상세페이지 UX 검토',
-              '가격 경쟁력 분석',
-              '배송/반품 정책 재검토',
-            ],
-          },
+          recommendedAction: buildRecommendedAction(
+            'CONVERSION_LOW_CRITICAL',
+            templateMap.get('CONVERSION_LOW_CRITICAL'),
+            fallbackAction
+          ),
         })
       } else if (convRate < THRESHOLDS.CONVERSION_WARNING) {
+        const fallbackAction: RecommendedAction = {
+          id: 'action-conversion-warning',
+          title: '전환율 개선 방안 검토',
+          description: '구매 전환을 높이기 위한 최적화 작업을 진행하세요.',
+          priority: 'medium',
+          department: 'commerce',
+          departmentUrl: '/dashboard?view=commerce',
+          steps: [
+            '이탈 페이지 분석',
+            '상품 리뷰 및 평점 개선',
+            '프로모션 효과 측정',
+          ],
+        }
         alerts.push({
           id: 'conversion-warning',
           level: 'warning',
@@ -256,19 +303,11 @@ export function ExecutiveView() {
           threshold: THRESHOLDS.CONVERSION_WARNING,
           department: 'commerce',
           actionUrl: '/dashboard?view=commerce',
-          recommendedAction: {
-            id: 'action-conversion-warning',
-            title: '전환율 개선 방안 검토',
-            description: '구매 전환을 높이기 위한 최적화 작업을 진행하세요.',
-            priority: 'medium',
-            department: 'commerce',
-            departmentUrl: '/dashboard?view=commerce',
-            steps: [
-              '이탈 페이지 분석',
-              '상품 리뷰 및 평점 개선',
-              '프로모션 효과 측정',
-            ],
-          },
+          recommendedAction: buildRecommendedAction(
+            'CONVERSION_LOW_WARNING',
+            templateMap.get('CONVERSION_LOW_WARNING'),
+            fallbackAction
+          ),
         })
       }
     }
@@ -313,7 +352,7 @@ export function ExecutiveView() {
     })
 
     return alerts
-  }, [metrics])
+  }, [metrics, templateMap])
 
   // 부서별 요약 생성
   const departments: DepartmentMetrics[] = useMemo(() => {
@@ -433,6 +472,27 @@ export function ExecutiveView() {
       </div>
     </div>
   )
+}
+
+// 템플릿 기반 RecommendedAction 빌더
+function buildRecommendedAction(
+  triggerType: TriggerType,
+  template: ActionTemplate | undefined,
+  fallback: RecommendedAction
+): RecommendedAction {
+  if (!template) {
+    return fallback
+  }
+
+  return {
+    id: `action-${template.id}`,
+    title: template.title,
+    description: template.description,
+    priority: template.priority.toLowerCase() as 'high' | 'medium' | 'low',
+    department: template.department.toLowerCase() as 'marketing' | 'commerce' | 'overall',
+    departmentUrl: template.departmentUrl,
+    steps: template.steps,
+  }
 }
 
 // 헬퍼 함수들
