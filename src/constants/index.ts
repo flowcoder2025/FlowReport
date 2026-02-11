@@ -5,3 +5,4 @@
  */
 
 export { DEFAULT_TARGETS, type TargetConfig } from './targets'
+export { BLOG_GUIDE, type BlogGuideKey } from './blog-guide'

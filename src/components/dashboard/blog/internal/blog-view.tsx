@@ -7,8 +7,11 @@ import { BlogKPICards } from './blog-kpi-cards'
 import { TrafficSourceChart } from './traffic-source-chart'
 import { BlogTrendChart } from './blog-trend-chart'
 import type { BlogMetricsData, TrafficSourceData, TrendDataPoint } from './types'
-import { FileText } from 'lucide-react'
+import { FileText, Info, Upload, ExternalLink } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { BLOG_GUIDE } from '@/constants'
+import Link from 'next/link'
 
 export function BlogView() {
   const { workspaceId, periodType, periodStart } = useDashboardContext()
@@ -47,6 +50,13 @@ export function BlogView() {
   const trafficSourceData = extractTrafficSourceData(blogMetrics)
   const trendChartData = buildTrendChartData(trendData)
 
+  // 데이터가 없는지 확인
+  const hasNoData = !blogMetrics || (
+    blogMetrics.visitors === null &&
+    blogMetrics.pageviews === null &&
+    blogMetrics.subscribers === null
+  )
+
   return (
     <div className="space-y-6">
       {/* 대시보드 헤더 */}
@@ -61,6 +71,9 @@ export function BlogView() {
           </p>
         </div>
       </div>
+
+      {/* 데이터 없을 때 연동 안내 배너 */}
+      {hasNoData && <BlogIntegrationGuide />}
 
       {/* KPI 카드 섹션 */}
       <BlogKPICards current={blogMetrics} previous={prevBlogMetrics} />
@@ -285,5 +298,68 @@ function BlogViewSkeleton() {
         <Skeleton className="h-[200px]" />
       </div>
     </div>
+  )
+}
+
+// 블로그 연동 안내 컴포넌트
+function BlogIntegrationGuide() {
+  return (
+    <Card className="border-blue-200 bg-blue-50/50">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <Info className="h-5 w-5 text-blue-600" />
+          <CardTitle className="text-base text-blue-900">
+            {BLOG_GUIDE.EMPTY_DATA.title}
+          </CardTitle>
+        </div>
+        <p className="text-sm text-blue-700">
+          {BLOG_GUIDE.EMPTY_DATA.description}
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* 네이버 블로그 안내 */}
+        <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-blue-100">
+          <Upload className="h-5 w-5 text-green-600 mt-0.5" />
+          <div className="flex-1">
+            <h4 className="font-medium text-sm">
+              {BLOG_GUIDE.NAVER_BLOG.title}
+            </h4>
+            <p className="text-sm text-muted-foreground mt-1">
+              {BLOG_GUIDE.NAVER_BLOG.description}
+            </p>
+            <Link href="/settings/channels">
+              <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-green-600">
+                CSV 업로드 바로가기
+                <ExternalLink className="h-3 w-3 ml-1" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* 티스토리 안내 */}
+        <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-blue-100">
+          <Info className="h-5 w-5 text-orange-600 mt-0.5" />
+          <div className="flex-1">
+            <h4 className="font-medium text-sm">
+              {BLOG_GUIDE.TISTORY.title}
+            </h4>
+            <p className="text-sm text-muted-foreground mt-1">
+              {BLOG_GUIDE.TISTORY.description}
+            </p>
+            <p className="text-xs text-orange-600 mt-1">
+              {BLOG_GUIDE.TISTORY.recommendation}
+            </p>
+          </div>
+        </div>
+
+        {/* 가이드 문서 링크 */}
+        <Link href={BLOG_GUIDE.GUIDE_URL}>
+          <Button variant="outline" size="sm" className="w-full mt-2">
+            <ExternalLink className="h-4 w-4 mr-2" />
+            연동 가이드 보기
+          </Button>
+        </Link>
+      </CardContent>
+    </Card>
   )
 }

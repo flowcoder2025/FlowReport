@@ -13,7 +13,8 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/lib/hooks/use-toast'
-import { Upload, Download, FileText, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { Upload, Download, FileText, X, Loader2, CheckCircle, AlertCircle, Info } from 'lucide-react'
+import { BLOG_GUIDE } from '@/constants'
 
 interface CsvUploadProps {
   workspaceId: string
@@ -214,6 +215,9 @@ export function CsvUpload({ workspaceId, onSuccess }: CsvUploadProps) {
           </div>
         </div>
 
+        {/* 블로그 채널 선택 시 안내 */}
+        <BlogChannelGuide channel={channel} />
+
         {/* Drop Zone */}
         <div
           className={`
@@ -318,4 +322,42 @@ export function CsvUpload({ workspaceId, onSuccess }: CsvUploadProps) {
       </CardContent>
     </Card>
   )
+}
+
+// 블로그 채널 선택 시 안내 컴포넌트
+function BlogChannelGuide({ channel }: { channel: ChannelProvider | null }) {
+  if (channel === 'NAVER_BLOG') {
+    return (
+      <div className="flex items-start gap-3 p-3 rounded-lg bg-green-50 border border-green-200">
+        <Info className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+        <div>
+          <p className="text-sm font-medium text-green-800">
+            {BLOG_GUIDE.NAVER_BLOG.title}
+          </p>
+          <p className="text-sm text-green-700 mt-1">
+            {BLOG_GUIDE.NAVER_BLOG.instruction}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // 티스토리는 CHANNELS에 없지만, 사용자가 알 수 있도록 선택 전 안내
+  if (!channel) {
+    return (
+      <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
+        <Info className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+        <div>
+          <p className="text-sm font-medium text-amber-800">
+            {BLOG_GUIDE.TISTORY.title} 사용자 안내
+          </p>
+          <p className="text-sm text-amber-700 mt-1">
+            {BLOG_GUIDE.TISTORY.instruction}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  return null
 }
