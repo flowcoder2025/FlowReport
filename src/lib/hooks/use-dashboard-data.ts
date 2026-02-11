@@ -229,6 +229,47 @@ export function useDashboardTrendData(
   })
 }
 
+// Action Progress Types
+export interface ActionItem {
+  id: string
+  title: string
+  description: string | null
+  status: 'completed' | 'in_progress' | 'not_started' | 'overdue' | 'canceled'
+  priority: number
+  createdAt: string
+  completedAt: string | null
+}
+
+export interface ActionProgressStats {
+  total: number
+  completed: number
+  inProgress: number
+  pending: number
+  canceled: number
+}
+
+export interface ActionProgressData {
+  periodType: string
+  periodStart: string
+  items: ActionItem[]
+  stats: ActionProgressStats
+  completionRate: number
+}
+
+export function useActionProgress(
+  workspaceId: string,
+  periodType: 'WEEKLY' | 'MONTHLY',
+  periodStart: Date
+) {
+  const periodStartStr = format(periodStart, 'yyyy-MM-dd')
+  const url = `/api/workspaces/${workspaceId}/notes/progress?periodType=${periodType}&periodStart=${periodStartStr}`
+
+  return useSWR<ActionProgressData>(url, fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
+  })
+}
+
 export async function saveDashboardNotes(
   workspaceId: string,
   periodType: 'WEEKLY' | 'MONTHLY',

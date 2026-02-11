@@ -8,7 +8,7 @@ import { InstagramCard, HighlightBanner } from '../../channel-metrics'
 import { Skeleton } from '../../skeleton'
 import { ChannelGrowth } from './channel-growth'
 import { ContentHighlights } from './content-highlights'
-import { CompetitorPlaceholder } from './competitor-placeholder'
+import { CompetitorComparison } from './competitor-comparison'
 import { Megaphone } from 'lucide-react'
 
 export function MarketingView() {
@@ -143,13 +143,8 @@ export function MarketingView() {
       {/* 콘텐츠 하이라이트 */}
       <ContentHighlights items={contentItems} maxItems={6} />
 
-      {/* 경쟁사 비교 (Placeholder) */}
-      <CompetitorPlaceholder
-        onRequestAccess={() => {
-          // TODO: 얼리 액세스 신청 모달 또는 폼 연결
-          console.log('경쟁사 분석 얼리 액세스 신청')
-        }}
-      />
+      {/* 경쟁사 비교 분석 */}
+      <CompetitorComparison />
     </div>
   )
 }

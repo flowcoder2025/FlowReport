@@ -1,14 +1,17 @@
 'use client'
 
+import { useState } from 'react'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
 import { useDashboardMetrics, useDashboardNotes } from '@/lib/hooks/use-dashboard-data'
-import { KPICardEnhanced, InsightCard, YouTubeDetailCard } from '../../cards'
+import { KPICardEnhanced, InsightCard, YouTubeDetailCard, HeadlineSummary } from '../../cards'
 import { ChannelSummaryTable } from '../../tables'
 import { HorizontalBarChart } from '../../charts'
 import { HighlightBanner, InstagramCard, StoreCard } from '../../channel-metrics'
 import { Skeleton } from '../../skeleton'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 
 export function OverviewView() {
+  const [isKpiExpanded, setIsKpiExpanded] = useState(false)
   const { workspaceId, periodType, periodStart, selectedChannels } = useDashboardContext()
 
   const channelsParam = selectedChannels.length > 0 ? selectedChannels : undefined
@@ -44,8 +47,8 @@ export function OverviewView() {
   const highlights = metrics?.highlights
   const snsChannels = metrics?.sns?.channels || []
 
-  // 8개 KPI
-  const kpis = [
+  // Primary KPIs (핵심 4개 - 항상 표시)
+  const primaryKpis = [
     {
       title: '총 매출',
       value: overview?.totalRevenue ?? null,
@@ -58,16 +61,6 @@ export function OverviewView() {
       previousValue: periodType === 'WEEKLY' ? previous?.wau : previous?.mau,
     },
     {
-      title: 'DAU',
-      value: overview?.dau ?? null,
-      previousValue: previous?.dau ?? null,
-    },
-    {
-      title: '회원가입',
-      value: overview?.signups ?? null,
-      previousValue: previous?.signups ?? null,
-    },
-    {
       title: '총 도달',
       value: overview?.reach ?? null,
       previousValue: previous?.reach ?? null,
@@ -76,6 +69,20 @@ export function OverviewView() {
       title: '총 참여',
       value: overview?.engagement ?? null,
       previousValue: previous?.engagement ?? null,
+    },
+  ]
+
+  // Secondary KPIs (확장 시 표시되는 4개)
+  const secondaryKpis = [
+    {
+      title: 'DAU',
+      value: overview?.dau ?? null,
+      previousValue: previous?.dau ?? null,
+    },
+    {
+      title: '회원가입',
+      value: overview?.signups ?? null,
+      previousValue: previous?.signups ?? null,
     },
     {
       title: '팔로워 순증',
@@ -88,6 +95,9 @@ export function OverviewView() {
       previousValue: previous?.uploads ?? null,
     },
   ]
+
+  // HeadlineSummary용 전체 KPI 배열
+  const allKpis = [...primaryKpis, ...secondaryKpis]
 
   // 채널별 매출 데이터
   const channelRevenueData = []
@@ -105,17 +115,67 @@ export function OverviewView() {
         <HighlightBanner highlights={highlights} />
       )}
 
-      {/* KPI 카드 8개 */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {kpis.map((kpi, index) => (
-          <KPICardEnhanced
-            key={index}
-            title={kpi.title}
-            value={kpi.value ?? null}
-            previousValue={kpi.previousValue ?? null}
-            format={kpi.format}
-          />
-        ))}
+      {/* 헤드라인 요약 */}
+      <HeadlineSummary
+        metrics={allKpis.map(kpi => ({
+          title: kpi.title,
+          value: kpi.value ?? null,
+          previousValue: kpi.previousValue ?? null,
+          ...('format' in kpi && kpi.format ? { format: kpi.format } : {}),
+        }))}
+        periodType={periodType}
+      />
+
+      {/* KPI 카드 섹션 */}
+      <div className="space-y-4">
+        {/* Primary KPIs - 항상 표시 */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {primaryKpis.map((kpi, index) => (
+            <KPICardEnhanced
+              key={`primary-${index}`}
+              title={kpi.title}
+              value={kpi.value ?? null}
+              previousValue={kpi.previousValue ?? null}
+              format={kpi.format}
+            />
+          ))}
+        </div>
+
+        {/* Secondary KPIs - 확장 시 표시 (애니메이션 적용) */}
+        <div
+          className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 overflow-hidden transition-all duration-300 ease-in-out ${
+            isKpiExpanded
+              ? 'max-h-[500px] opacity-100'
+              : 'max-h-0 opacity-0'
+          }`}
+        >
+          {secondaryKpis.map((kpi, index) => (
+            <KPICardEnhanced
+              key={`secondary-${index}`}
+              title={kpi.title}
+              value={kpi.value ?? null}
+              previousValue={kpi.previousValue ?? null}
+            />
+          ))}
+        </div>
+
+        {/* 확장/축소 버튼 */}
+        <button
+          onClick={() => setIsKpiExpanded(!isKpiExpanded)}
+          className="flex items-center justify-center gap-2 w-full py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg border border-dashed border-muted-foreground/30 transition-colors duration-200"
+        >
+          {isKpiExpanded ? (
+            <>
+              <ChevronUp className="h-4 w-4" />
+              접기
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-4 w-4" />
+              더보기 (+4)
+            </>
+          )}
+        </button>
       </div>
 
       {/* 채널 상세 카드 */}
@@ -176,10 +236,17 @@ export function OverviewView() {
 function OverviewSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-[100px]" />
-        ))}
+      {/* 헤드라인 요약 스켈레톤 */}
+      <Skeleton className="h-[80px]" />
+      {/* KPI 카드 스켈레톤 (기본 4개만 표시) */}
+      <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-[100px]" />
+          ))}
+        </div>
+        {/* 확장 버튼 스켈레톤 */}
+        <Skeleton className="h-[40px] w-full" />
       </div>
       <Skeleton className="h-[200px]" />
       <Skeleton className="h-[150px]" />

@@ -4,6 +4,16 @@
 
 export type RiskLevel = 'critical' | 'warning' | 'info'
 
+export interface RecommendedAction {
+  id: string
+  title: string
+  description: string
+  priority: 'high' | 'medium' | 'low'
+  department: 'marketing' | 'commerce' | 'overall'
+  departmentUrl: string
+  steps?: string[]
+}
+
 export interface RiskAlert {
   id: string
   level: RiskLevel
@@ -14,6 +24,7 @@ export interface RiskAlert {
   threshold?: number
   department?: 'marketing' | 'commerce' | 'overall'
   actionUrl?: string
+  recommendedAction?: RecommendedAction
 }
 
 export interface ExecutiveKPI {
