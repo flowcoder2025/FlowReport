@@ -47,15 +47,26 @@ FlowReport는 **ReportingOps SaaS** 플랫폼입니다.
 
 ## 최근 완료된 스프린트
 
+### 성능 최적화 (2026-02-11)
+**P0 (즉시 효과):**
+- Trend API N+1 쿼리 → Promise.all 병렬화 (70-80% 단축)
+- DashboardViewRenderer 7개 뷰 dynamic import
+- 차트/카드 컴포넌트 React.memo (5개)
+
+**P1 (추가 개선):**
+- 뷰 컴포넌트 useMemo 16개 추가
+- 전역 SWRConfig + Provider 설정
+- PDF 렌더러 lazy load
+
+**P2 (기술 부채):**
+- Context 분리 (View/Filter/Workspace)
+- 데이터 프리페칭
+
 ### 목표값 관리 UI (2026-02-11)
 - Workspace에 targetConfig JSON 필드 추가
 - 목표값 설정 API (GET/PATCH /settings/targets)
 - Settings 페이지에 "목표" 탭 추가
 - Executive Dashboard에서 API 목표값 연동
-
-**TODO (다음 스프린트):**
-- TargetConfig 타입 통합 (4곳 → 1곳)
-- 에러 처리 클래스화
 
 ## 아키텍처 결정
 
@@ -115,7 +126,9 @@ CTO 코드 리뷰 (opus)
 
 1. **새 Epic 선정**
    - 다음 스프린트 기획
-2. **기술 부채 해결**
+2. **기술 부채 해결 (P2)**
+   - Context 분리 (View/Filter/Workspace) - 리렌더링 50-70%↓
+   - 데이터 프리페칭
    - CSV 템플릿 상수 통합
    - 채널명 하드코딩 제거
    - TargetConfig 타입 통합

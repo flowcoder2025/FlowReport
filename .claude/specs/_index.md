@@ -20,7 +20,7 @@
 
 ## Drift Tracking
 
-- Last Reviewed Commit: `dfe3c67`
+- Last Reviewed Commit: `7e99447`
 - Last Review Date: 2026-02-11
 
 ## 파일 구조
@@ -57,13 +57,16 @@ specs/
 - menu-ux-improvement Epic 완료 (Phase 4: 템플릿 DB화, OpenAPI 문서)
 - blog-channel Epic 완료 (Phase 1: CSV 확장, Phase 2: GA4 가이드)
 - 목표값 관리 UI 스프린트 완료
+- **성능 최적화 스프린트 완료** (P0 + P1)
+  - API 병렬화, Dynamic Import, React.memo
+  - useMemo, 전역 SWRConfig, PDF lazy load
 
 ### Git Commits
 ```
+7e99447 perf: 성능 최적화 P1 - useMemo, SWRConfig, PDF lazy load
+d456060 perf: 성능 최적화 P0 - API 병렬화, Dynamic Import, React.memo
 dfe3c67 feat: 블로그 채널 Phase 2 - 티스토리 GA4 연동 가이드 및 UI 개선
 0d365db feat: 블로그 채널 Phase 1 - CSV 스키마 확장 및 대시보드 구현
 339e53c feat: 목표값 관리 UI 추가
 bd2af66 feat: 권장 조치 템플릿 DB화 및 OpenAPI 문서 추가
-efa3944 docs: menu-ux-improvement Epic 스펙 문서
-844b99d feat: 메뉴 UX 개선 Phase 3-4
 ```
