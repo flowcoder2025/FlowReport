@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FunnelChart, PieChart } from '../../charts'
 import { StoreTable } from '../../tables'
 import type { StoreMetrics } from '@/lib/hooks/use-dashboard-data'
+import { XCircle, RotateCcw, AlertTriangle } from 'lucide-react'
 
 interface StoreComparisonProps {
   smartstoreMetrics: StoreMetrics | undefined
@@ -84,9 +85,8 @@ export function StoreComparison({
       previousRevenue,
       orders: smartstoreMetrics.orders || 0,
       aov: smartstoreMetrics.avgOrderValue || 0,
-      // TODO: 실제 반품/취소 데이터는 스토어 API 연동 후 제공
-      cancels: null,
-      refunds: null,
+      cancels: smartstoreMetrics.cancels ?? null,
+      refunds: smartstoreMetrics.refunds ?? null,
     })
   }
 
@@ -101,9 +101,8 @@ export function StoreComparison({
       previousRevenue,
       orders: coupangMetrics.orders || 0,
       aov: coupangMetrics.avgOrderValue || 0,
-      // TODO: 실제 반품/취소 데이터는 스토어 API 연동 후 제공
-      cancels: null,
-      refunds: null,
+      cancels: coupangMetrics.cancels ?? null,
+      refunds: coupangMetrics.refunds ?? null,
     })
   }
 
@@ -149,23 +148,116 @@ export function StoreComparison({
         />
       )}
 
-      {/* 반품/취소 현황 안내 */}
+      {/* 반품/취소 현황 */}
       {storeTableData.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium">
-              반품/취소 현황
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground">
-              현재 연동된 채널에서 반품/취소 데이터가 제공되지 않습니다.
-              <br />
-              CSV 업로드 또는 추가 채널 연동 시 해당 데이터가 표시됩니다.
-            </div>
-          </CardContent>
-        </Card>
+        <RefundCancelSummary data={storeTableData} />
       )}
     </section>
+  )
+}
+
+/**
+ * 반품/취소 현황 요약 컴포넌트
+ */
+function RefundCancelSummary({ data }: { data: StoreTableRow[] }) {
+  const totalCancels = data.reduce((sum, r) => sum + (r.cancels ?? 0), 0)
+  const totalRefunds = data.reduce((sum, r) => sum + (r.refunds ?? 0), 0)
+  const totalOrders = data.reduce((sum, r) => sum + r.orders, 0)
+  const hasData = data.some((r) => r.cancels !== null || r.refunds !== null)
+
+  // 손실률 계산 (취소+반품 / 총주문)
+  const lossRate =
+    totalOrders > 0 ? ((totalCancels + totalRefunds) / totalOrders) * 100 : 0
+
+  if (!hasData) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-medium">
+            반품/취소 현황
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground">
+            현재 연동된 채널에서 반품/취소 데이터가 제공되지 않습니다.
+            <br />
+            CSV 업로드 시 cancels_count, refunds_count 컬럼을 포함하면 표시됩니다.
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-medium">
+          반품/취소 현황
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* 취소 건수 */}
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30">
+              <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">취소</p>
+              <p className="text-lg font-semibold">
+                {totalCancels.toLocaleString()}건
+              </p>
+            </div>
+          </div>
+
+          {/* 반품 건수 */}
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30">
+              <RotateCcw className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">반품</p>
+              <p className="text-lg font-semibold">
+                {totalRefunds.toLocaleString()}건
+              </p>
+            </div>
+          </div>
+
+          {/* 손실률 */}
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30">
+              <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">손실률</p>
+              <p className="text-lg font-semibold">
+                {lossRate.toFixed(1)}%
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 스토어별 상세 */}
+        {data.length > 1 && (
+          <div className="mt-4 pt-4 border-t">
+            <p className="text-sm font-medium mb-2">스토어별</p>
+            <div className="space-y-2">
+              {data.map((row) => (
+                <div
+                  key={row.store}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <span className="text-muted-foreground">{row.store}</span>
+                  <span>
+                    취소 {row.cancels?.toLocaleString() ?? '-'}건 / 반품{' '}
+                    {row.refunds?.toLocaleString() ?? '-'}건
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

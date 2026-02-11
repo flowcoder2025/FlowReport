@@ -69,10 +69,16 @@ export interface StoreMetrics {
   orders: number | null
   conversionRate: number | null
   avgOrderValue: number | null
+  cancels: number | null
+  refunds: number | null
+  refundAmount: number | null
+  returns: number | null
   change: {
     revenue: number | null
     orders: number | null
     conversionRate: number | null
+    cancels: number | null
+    refunds: number | null
   }
 }
 
@@ -491,6 +497,41 @@ export function useActionTemplates(workspaceId: string) {
     error,
     mutate: () => mutate(url),
   }
+}
+
+// ===========================================
+// Product Ranking Types & Hook
+// ===========================================
+
+export interface ProductRankingItem {
+  id: string
+  name: string
+  url: string
+  channel: string
+  sales: number
+  revenue: number
+  units: number
+  change: number | null
+}
+
+export interface ProductRankingData {
+  periodType: string
+  periodStart: string
+  periodEnd: string
+  products: ProductRankingItem[]
+  total: number
+}
+
+export function useDashboardProducts(
+  workspaceId: string,
+  periodType: 'WEEKLY' | 'MONTHLY',
+  periodStart: Date,
+  limit = 5
+) {
+  const periodStartStr = format(periodStart, 'yyyy-MM-dd')
+  const url = `/api/workspaces/${workspaceId}/products/top?periodType=${periodType}&periodStart=${periodStartStr}&limit=${limit}`
+
+  return useSWR<ProductRankingData>(workspaceId ? url : null, fetcher)
 }
 
 // ===========================================

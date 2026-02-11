@@ -7,10 +7,11 @@
  * - 전환 퍼널 (방문 -> 장바구니 -> 결제)
  * - 객단가(AOV) 추이
  * - 반품/취소 현황
- * - 상품 순위 (placeholder)
+ * - 상품 순위 TOP 5
  */
 
 export { CommerceDashboardView } from './internal/commerce-dashboard-view'
 export { SalesKPISection } from './internal/sales-kpi-section'
 export { StoreComparison } from './internal/store-comparison'
+export { ProductRanking } from './internal/product-ranking'
 export { ProductRankingPlaceholder } from './internal/product-ranking-placeholder'

@@ -6,7 +6,7 @@ import { InsightCard } from '../../cards'
 import { Skeleton } from '../../skeleton'
 import { SalesKPISection } from './sales-kpi-section'
 import { StoreComparison } from './store-comparison'
-import { ProductRankingPlaceholder } from './product-ranking-placeholder'
+import { ProductRanking } from './product-ranking'
 
 /**
  * Commerce Dashboard View
@@ -107,7 +107,7 @@ export function CommerceDashboardView() {
 
       {/* 3. 상품 순위 & 인사이트 */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <ProductRankingPlaceholder title="상품 판매 순위 (TOP 5)" />
+        <ProductRanking title="상품 판매 순위 (TOP 5)" />
 
         <div className="space-y-4">
           <InsightCard

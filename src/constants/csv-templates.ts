@@ -88,3 +88,18 @@ export function getCsvTemplateContent(channel: ChannelProvider): string {
   const template = CSV_TEMPLATES[channel]
   return `${template.headers}\n${template.sample}`
 }
+
+/**
+ * 상품 데이터 CSV 템플릿 (스마트스토어/쿠팡 공통)
+ */
+export const PRODUCT_CSV_TEMPLATE: CsvTemplate = {
+  headers: 'product_id,product_name,product_url,date,sales_count,sales_amount,units_sold',
+  sample: 'PROD001,상품명 예시,https://smartstore.naver.com/example/products/123,2026-02-10,50,500000,55',
+}
+
+/**
+ * 상품 CSV 템플릿 문자열 생성
+ */
+export function getProductCsvTemplateContent(): string {
+  return `${PRODUCT_CSV_TEMPLATE.headers}\n${PRODUCT_CSV_TEMPLATE.sample}`
+}

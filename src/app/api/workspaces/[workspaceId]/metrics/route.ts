@@ -71,10 +71,16 @@ interface StoreMetrics {
   orders: number | null
   conversionRate: number | null
   avgOrderValue: number | null
+  cancels: number | null
+  refunds: number | null
+  refundAmount: number | null
+  returns: number | null
   change: {
     revenue: number | null
     orders: number | null
     conversionRate: number | null
+    cancels: number | null
+    refunds: number | null
   }
 }
 
@@ -642,6 +648,10 @@ function generateChannelDetails(
         orders,
         conversionRate: current.conversionRate ?? null,
         avgOrderValue,
+        cancels: current.cancels ?? null,
+        refunds: current.refunds ?? null,
+        refundAmount: current.refundAmount ?? null,
+        returns: current.returns ?? null,
         change: {
           revenue: calculateSingleChange(revenue, prevRevenue),
           orders: calculateSingleChange(orders, prev.orders),
@@ -649,6 +659,8 @@ function generateChannelDetails(
             current.conversionRate,
             prev.conversionRate
           ),
+          cancels: calculateSingleChange(current.cancels, prev.cancels),
+          refunds: calculateSingleChange(current.refunds, prev.refunds),
         },
       }
 

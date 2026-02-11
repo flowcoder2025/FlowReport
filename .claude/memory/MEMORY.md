@@ -58,9 +58,11 @@ FlowReport는 **ReportingOps SaaS** 플랫폼입니다.
 - 전역 SWRConfig + Provider 설정
 - PDF 렌더러 lazy load
 
-**P2 (기술 부채):**
+**P2 (기술 부채) - 완료:**
+- 채널 상수 통합 (CHANNEL_GROUPS)
+- CSV 템플릿 상수 통합
+- TargetConfig 타입 통합
 - Context 분리 (View/Filter/Workspace)
-- 데이터 프리페칭
 
 ### 목표값 관리 UI (2026-02-11)
 - Workspace에 targetConfig JSON 필드 추가
@@ -106,6 +108,7 @@ CTO 코드 리뷰 (opus)
 
 | Epic | 완료일 | 요약 |
 |------|--------|------|
+| commerce-enhancement | 2026-02-11 | 반품/취소 분석, 상품 TOP 5 |
 | blog-channel | 2026-02-11 | 블로그 CSV 확장, GA4 연동 가이드 |
 | menu-ux-improvement | 2026-02-11 | 의사결정 대시보드 전환, 메뉴 7→6개 |
 | dashboard-persona-refactoring | 2026-02-10 | 페르소나별 특화 대시보드 |
@@ -124,11 +127,18 @@ CTO 코드 리뷰 (opus)
 
 ## 다음 세션 TODO
 
-1. **새 Epic 선정**
-   - 다음 스프린트 기획
-2. **기술 부채 해결 (P2)**
-   - Context 분리 (View/Filter/Workspace) - 리렌더링 50-70%↓
-   - 데이터 프리페칭
-   - CSV 템플릿 상수 통합
-   - 채널명 하드코딩 제거
-   - TargetConfig 타입 통합
+1. **다음 Epic 진행**: D. 콘텐츠 분석 강화
+   - 콘텐츠 타입별 성과 분석
+   - 채널별 최적 발행 시간
+2. **남은 기술 부채**
+   - 데이터 프리페칭 (네비게이션 체감 속도↑)
+
+## 현재 진행중인 로드맵
+
+```
+C. 커머스 고도화 ✅ 완료
+D. 콘텐츠 분석 강화 ← 다음
+A. 리포트 자동화
+B. 알림 시스템
+E. 고급 분석 도구
+```

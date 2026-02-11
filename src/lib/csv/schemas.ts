@@ -96,6 +96,17 @@ export const contentItemSchema = z.object({
   comments: z.number().int().optional().nullable(),
 })
 
+// Product metrics schema (for store product ranking)
+export const productMetricSchema = z.object({
+  product_id: z.string(),
+  product_name: z.string(),
+  product_url: z.string().url().optional().nullable(),
+  date: dateString,
+  sales_count: z.number().int().optional().nullable(),
+  sales_amount: z.number().optional().nullable(),
+  units_sold: z.number().int().optional().nullable(),
+})
+
 // Map channel providers to their schemas
 export const channelSchemas: Record<ChannelProvider, z.ZodSchema> = {
   GA4: trafficMetricSchema,
@@ -115,3 +126,4 @@ export type BlogMetric = z.infer<typeof blogMetricSchema>
 export type KeywordMetric = z.infer<typeof keywordMetricSchema>
 export type TrafficMetric = z.infer<typeof trafficMetricSchema>
 export type ContentItemInput = z.infer<typeof contentItemSchema>
+export type ProductMetric = z.infer<typeof productMetricSchema>

@@ -12,6 +12,7 @@
 
 | Epic | 완료일 | Phase 수 |
 |------|--------|----------|
+| [commerce-enhancement](./commerce-enhancement/README.md) | 2026-02-11 | 2 |
 | [blog-channel](./blog-channel/README.md) | 2026-02-11 | 2 |
 | [menu-ux-improvement](./menu-ux-improvement/README.md) | 2026-02-11 | 4 |
 | [dashboard-persona-refactoring](./dashboard-persona-refactoring/README.md) | 2026-02-10 | 3 |
@@ -20,7 +21,7 @@
 
 ## Drift Tracking
 
-- Last Reviewed Commit: `7e99447`
+- Last Reviewed Commit: `8397161`
 - Last Review Date: 2026-02-11
 
 ## 파일 구조
@@ -28,6 +29,10 @@
 ```
 specs/
 ├── _index.md
+├── commerce-enhancement/               ← 2026-02-11 완료
+│   ├── README.md
+│   ├── 01-refund-cancel-analysis.md
+│   └── 02-product-top5.md
 ├── blog-channel/                       ← 2026-02-11 완료
 │   ├── README.md
 │   ├── 01-naver-blog-csv.md
@@ -54,15 +59,22 @@ specs/
 ## 최근 변경사항
 
 ### 2026-02-11
+- **commerce-enhancement Epic 완료** (Phase 1: 반품/취소 분석, Phase 2: 상품 TOP 5)
 - menu-ux-improvement Epic 완료 (Phase 4: 템플릿 DB화, OpenAPI 문서)
 - blog-channel Epic 완료 (Phase 1: CSV 확장, Phase 2: GA4 가이드)
 - 목표값 관리 UI 스프린트 완료
 - **성능 최적화 스프린트 완료** (P0 + P1)
   - API 병렬화, Dynamic Import, React.memo
   - useMemo, 전역 SWRConfig, PDF lazy load
+- **P2 기술 부채 스프린트 완료**
+  - 채널 상수 통합 (CHANNEL_GROUPS)
+  - CSV 템플릿 상수 통합
+  - TargetConfig 타입 통합 (4곳 → 1곳)
+  - Context 분리 (View/Filter/Workspace)
 
 ### Git Commits
 ```
+8397161 refactor: P2 기술 부채 해결 - 상수/타입 통합 및 Context 분리
 7e99447 perf: 성능 최적화 P1 - useMemo, SWRConfig, PDF lazy load
 d456060 perf: 성능 최적화 P0 - API 병렬화, Dynamic Import, React.memo
 dfe3c67 feat: 블로그 채널 Phase 2 - 티스토리 GA4 연동 가이드 및 UI 개선
