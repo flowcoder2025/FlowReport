@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireWorkspaceViewer } from '@/lib/permissions/workspace-middleware'
-import { generateMonthlyPDF, MonthlyReportData } from '@/lib/export/pdf-generator'
+import type { MonthlyReportData } from '@/lib/export/pdf-generator'
 import { prisma } from '@/lib/db'
 
 // 채널 이름 매핑
@@ -162,7 +162,8 @@ export async function GET(request: NextRequest) {
           },
         }
 
-    // Generate PDF
+    // Generate PDF (lazy load - @react-pdf/renderer is 300-500KB)
+    const { generateMonthlyPDF } = await import('@/lib/export/pdf-generator')
     const pdfBuffer = await generateMonthlyPDF(reportData)
 
     // Return PDF file

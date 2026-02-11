@@ -173,10 +173,8 @@ export function useDashboardMetrics(
   const channelsParam = channels && channels.length > 0 ? `&channels=${channels.join(',')}` : ''
   const url = `/api/workspaces/${workspaceId}/metrics?periodType=${periodType}&periodStart=${periodStartStr}${channelsParam}`
 
-  return useSWR<MetricsData>(url, fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 30000, // 30 seconds
-  })
+  // 전역 SWR 설정 사용 (src/lib/swr-config.ts)
+  return useSWR<MetricsData>(url, fetcher)
 }
 
 export function useDashboardNotes(
@@ -187,10 +185,8 @@ export function useDashboardNotes(
   const periodStartStr = format(periodStart, 'yyyy-MM-dd')
   const url = `/api/workspaces/${workspaceId}/notes?periodType=${periodType}&periodStart=${periodStartStr}`
 
-  return useSWR<NotesData>(url, fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 30000,
-  })
+  // 전역 SWR 설정 사용
+  return useSWR<NotesData>(url, fetcher)
 }
 
 export interface TrendPeriod {
@@ -223,10 +219,8 @@ export function useDashboardTrendData(
   const channelsParam = channels && channels.length > 0 ? `&channels=${channels.join(',')}` : ''
   const url = `/api/workspaces/${workspaceId}/metrics/trend?periodType=${periodType}&periodCount=${periodCount}${channelsParam}`
 
-  return useSWR<TrendData>(url, fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 60000, // 1 minute for trend data
-  })
+  // 전역 SWR 설정 사용
+  return useSWR<TrendData>(url, fetcher)
 }
 
 // Action Progress Types
@@ -264,10 +258,8 @@ export function useActionProgress(
   const periodStartStr = format(periodStart, 'yyyy-MM-dd')
   const url = `/api/workspaces/${workspaceId}/notes/progress?periodType=${periodType}&periodStart=${periodStartStr}`
 
-  return useSWR<ActionProgressData>(url, fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 30000,
-  })
+  // 전역 SWR 설정 사용
+  return useSWR<ActionProgressData>(url, fetcher)
 }
 
 export async function saveDashboardNotes(
@@ -359,13 +351,10 @@ export interface UpdateCompetitorData {
 export function useCompetitors(workspaceId: string) {
   const url = `/api/workspaces/${workspaceId}/competitors`
 
+  // 전역 SWR 설정 사용
   const { data, error, isLoading, isValidating } = useSWR<CompetitorsData>(
     workspaceId ? url : null,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 30000,
-    }
+    fetcher
   )
 
   return {
@@ -476,13 +465,10 @@ export interface ActionTemplatesData {
 export function useActionTemplates(workspaceId: string) {
   const url = `/api/workspaces/${workspaceId}/action-templates`
 
+  // 전역 SWR 설정 사용
   const { data, error, isLoading, isValidating } = useSWR<ActionTemplatesData>(
     workspaceId ? url : null,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 60000, // 1 minute
-    }
+    fetcher
   )
 
   // TriggerType을 키로 하는 Map 생성 (빠른 조회용)
@@ -526,13 +512,10 @@ export function useWorkspaceTargets(workspaceId: string): {
 } {
   const url = `/api/workspaces/${workspaceId}/settings/targets`
 
+  // 전역 SWR 설정 사용
   const { data, error, isLoading } = useSWR<WorkspaceTargetsData>(
     workspaceId ? url : null,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 60000, // 1 minute - targets rarely change
-    }
+    fetcher
   )
 
   return {

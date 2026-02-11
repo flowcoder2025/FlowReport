@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
 import { useDashboardMetrics, useDashboardTrendData, ChannelTrendMetrics } from '@/lib/hooks/use-dashboard-data'
 import { KPICardEnhanced } from '../../cards'
@@ -50,7 +51,7 @@ export function MarketingView() {
   const youtubeVideos = channelDetails?.YOUTUBE?.topVideos || []
 
   // 마케팅 중심 KPIs (6개)
-  const marketingKpis = [
+  const marketingKpis = useMemo(() => [
     {
       title: '총 도달',
       value: overview?.reach ?? null,
@@ -81,16 +82,22 @@ export function MarketingView() {
       value: overview?.signups ?? null,
       previousValue: previous?.signups ?? null,
     },
-  ]
+  ], [overview, previous, periodType])
 
   // 채널 성장 데이터 구성 (트렌드 데이터 포함)
-  const channelGrowthData = buildChannelGrowthData(
-    channelDetails as Record<string, unknown> | undefined,
-    trendData?.channelMetrics
+  const channelGrowthData = useMemo(
+    () => buildChannelGrowthData(
+      channelDetails as Record<string, unknown> | undefined,
+      trendData?.channelMetrics
+    ),
+    [channelDetails, trendData?.channelMetrics]
   )
 
   // 콘텐츠 하이라이트 데이터 구성
-  const contentItems = buildContentItems(topPosts, youtubeVideos)
+  const contentItems = useMemo(
+    () => buildContentItems(topPosts, youtubeVideos),
+    [topPosts, youtubeVideos]
+  )
 
   return (
     <div className="space-y-6">

@@ -87,10 +87,8 @@ export function AnalyticsView() {
     return `/api/workspaces/${workspaceId}/metrics/raw?${params.toString()}`
   }, [workspaceId, dateRange, periodType, selectedChannels, selectedMetrics])
 
-  const { data, error, isLoading } = useSWR<RawMetricsResponse>(apiUrl, fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 30000,
-  })
+  // 전역 SWR 설정 사용 (src/lib/swr-config.ts)
+  const { data, error, isLoading } = useSWR<RawMetricsResponse>(apiUrl, fetcher)
 
   const handlePresetChange = useCallback((preset: PeriodPreset) => {
     setPeriodPreset(preset)

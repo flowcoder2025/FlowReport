@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
 import { useDashboardMetrics, useDashboardTrendData } from '@/lib/hooks/use-dashboard-data'
 import { Skeleton } from '../../skeleton'
@@ -44,18 +45,30 @@ export function BlogView() {
     )
   }
 
-  // 블로그 메트릭 추출
-  const blogMetrics = extractBlogMetrics(metrics)
-  const prevBlogMetrics = extractPrevBlogMetrics(metrics)
-  const trafficSourceData = extractTrafficSourceData(blogMetrics)
-  const trendChartData = buildTrendChartData(trendData)
+  // 블로그 메트릭 추출 (메모이제이션)
+  const blogMetrics = useMemo(
+    () => extractBlogMetrics(metrics),
+    [metrics]
+  )
+  const prevBlogMetrics = useMemo(
+    () => extractPrevBlogMetrics(metrics),
+    [metrics]
+  )
+  const trafficSourceData = useMemo(
+    () => extractTrafficSourceData(blogMetrics),
+    [blogMetrics]
+  )
+  const trendChartData = useMemo(
+    () => buildTrendChartData(trendData),
+    [trendData]
+  )
 
   // 데이터가 없는지 확인
-  const hasNoData = !blogMetrics || (
+  const hasNoData = useMemo(() => !blogMetrics || (
     blogMetrics.visitors === null &&
     blogMetrics.pageviews === null &&
     blogMetrics.subscribers === null
-  )
+  ), [blogMetrics])
 
   return (
     <div className="space-y-6">

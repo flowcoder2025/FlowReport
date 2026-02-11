@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PeriodSelector } from '../period-selector'
 import { SummaryTab } from './summary-tab'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Download } from 'lucide-react'
+import { Download, Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { generateAndDownloadPNG } from '@/lib/export/png-generator'
 
@@ -16,11 +16,36 @@ interface MonthlyDashboardProps {
 
 export function MonthlyDashboard({ workspaceId }: MonthlyDashboardProps) {
   const [periodStart, setPeriodStart] = useState(() => new Date())
+  const [isExportingPDF, setIsExportingPDF] = useState(false)
 
-  const handleExportPDF = () => {
-    // TODO: Implement PDF export
-    console.log('Export PDF')
-  }
+  const handleExportPDF = useCallback(async () => {
+    setIsExportingPDF(true)
+    try {
+      const period = format(periodStart, 'yyyy-MM')
+      const response = await fetch(
+        `/api/exports/pdf?workspaceId=${workspaceId}&period=${period}`
+      )
+
+      if (!response.ok) {
+        throw new Error('PDF export failed')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `monthly-report-${period}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('PDF export error:', error)
+      // TODO: Show toast notification
+    } finally {
+      setIsExportingPDF(false)
+    }
+  }, [workspaceId, periodStart])
 
   const handleExportPNG = async () => {
     const filename = `monthly-report-${format(periodStart, 'yyyy-MM')}.png`
@@ -43,9 +68,13 @@ export function MonthlyDashboard({ workspaceId }: MonthlyDashboardProps) {
             <Download className="h-4 w-4 mr-2" />
             PNG
           </Button>
-          <Button onClick={handleExportPDF}>
-            <Download className="h-4 w-4 mr-2" />
-            PDF
+          <Button onClick={handleExportPDF} disabled={isExportingPDF}>
+            {isExportingPDF ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            {isExportingPDF ? '생성 중...' : 'PDF'}
           </Button>
         </div>
       </div>

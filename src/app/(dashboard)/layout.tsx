@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { DashboardNav } from '@/components/dashboard/nav'
+import { SWRProvider } from '@/components/providers/swr-provider'
 
 export default async function DashboardLayout({
   children,
@@ -13,9 +14,11 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <DashboardNav user={session.user} />
-      <main>{children}</main>
-    </div>
+    <SWRProvider>
+      <div className="min-h-screen bg-white">
+        <DashboardNav user={session.user} />
+        <main>{children}</main>
+      </div>
+    </SWRProvider>
   )
 }

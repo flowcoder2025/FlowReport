@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
 import { useDashboardMetrics, useDashboardTrendData } from '@/lib/hooks/use-dashboard-data'
@@ -130,6 +131,13 @@ function PerformanceOverviewContent({
   periodType,
   channelDetails,
 }: PerformanceOverviewContentProps) {
+  // 상수 배열은 빈 의존성으로 메모이제이션
+  const lines = useMemo(() => [
+    { dataKey: 'revenue', name: '매출', color: '#3b82f6' },
+    { dataKey: 'reach', name: '도달', color: '#22c55e' },
+    { dataKey: 'engagement', name: '참여', color: '#f59e0b' },
+  ], [])
+
   return (
     <div className="space-y-6">
       {/* 채널별 요약 테이블 (전체) */}
@@ -149,11 +157,7 @@ function PerformanceOverviewContent({
           </h3>
           <TrendLineChart
             data={periods}
-            lines={[
-              { dataKey: 'revenue', name: '매출', color: '#3b82f6' },
-              { dataKey: 'reach', name: '도달', color: '#22c55e' },
-              { dataKey: 'engagement', name: '참여', color: '#f59e0b' },
-            ]}
+            lines={lines}
             height={300}
           />
         </div>
@@ -196,15 +200,15 @@ function ContentAnalysisContent({ metrics }: ContentAnalysisContentProps) {
   const topPosts = metrics?.sns?.topPosts || []
   const youtubeVideos = metrics?.channelDetails?.YOUTUBE?.topVideos || []
 
-  const bubbleData = topPosts.map((post: any, index: number) => ({
+  const bubbleData = useMemo(() => topPosts.map((post: any, index: number) => ({
     name: post.title || `콘텐츠 ${index + 1}`,
     x: post.views || 0,
     y: post.engagement ? (post.engagement / (post.views || 1)) * 100 : 0,
     z: post.engagement || 100,
     color: post.channel === 'YOUTUBE' ? '#ef4444' : post.channel === 'META_INSTAGRAM' ? '#ec4899' : '#3b82f6',
-  }))
+  })), [topPosts])
 
-  const topContentItems = [
+  const topContentItems = useMemo(() => [
     ...topPosts.map((post: any) => ({
       title: post.title || '제목 없음',
       channel: getChannelLabel(post.channel),
@@ -219,9 +223,9 @@ function ContentAnalysisContent({ metrics }: ContentAnalysisContentProps) {
       engagementRate: video.engagement && video.views ? (video.engagement / video.views) * 100 : 0,
       url: video.url,
     })),
-  ].sort((a, b) => b.views - a.views)
+  ].sort((a, b) => b.views - a.views), [topPosts, youtubeVideos])
 
-  const tableData = topContentItems.map((item, index) => ({
+  const tableData = useMemo(() => topContentItems.map((item, index) => ({
     id: `content-${index}`,
     title: item.title,
     channel: item.channel,
@@ -231,7 +235,7 @@ function ContentAnalysisContent({ metrics }: ContentAnalysisContentProps) {
     comments: 0,
     engagementRate: item.engagementRate,
     url: item.url,
-  }))
+  })), [topContentItems])
 
   return (
     <div className="space-y-6">

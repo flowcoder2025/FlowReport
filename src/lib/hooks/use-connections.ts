@@ -27,10 +27,8 @@ interface ConnectionsResponse {
 export function useConnections(workspaceId: string) {
   const url = `/api/workspaces/${workspaceId}/connections`
 
-  const result = useSWR<ConnectionsResponse>(url, fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 60000,
-  })
+  // 전역 SWR 설정 사용 (src/lib/swr-config.ts)
+  const result = useSWR<ConnectionsResponse>(url, fetcher)
 
   const transformedData = result.data
     ? {

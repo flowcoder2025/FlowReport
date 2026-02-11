@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
 import { useDashboardMetrics, useDashboardNotes } from '@/lib/hooks/use-dashboard-data'
 import { KPICardEnhanced, InsightCard, YouTubeDetailCard, HeadlineSummary } from '../../cards'
@@ -48,7 +48,7 @@ export function OverviewView() {
   const snsChannels = metrics?.sns?.channels || []
 
   // Primary KPIs (핵심 4개 - 항상 표시)
-  const primaryKpis = [
+  const primaryKpis = useMemo(() => [
     {
       title: '총 매출',
       value: overview?.totalRevenue ?? null,
@@ -70,10 +70,10 @@ export function OverviewView() {
       value: overview?.engagement ?? null,
       previousValue: previous?.engagement ?? null,
     },
-  ]
+  ], [overview, previous, periodType])
 
   // Secondary KPIs (확장 시 표시되는 4개)
-  const secondaryKpis = [
+  const secondaryKpis = useMemo(() => [
     {
       title: 'DAU',
       value: overview?.dau ?? null,
@@ -94,19 +94,22 @@ export function OverviewView() {
       value: overview?.uploads ?? null,
       previousValue: previous?.uploads ?? null,
     },
-  ]
+  ], [overview, previous])
 
   // HeadlineSummary용 전체 KPI 배열
-  const allKpis = [...primaryKpis, ...secondaryKpis]
+  const allKpis = useMemo(() => [...primaryKpis, ...secondaryKpis], [primaryKpis, secondaryKpis])
 
   // 채널별 매출 데이터
-  const channelRevenueData = []
-  if (channelDetails?.SMARTSTORE?.revenue) {
-    channelRevenueData.push({ name: '스마트스토어', value: channelDetails.SMARTSTORE.revenue, color: '#22c55e' })
-  }
-  if (channelDetails?.COUPANG?.revenue) {
-    channelRevenueData.push({ name: '쿠팡', value: channelDetails.COUPANG.revenue, color: '#3b82f6' })
-  }
+  const channelRevenueData = useMemo(() => {
+    const data: Array<{ name: string; value: number; color: string }> = []
+    if (channelDetails?.SMARTSTORE?.revenue) {
+      data.push({ name: '스마트스토어', value: channelDetails.SMARTSTORE.revenue, color: '#22c55e' })
+    }
+    if (channelDetails?.COUPANG?.revenue) {
+      data.push({ name: '쿠팡', value: channelDetails.COUPANG.revenue, color: '#3b82f6' })
+    }
+    return data
+  }, [channelDetails])
 
   return (
     <div className="space-y-6">
