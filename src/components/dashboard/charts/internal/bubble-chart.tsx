@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import {
   ScatterChart,
   Scatter,
@@ -37,7 +38,7 @@ const DEFAULT_COLORS = [
   '#ec4899',
 ]
 
-export function BubbleChart({
+export const BubbleChart = memo(function BubbleChart({
   data,
   xLabel = 'X',
   yLabel = 'Y',
@@ -114,7 +115,7 @@ export function BubbleChart({
       </ScatterChart>
     </ResponsiveContainer>
   )
-}
+})
 
 function formatNumber(value: number): string {
   if (value >= 1000000) {

@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import {
   PieChart as RechartsPieChart,
   Pie,
@@ -34,7 +35,7 @@ const DEFAULT_COLORS = [
   '#84cc16',
 ]
 
-export function PieChart({
+export const PieChart = memo(function PieChart({
   data,
   height = 250,
   showLegend = true,
@@ -94,7 +95,7 @@ export function PieChart({
       </RechartsPieChart>
     </ResponsiveContainer>
   )
-}
+})
 
 function formatNumber(value: number): string {
   if (value >= 1000000) {

@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import {
   BarChart,
   Bar,
@@ -33,7 +34,7 @@ const DEFAULT_COLORS = [
   '#ec4899',
 ]
 
-export function HorizontalBarChart({
+export const HorizontalBarChart = memo(function HorizontalBarChart({
   data,
   height = 250,
   showGrid = false,
@@ -92,7 +93,7 @@ export function HorizontalBarChart({
       </BarChart>
     </ResponsiveContainer>
   )
-}
+})
 
 function formatNumber(value: number): string {
   if (value >= 1000000) {

@@ -73,30 +73,44 @@ export async function GET(
     const youtubeData: Array<{ period: string; subscribers: number; views: number }> = []
     const instagramData: Array<{ period: string; followers: number; reach: number }> = []
 
-    for (let i = periodCount - 1; i >= 0; i--) {
-      const { start, end, label } = getPeriodBounds(now, periodType as PeriodType, i)
+    // 1. 모든 기간의 쿼리 정보를 배열로 생성 (병렬화 준비)
+    const periodQueries = Array.from({ length: periodCount }, (_, i) => {
+      const idx = periodCount - 1 - i
+      const { start, end, label } = getPeriodBounds(now, periodType as PeriodType, idx)
+      return {
+        start,
+        end,
+        label,
+        promise: prisma.metricSnapshot.findMany({
+          where: {
+            workspaceId,
+            periodType: {
+              in: [periodType as PeriodType, 'DAILY'],
+            },
+            periodStart: {
+              gte: start,
+              lte: end,
+            },
+            ...(channelFilter && channelFilter.length > 0 && {
+              connection: { provider: { in: channelFilter } },
+            }),
+          },
+          include: {
+            connection: {
+              select: { provider: true },
+            },
+          },
+        }),
+      }
+    })
 
-      // Fetch snapshots for this period
-      const snapshots = await prisma.metricSnapshot.findMany({
-        where: {
-          workspaceId,
-          periodType: {
-            in: [periodType as PeriodType, 'DAILY'],
-          },
-          periodStart: {
-            gte: start,
-            lte: end,
-          },
-          ...(channelFilter && channelFilter.length > 0 && {
-            connection: { provider: { in: channelFilter } },
-          }),
-        },
-        include: {
-          connection: {
-            select: { provider: true },
-          },
-        },
-      })
+    // 2. 모든 쿼리를 병렬 실행
+    const snapshotResults = await Promise.all(periodQueries.map(q => q.promise))
+
+    // 3. 결과 처리 (기존 로직 유지)
+    periodQueries.forEach((q, i) => {
+      const snapshots = snapshotResults[i]
+      const { start, end, label } = q
 
       // Aggregate metrics
       let revenue = 0
@@ -139,7 +153,7 @@ export async function GET(
       // 채널별 트렌드 데이터 추가
       youtubeData.push({ period: label, subscribers: youtubeSubscribers, views: youtubeViews })
       instagramData.push({ period: label, followers: instagramFollowers, reach: instagramReach })
-    }
+    })
 
     // 채널별 메트릭스 구성 (데이터가 있는 채널만 포함)
     const channelMetrics: ChannelTrendMetrics = {}

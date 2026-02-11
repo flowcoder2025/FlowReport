@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import {
   LineChart,
   Line,
@@ -28,7 +29,7 @@ interface TrendLineChartProps {
   showLegend?: boolean
 }
 
-export function TrendLineChart({
+export const TrendLineChart = memo(function TrendLineChart({
   data,
   lines,
   height = 300,
@@ -89,7 +90,7 @@ export function TrendLineChart({
       </LineChart>
     </ResponsiveContainer>
   )
-}
+})
 
 function formatNumber(value: number): string {
   if (value >= 1000000) {

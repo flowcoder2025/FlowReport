@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
@@ -14,7 +15,7 @@ interface KPICardEnhancedProps {
   naReason?: string
 }
 
-export function KPICardEnhanced({
+export const KPICardEnhanced = memo(function KPICardEnhanced({
   title,
   value,
   previousValue,
@@ -87,7 +88,7 @@ export function KPICardEnhanced({
       </CardContent>
     </Card>
   )
-}
+})
 
 function formatValue(v: number, format: string): string {
   switch (format) {

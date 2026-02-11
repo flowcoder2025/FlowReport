@@ -1,16 +1,59 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
-import {
-  OverviewView,
-  PerformanceView,
-  CommerceView,
-} from './views'
-import { ExecutiveView } from './executive'
-import { MarketingView } from './marketing'
-import { CommerceDashboardView } from './commerce'
-import { AnalyticsView } from './analytics'
-import { BlogView } from './blog'
+import { Skeleton } from './skeleton'
+
+// 로딩 스켈레톤 컴포넌트
+function ViewSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Skeleton className="h-8 w-48" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-[100px]" />
+        ))}
+      </div>
+      <Skeleton className="h-[300px]" />
+    </div>
+  )
+}
+
+// Dynamic imports - 코드 스플리팅으로 초기 번들 사이즈 최적화
+const OverviewView = dynamic(
+  () => import('./views').then((mod) => ({ default: mod.OverviewView })),
+  { loading: () => <ViewSkeleton /> }
+)
+
+const PerformanceView = dynamic(
+  () => import('./views').then((mod) => ({ default: mod.PerformanceView })),
+  { loading: () => <ViewSkeleton /> }
+)
+
+const CommerceView = dynamic(
+  () => import('./views').then((mod) => ({ default: mod.CommerceView })),
+  { loading: () => <ViewSkeleton /> }
+)
+
+const ExecutiveView = dynamic(
+  () => import('./executive').then((mod) => ({ default: mod.ExecutiveView })),
+  { loading: () => <ViewSkeleton /> }
+)
+
+const MarketingView = dynamic(
+  () => import('./marketing').then((mod) => ({ default: mod.MarketingView })),
+  { loading: () => <ViewSkeleton /> }
+)
+
+const AnalyticsView = dynamic(
+  () => import('./analytics').then((mod) => ({ default: mod.AnalyticsView })),
+  { loading: () => <ViewSkeleton /> }
+)
+
+const BlogView = dynamic(
+  () => import('./blog').then((mod) => ({ default: mod.BlogView })),
+  { loading: () => <ViewSkeleton /> }
+)
 
 export function DashboardViewRenderer() {
   const { activeView } = useDashboardContext()
