@@ -2,14 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PieChart } from '../../charts'
-
-// 유입 경로별 색상 상수
-const TRAFFIC_SOURCE_COLORS = {
-  search: '#3b82f6',    // blue
-  direct: '#22c55e',    // green
-  social: '#f59e0b',    // amber
-  referral: '#8b5cf6',  // purple
-}
+import { TRAFFIC_SOURCE_COLORS } from '@/constants'
 
 interface TrafficSourceData {
   searchVisitors: number | null

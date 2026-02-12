@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { CHANNEL_COLORS } from '@/constants'
 import type { SelectedMetric } from './metric-selector'
 import type { RawMetricData } from './data-explorer'
 
@@ -39,18 +40,6 @@ interface ScatterDataPoint {
   channel: ChannelProvider
   channelName: string
   date: string
-}
-
-const CHANNEL_COLORS: Record<ChannelProvider, string> = {
-  GA4: '#f97316',
-  META_INSTAGRAM: '#ec4899',
-  META_FACEBOOK: '#3b82f6',
-  YOUTUBE: '#ef4444',
-  SMARTSTORE: '#22c55e',
-  COUPANG: '#0ea5e9',
-  GOOGLE_SEARCH_CONSOLE: '#eab308',
-  NAVER_BLOG: '#10b981',
-  NAVER_KEYWORDS: '#14b8a6',
 }
 
 /**

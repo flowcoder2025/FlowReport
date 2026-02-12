@@ -8,6 +8,7 @@ import {
   Font,
 } from '@react-pdf/renderer'
 import { MonthlyReportData, formatPdfValue } from './pdf-generator'
+import { STATUS_COLORS } from '@/constants'
 
 // Noto Sans KR 폰트 등록 (Google Fonts CDN)
 Font.register({
@@ -90,10 +91,10 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
   kpiChangePositive: {
-    color: '#10b981',
+    color: STATUS_COLORS.positive,
   },
   kpiChangeNegative: {
-    color: '#ef4444',
+    color: STATUS_COLORS.negative,
   },
   // 채널믹스 스타일
   channelRow: {
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
   },
   channelBarFill: {
     height: '100%',
-    backgroundColor: '#3b82f6',
+    backgroundColor: STATUS_COLORS.primary,
     borderRadius: 2,
   },
   channelPercent: {

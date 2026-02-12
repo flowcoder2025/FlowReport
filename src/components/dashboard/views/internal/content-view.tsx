@@ -6,6 +6,7 @@ import { TopContentCard } from '../../cards'
 import { BubbleChart } from '../../charts'
 import { ContentTable } from '../../tables'
 import { Skeleton } from '../../skeleton'
+import { getChannelColor, CHANNEL_LABELS } from '@/constants'
 
 export function ContentView() {
   const { workspaceId, periodType, periodStart, selectedChannels } = useDashboardContext()
@@ -38,7 +39,7 @@ export function ContentView() {
     x: post.views || 0,
     y: post.engagement ? (post.engagement / (post.views || 1)) * 100 : 0,
     z: post.engagement || 100,
-    color: post.channel === 'YOUTUBE' ? '#ef4444' : post.channel === 'META_INSTAGRAM' ? '#ec4899' : '#3b82f6',
+    color: getChannelColor(post.channel),
   }))
 
   const topContentItems = [
@@ -51,7 +52,7 @@ export function ContentView() {
     })),
     ...youtubeVideos.map(video => ({
       title: video.title || '제목 없음',
-      channel: 'YouTube',
+      channel: CHANNEL_LABELS.YOUTUBE,
       views: video.views || 0,
       engagementRate: video.engagement && video.views ? (video.engagement / video.views) * 100 : 0,
       url: video.url,
@@ -98,13 +99,7 @@ export function ContentView() {
 }
 
 function getChannelLabel(channel: string): string {
-  const labels: Record<string, string> = {
-    YOUTUBE: 'YouTube',
-    META_INSTAGRAM: 'Instagram',
-    META_FACEBOOK: 'Facebook',
-    NAVER_BLOG: '네이버 블로그',
-  }
-  return labels[channel] || channel
+  return CHANNEL_LABELS[channel as keyof typeof CHANNEL_LABELS] || channel
 }
 
 function ContentSkeleton() {

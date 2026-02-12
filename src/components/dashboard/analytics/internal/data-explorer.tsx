@@ -14,6 +14,7 @@ import { ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 import { ChannelProvider } from '@prisma/client'
 import { cn } from '@/lib/utils'
+import { CHANNEL_BADGE_COLORS } from '@/constants'
 import type { SelectedMetric } from './metric-selector'
 
 export interface RawMetricData {
@@ -37,18 +38,6 @@ type SortDirection = 'asc' | 'desc'
 type SortConfig = {
   key: string
   direction: SortDirection
-}
-
-const CHANNEL_COLORS: Record<ChannelProvider, string> = {
-  GA4: 'bg-orange-100 text-orange-700',
-  META_INSTAGRAM: 'bg-pink-100 text-pink-700',
-  META_FACEBOOK: 'bg-blue-100 text-blue-700',
-  YOUTUBE: 'bg-red-100 text-red-700',
-  SMARTSTORE: 'bg-green-100 text-green-700',
-  COUPANG: 'bg-sky-100 text-sky-700',
-  GOOGLE_SEARCH_CONSOLE: 'bg-yellow-100 text-yellow-700',
-  NAVER_BLOG: 'bg-emerald-100 text-emerald-700',
-  NAVER_KEYWORDS: 'bg-teal-100 text-teal-700',
 }
 
 export function DataExplorer({
@@ -185,7 +174,7 @@ export function DataExplorer({
                   <span
                     className={cn(
                       'inline-flex items-center rounded px-2 py-0.5 text-xs font-medium',
-                      CHANNEL_COLORS[row.channel] || 'bg-gray-100 text-gray-700'
+                      CHANNEL_BADGE_COLORS[row.channel] || 'bg-gray-100 text-gray-700'
                     )}
                   >
                     {row.channelName}

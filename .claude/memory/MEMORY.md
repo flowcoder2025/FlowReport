@@ -10,10 +10,13 @@
 - **운영 URL**: https://flowreport.vercel.app
 
 ## 완료된 Epics
+- **SSOT 리팩토링**: 하드코딩 완전 제거 (2026-02-12 완료)
 - **Epic A: 리포트 자동화** (2026-02-12 완료)
 
 ## 아키텍처 결정
 - **모듈 구조**: index.ts (Public API) + internal/ (Private)
+- **SSOT 3파일 체제**: channels.ts (채널), metrics.ts (메트릭), colors.ts (UI 컬러)
+- **하드코딩 금지**: 채널 라벨/컬러/메트릭/차트팔레트 모두 src/constants/ 참조 필수
 - **이메일**: Resend 사용
 - **Cron**: Vercel Cron (Hobby: 하루 1회 제한)
 - **Meta OAuth**: 장기 토큰 교환 + Page Access Token 우선 사용
@@ -50,5 +53,6 @@
 - 감사 로그 보존 (connectionId nullable)
 
 ## 최근 작업
+- 2026-02-12: SSOT 리팩토링 완료 - 40개 파일 수정, 하드코딩 0건 달성 (커밋 필요)
 - 2026-02-12: Meta 채널 연동 완료 (Facebook + Instagram 동기화 성공)
 - 2026-02-12: Facebook 카드 컴포넌트 추가, 인사이트 에러 처리 개선

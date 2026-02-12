@@ -11,6 +11,7 @@ import { TrendLineChart, BubbleChart } from '../../charts'
 import { InstagramCard, StoreCard } from '../../channel-metrics'
 import { Skeleton } from '../../skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { getChannelColor, CHANNEL_LABELS, METRIC_LABELS, METRIC_TREND_COLORS } from '@/constants'
 
 // 탭 상수 정의
 const PERFORMANCE_TABS = {
@@ -133,9 +134,9 @@ function PerformanceOverviewContent({
 }: PerformanceOverviewContentProps) {
   // 상수 배열은 빈 의존성으로 메모이제이션
   const lines = useMemo(() => [
-    { dataKey: 'revenue', name: '매출', color: '#3b82f6' },
-    { dataKey: 'reach', name: '도달', color: '#22c55e' },
-    { dataKey: 'engagement', name: '참여', color: '#f59e0b' },
+    { dataKey: 'revenue', name: METRIC_LABELS.revenue, color: METRIC_TREND_COLORS.revenue },
+    { dataKey: 'reach', name: METRIC_LABELS.reach, color: METRIC_TREND_COLORS.reach },
+    { dataKey: 'engagement', name: METRIC_LABELS.engagement, color: METRIC_TREND_COLORS.engagement },
   ], [])
 
   return (
@@ -180,11 +181,11 @@ function PerformanceOverviewContent({
 
         {/* 스토어 카드들 */}
         {channelDetails?.SMARTSTORE && (
-          <StoreCard metrics={channelDetails.SMARTSTORE} name="스마트스토어" />
+          <StoreCard metrics={channelDetails.SMARTSTORE} name={CHANNEL_LABELS.SMARTSTORE} />
         )}
 
         {channelDetails?.COUPANG && (
-          <StoreCard metrics={channelDetails.COUPANG} name="쿠팡" />
+          <StoreCard metrics={channelDetails.COUPANG} name={CHANNEL_LABELS.COUPANG} />
         )}
       </div>
     </div>
@@ -205,7 +206,7 @@ function ContentAnalysisContent({ metrics }: ContentAnalysisContentProps) {
     x: post.views || 0,
     y: post.engagement ? (post.engagement / (post.views || 1)) * 100 : 0,
     z: post.engagement || 100,
-    color: post.channel === 'YOUTUBE' ? '#ef4444' : post.channel === 'META_INSTAGRAM' ? '#ec4899' : '#3b82f6',
+    color: getChannelColor(post.channel),
   })), [topPosts])
 
   const topContentItems = useMemo(() => [
@@ -218,7 +219,7 @@ function ContentAnalysisContent({ metrics }: ContentAnalysisContentProps) {
     })),
     ...youtubeVideos.map((video: any) => ({
       title: video.title || '제목 없음',
-      channel: 'YouTube',
+      channel: CHANNEL_LABELS.YOUTUBE,
       views: video.views || 0,
       engagementRate: video.engagement && video.views ? (video.engagement / video.views) * 100 : 0,
       url: video.url,
@@ -264,15 +265,8 @@ function ContentAnalysisContent({ metrics }: ContentAnalysisContentProps) {
   )
 }
 
-// 채널 라벨 변환 함수
 function getChannelLabel(channel: string): string {
-  const labels: Record<string, string> = {
-    YOUTUBE: 'YouTube',
-    META_INSTAGRAM: 'Instagram',
-    META_FACEBOOK: 'Facebook',
-    NAVER_BLOG: '네이버 블로그',
-  }
-  return labels[channel] || channel
+  return CHANNEL_LABELS[channel as keyof typeof CHANNEL_LABELS] || channel
 }
 
 function PerformanceSkeleton() {

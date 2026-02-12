@@ -1,7 +1,7 @@
 # FlowReport Specs Index
 
 > 마지막 업데이트: 2026-02-12
-> Last Reviewed Commit: (TBD - 첫 커밋 후 업데이트)
+> Last Reviewed Commit: `4401919`
 
 ## Active Epics
 | Epic | 상태 | Phase 진행 | 마지막 업데이트 |
@@ -11,12 +11,17 @@
 ## Completed Epics
 | Epic | 완료일 | Phase 수 |
 |------|--------|----------|
+| [ssot-refactoring](./ssot-refactoring/README.md) | 2026-02-12 | 2 |
 | [report-automation](./report-automation/README.md) | 2026-02-12 | 5 |
 
 ## 파일 구조
 ```
 specs/
 ├── _index.md
+├── ssot-refactoring/
+│   ├── README.md
+│   ├── 01-ssot-constants.md
+│   └── 02-complete-cleanup.md
 └── report-automation/
     ├── README.md
     ├── 01-db-schema.md
@@ -29,5 +34,5 @@ specs/
 ```
 
 ## Drift Tracking
-- Last Reviewed Commit: `3858791`
+- Last Reviewed Commit: `4401919`
 - Last Review Date: 2026-02-12

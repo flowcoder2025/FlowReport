@@ -1,5 +1,6 @@
 import { StoreBaseConnector, StoreCredentials } from './store-base'
 import { ConnectorConfig, ConnectionTestResult } from './base'
+import { CHANNEL_LABELS } from '@/constants'
 
 export interface SmartStoreCredentials extends StoreCredentials {
   storeName?: string
@@ -34,7 +35,7 @@ export class SmartStoreConnector extends StoreBaseConnector {
     const creds = this.credentials as SmartStoreCredentials
     return {
       valid: true,
-      accountName: creds.storeName || '스마트스토어',
+      accountName: creds.storeName || CHANNEL_LABELS.SMARTSTORE,
     }
   }
 }

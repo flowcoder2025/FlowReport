@@ -25,6 +25,7 @@ import {
   ShoppingBag,
   Upload,
 } from 'lucide-react'
+import { CHANNEL_LABELS } from '@/constants'
 
 interface AddChannelModalProps {
   workspaceId: string
@@ -56,7 +57,7 @@ interface ChannelConfig {
 const CHANNEL_CONFIGS: ChannelConfig[] = [
   {
     provider: 'GA4',
-    displayName: 'Google Analytics 4',
+    displayName: CHANNEL_LABELS.GA4,
     icon: <BarChart3 className="h-5 w-5 text-orange-500" />,
     credentialType: 'SERVICE_ACCOUNT_JSON',
     isApiSupported: true,
@@ -67,7 +68,7 @@ const CHANNEL_CONFIGS: ChannelConfig[] = [
   },
   {
     provider: 'YOUTUBE',
-    displayName: 'YouTube',
+    displayName: CHANNEL_LABELS.YOUTUBE,
     icon: <Youtube className="h-5 w-5 text-red-500" />,
     credentialType: 'OAUTH_TOKEN',
     isApiSupported: true,
@@ -78,7 +79,7 @@ const CHANNEL_CONFIGS: ChannelConfig[] = [
   },
   {
     provider: 'META_INSTAGRAM',
-    displayName: 'Instagram',
+    displayName: CHANNEL_LABELS.META_INSTAGRAM,
     icon: <Instagram className="h-5 w-5 text-pink-500" />,
     credentialType: 'OAUTH_TOKEN',
     isApiSupported: true,
@@ -89,7 +90,7 @@ const CHANNEL_CONFIGS: ChannelConfig[] = [
   },
   {
     provider: 'META_FACEBOOK',
-    displayName: 'Facebook',
+    displayName: CHANNEL_LABELS.META_FACEBOOK,
     icon: <Facebook className="h-5 w-5 text-blue-600" />,
     credentialType: 'OAUTH_TOKEN',
     isApiSupported: true,
@@ -100,7 +101,7 @@ const CHANNEL_CONFIGS: ChannelConfig[] = [
   },
   {
     provider: 'SMARTSTORE',
-    displayName: '스마트스토어',
+    displayName: CHANNEL_LABELS.SMARTSTORE,
     icon: <ShoppingBag className="h-5 w-5 text-green-500" />,
     credentialType: 'CSV_ONLY',
     isApiSupported: false,
@@ -111,7 +112,7 @@ const CHANNEL_CONFIGS: ChannelConfig[] = [
   },
   {
     provider: 'COUPANG',
-    displayName: '쿠팡',
+    displayName: CHANNEL_LABELS.COUPANG,
     icon: <ShoppingBag className="h-5 w-5 text-blue-500" />,
     credentialType: 'CSV_ONLY',
     isApiSupported: false,
@@ -122,7 +123,7 @@ const CHANNEL_CONFIGS: ChannelConfig[] = [
   },
   {
     provider: 'NAVER_BLOG',
-    displayName: '네이버 블로그',
+    displayName: CHANNEL_LABELS.NAVER_BLOG,
     icon: <LineChart className="h-5 w-5 text-green-600" />,
     credentialType: 'CSV_ONLY',
     isApiSupported: false,

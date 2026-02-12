@@ -5,7 +5,7 @@ import { MetaConnector } from './meta'
 import { YouTubeConnector } from './youtube'
 import { SmartStoreConnector } from './smartstore'
 import { CoupangConnector } from './coupang'
-import { CHANNEL_GROUPS } from '@/constants'
+import { CHANNEL_GROUPS, CHANNEL_LABELS } from '@/constants'
 
 export * from './base'
 export * from './ga4'
@@ -76,18 +76,8 @@ export function isCsvOnly(provider: ChannelProvider): boolean {
 
 /**
  * Get display name for a provider
+ * SSOT: CHANNEL_LABELS를 참조
  */
 export function getProviderDisplayName(provider: ChannelProvider): string {
-  const displayNames: Record<ChannelProvider, string> = {
-    GA4: 'Google Analytics 4',
-    META_INSTAGRAM: 'Instagram',
-    META_FACEBOOK: 'Facebook',
-    YOUTUBE: 'YouTube',
-    SMARTSTORE: '스마트스토어',
-    COUPANG: '쿠팡',
-    NAVER_BLOG: '네이버 블로그',
-    NAVER_KEYWORDS: '네이버 키워드',
-    GOOGLE_SEARCH_CONSOLE: 'Google Search Console',
-  }
-  return displayNames[provider] || provider
+  return CHANNEL_LABELS[provider] || provider
 }

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useDashboardMetrics } from '@/lib/hooks/use-dashboard-data'
 import { Skeleton } from '../skeleton'
 import { ImageIcon } from 'lucide-react'
+import { CHANNEL_LABELS } from '@/constants'
 
 interface SNSTabProps {
   workspaceId: string
@@ -187,11 +188,5 @@ function renderChange(change: number | null | undefined) {
 }
 
 function getChannelDisplayName(channel: string): string {
-  const names: Record<string, string> = {
-    META_INSTAGRAM: 'Instagram',
-    META_FACEBOOK: 'Facebook',
-    YOUTUBE: 'YouTube',
-    NAVER_BLOG: '네이버 블로그',
-  }
-  return names[channel] || channel
+  return CHANNEL_LABELS[channel as keyof typeof CHANNEL_LABELS] || channel
 }

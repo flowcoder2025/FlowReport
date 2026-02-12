@@ -5,6 +5,7 @@ import { FunnelChart, PieChart } from '../../charts'
 import { StoreTable } from '../../tables'
 import type { StoreMetrics } from '@/lib/hooks/use-dashboard-data'
 import { XCircle, RotateCcw, AlertTriangle } from 'lucide-react'
+import { CHANNEL_LABELS, CHANNEL_COLORS } from '@/constants'
 
 interface StoreComparisonProps {
   smartstoreMetrics: StoreMetrics | undefined
@@ -58,16 +59,16 @@ export function StoreComparison({
   const pieData: Array<{ name: string; value: number; color: string }> = []
   if (smartstoreMetrics?.revenue) {
     pieData.push({
-      name: '스마트스토어',
+      name: CHANNEL_LABELS.SMARTSTORE,
       value: smartstoreMetrics.revenue,
-      color: '#22c55e',
+      color: CHANNEL_COLORS.SMARTSTORE,
     })
   }
   if (coupangMetrics?.revenue) {
     pieData.push({
-      name: '쿠팡',
+      name: CHANNEL_LABELS.COUPANG,
       value: coupangMetrics.revenue,
-      color: '#3b82f6',
+      color: CHANNEL_COLORS.COUPANG,
     })
   }
 
@@ -80,7 +81,7 @@ export function StoreComparison({
       : undefined
 
     storeTableData.push({
-      store: '스마트스토어',
+      store: CHANNEL_LABELS.SMARTSTORE,
       revenue: smartstoreMetrics.revenue || 0,
       previousRevenue,
       orders: smartstoreMetrics.orders || 0,
@@ -96,7 +97,7 @@ export function StoreComparison({
       : undefined
 
     storeTableData.push({
-      store: '쿠팡',
+      store: CHANNEL_LABELS.COUPANG,
       revenue: coupangMetrics.revenue || 0,
       previousRevenue,
       orders: coupangMetrics.orders || 0,

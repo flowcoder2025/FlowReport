@@ -5,6 +5,7 @@ import { Package, TrendingUp, TrendingDown, ExternalLink } from 'lucide-react'
 import { useDashboardProducts, ProductRankingItem } from '@/lib/hooks/use-dashboard-data'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
 import { Skeleton } from '../../skeleton'
+import { CHANNEL_LABELS } from '@/constants'
 
 interface ProductRankingProps {
   title?: string
@@ -137,7 +138,7 @@ function ProductRow({
           )}
         </div>
         <div className="text-xs text-muted-foreground">
-          {product.channel === 'SMARTSTORE' ? '스마트스토어' : '쿠팡'} ·{' '}
+          {CHANNEL_LABELS[product.channel as keyof typeof CHANNEL_LABELS] || product.channel} ·{' '}
           {product.units.toLocaleString()}개 판매
         </div>
       </div>

@@ -3,9 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StoreCardProps } from '../types'
 import { MetricBox } from './metric-box'
+import { CHANNEL_LABELS } from '@/constants'
 
 export function StoreCard({ metrics, name }: StoreCardProps) {
-  const icon = name === '스마트스토어' ? '🛒' : '🚀'
+  const icon = name === CHANNEL_LABELS.SMARTSTORE ? '🛒' : '🚀'
 
   return (
     <Card>

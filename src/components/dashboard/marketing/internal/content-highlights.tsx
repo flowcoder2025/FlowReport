@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { PublishTimeAnalysis } from './publish-time-analysis'
 import { cn } from '@/lib/utils'
+import { CHANNEL_LABELS } from '@/constants'
 
 interface ContentItem {
   id: string
@@ -229,12 +230,12 @@ function MetricItem({ icon, label, value, isHero, highlight }: MetricItemProps) 
 function getChannelConfig(channel: string) {
   const configs: Record<string, { label: string; icon: React.ReactNode; badgeClass: string }> = {
     YOUTUBE: {
-      label: 'YouTube',
+      label: CHANNEL_LABELS.YOUTUBE,
       icon: <span className="text-red-500">&#9658;</span>,
       badgeClass: 'border-red-200 text-red-700',
     },
     META_INSTAGRAM: {
-      label: 'Instagram',
+      label: CHANNEL_LABELS.META_INSTAGRAM,
       icon: <span>&#128247;</span>,
       badgeClass: 'border-pink-200 text-pink-700',
     },

@@ -7,16 +7,10 @@ import { prisma } from '@/lib/db'
 import type { MonthlyReportData } from '@/lib/export/pdf-generator'
 import type { WeeklyReportData, ReportPeriodRange } from '../types'
 
-const CHANNEL_NAMES: Record<string, string> = {
-  GA4: 'GA4',
-  META_INSTAGRAM: 'Instagram',
-  META_FACEBOOK: 'Facebook',
-  YOUTUBE: 'YouTube',
-  SMARTSTORE: '스마트스토어',
-  COUPANG: '쿠팡',
-  NAVER_BLOG: '네이버 블로그',
-  GOOGLE_SEARCH_CONSOLE: 'Google Search Console',
-}
+import { CHANNEL_LABELS, CHANNEL_GROUPS } from '@/constants'
+
+// SSOT: CHANNEL_LABELS를 참조 (string 키 접근 허용)
+const CHANNEL_NAMES: Record<string, string> = { ...CHANNEL_LABELS }
 
 const MONTH_NAMES = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
 
@@ -267,7 +261,7 @@ function buildChannelMix(
 function buildSnsPerformance(
   snapshots: { data: unknown; connection: { provider: string } | null }[]
 ): MonthlyReportData['snsPerformance'] {
-  const snsChannels = ['META_INSTAGRAM', 'META_FACEBOOK', 'YOUTUBE']
+  const snsChannels: string[] = [...CHANNEL_GROUPS.SNS]
   const result: MonthlyReportData['snsPerformance'] = []
 
   for (const snapshot of snapshots) {

@@ -1,5 +1,6 @@
 import { StoreBaseConnector, StoreCredentials } from './store-base'
 import { ConnectorConfig, ConnectionTestResult } from './base'
+import { CHANNEL_LABELS } from '@/constants'
 
 export interface CoupangCredentials extends StoreCredentials {
   vendorId?: string
@@ -34,7 +35,7 @@ export class CoupangConnector extends StoreBaseConnector {
     const creds = this.credentials as CoupangCredentials
     return {
       valid: true,
-      accountName: creds.storeName || creds.vendorId || '쿠팡',
+      accountName: creds.storeName || creds.vendorId || CHANNEL_LABELS.COUPANG,
     }
   }
 }

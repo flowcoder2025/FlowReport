@@ -12,7 +12,7 @@ import {
   subMonths,
   parseISO,
 } from 'date-fns'
-import { CHANNEL_GROUPS } from '@/constants'
+import { CHANNEL_GROUPS, CHANNEL_LABELS, METRIC_LABELS, HIGHLIGHT_THRESHOLD, getMetricSeverity } from '@/constants'
 
 const querySchema = z.object({
   periodType: z.enum(['WEEKLY', 'MONTHLY']),
@@ -458,18 +458,7 @@ function extractTrafficData(
 }
 
 function getChannelDisplayName(provider: ChannelProvider): string {
-  const names: Record<ChannelProvider, string> = {
-    GA4: 'Google Analytics',
-    META_INSTAGRAM: 'Instagram',
-    META_FACEBOOK: 'Facebook',
-    YOUTUBE: 'YouTube',
-    SMARTSTORE: '스마트스토어',
-    COUPANG: '쿠팡',
-    GOOGLE_SEARCH_CONSOLE: 'Google Search Console',
-    NAVER_BLOG: '네이버 블로그',
-    NAVER_KEYWORDS: '네이버 키워드',
-  }
-  return names[provider] || provider
+  return CHANNEL_LABELS[provider] || provider
 }
 
 function generateHighlights(
@@ -479,21 +468,6 @@ function generateHighlights(
   storeChannels: ChannelMetrics[]
 ): HighlightItem[] {
   const highlights: HighlightItem[] = []
-  const HIGHLIGHT_THRESHOLD = 10
-
-  const metricLabels: Record<string, string> = {
-    views: '조회수',
-    reach: '도달',
-    engagement: '참여',
-    engagements: '참여',
-    followers: '팔로워',
-    subscriberGained: '구독자',
-    revenue: '매출',
-    orders: '주문',
-    sales: '매출',
-    impressions: '노출',
-    estimatedMinutesWatched: '시청시간',
-  }
 
   for (const channel of [...snsChannels, ...storeChannels]) {
     for (const [metricKey, changeValue] of Object.entries(channel.change)) {
@@ -501,7 +475,7 @@ function generateHighlights(
         continue
       }
 
-      const label = metricLabels[metricKey]
+      const label = METRIC_LABELS[metricKey]
       if (!label) continue
 
       highlights.push({
@@ -509,7 +483,7 @@ function generateHighlights(
         metric: label,
         change: Math.round(changeValue * 10) / 10,
         direction: changeValue > 0 ? 'up' : 'down',
-        severity: getSeverity(metricKey, changeValue),
+        severity: getMetricSeverity(metricKey, changeValue),
       })
     }
   }
@@ -518,29 +492,6 @@ function generateHighlights(
   return highlights.slice(0, 5)
 }
 
-function getSeverity(
-  metricKey: string,
-  change: number
-): 'positive' | 'negative' | 'neutral' {
-  const positiveMetrics = [
-    'views',
-    'reach',
-    'engagement',
-    'engagements',
-    'followers',
-    'subscriberGained',
-    'revenue',
-    'orders',
-    'sales',
-    'impressions',
-    'estimatedMinutesWatched',
-  ]
-
-  if (positiveMetrics.includes(metricKey)) {
-    return change > 0 ? 'positive' : 'negative'
-  }
-  return 'neutral'
-}
 
 function generateChannelDetails(
   currentSnapshots: Array<{
@@ -662,7 +613,7 @@ function generateChannelDetails(
     }
   }
 
-  const storeProviders = ['SMARTSTORE', 'COUPANG'] as const
+  const storeProviders = CHANNEL_GROUPS.STORE
   for (const provider of storeProviders) {
     const storeSnapshots = currentSnapshots.filter(
       (s) => s.connection?.provider === provider

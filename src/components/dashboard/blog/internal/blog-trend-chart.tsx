@@ -2,12 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { TrendLineChart } from '../../charts'
+import { BLOG_TREND_COLORS } from '@/constants'
 
-// 트렌드 차트 라인 색상 상수
-const TREND_LINE_COLORS = {
-  visitors: '#3b82f6',   // blue
-  pageviews: '#22c55e',  // green
-}
+const TREND_LINE_COLORS = BLOG_TREND_COLORS
 
 interface TrendDataPoint {
   period: string

@@ -6,6 +6,7 @@ import { KPICardEnhanced, InsightCard } from '../../cards'
 import { FunnelChart, PieChart } from '../../charts'
 import { StoreTable } from '../../tables'
 import { Skeleton } from '../../skeleton'
+import { CHANNEL_COLORS, CHANNEL_LABELS } from '@/constants'
 
 export function CommerceView() {
   const { workspaceId, periodType, periodStart, selectedChannels } = useDashboardContext()
@@ -62,16 +63,16 @@ export function CommerceView() {
 
   const pieData = []
   if (channelDetails?.SMARTSTORE?.revenue) {
-    pieData.push({ name: '스마트스토어', value: channelDetails.SMARTSTORE.revenue, color: '#22c55e' })
+    pieData.push({ name: CHANNEL_LABELS.SMARTSTORE, value: channelDetails.SMARTSTORE.revenue, color: CHANNEL_COLORS.SMARTSTORE })
   }
   if (channelDetails?.COUPANG?.revenue) {
-    pieData.push({ name: '쿠팡', value: channelDetails.COUPANG.revenue, color: '#3b82f6' })
+    pieData.push({ name: CHANNEL_LABELS.COUPANG, value: channelDetails.COUPANG.revenue, color: CHANNEL_COLORS.COUPANG })
   }
 
   const storeTableData = []
   if (channelDetails?.SMARTSTORE) {
     storeTableData.push({
-      store: '스마트스토어',
+      store: CHANNEL_LABELS.SMARTSTORE,
       revenue: channelDetails.SMARTSTORE.revenue || 0,
       previousRevenue: channelDetails.SMARTSTORE.change?.revenue ? (channelDetails.SMARTSTORE.revenue || 0) / (1 + channelDetails.SMARTSTORE.change.revenue / 100) : undefined,
       orders: channelDetails.SMARTSTORE.orders || 0,
@@ -82,7 +83,7 @@ export function CommerceView() {
   }
   if (channelDetails?.COUPANG) {
     storeTableData.push({
-      store: '쿠팡',
+      store: CHANNEL_LABELS.COUPANG,
       revenue: channelDetails.COUPANG.revenue || 0,
       previousRevenue: channelDetails.COUPANG.change?.revenue ? (channelDetails.COUPANG.revenue || 0) / (1 + channelDetails.COUPANG.change.revenue / 100) : undefined,
       orders: channelDetails.COUPANG.orders || 0,

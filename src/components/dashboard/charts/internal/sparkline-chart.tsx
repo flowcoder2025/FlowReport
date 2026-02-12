@@ -1,6 +1,7 @@
 'use client'
 
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts'
+import { STATUS_COLORS } from '@/constants'
 
 interface SparklineChartProps {
   data: { value: number }[]
@@ -11,7 +12,7 @@ interface SparklineChartProps {
 
 export function SparklineChart({
   data,
-  color = '#3b82f6',
+  color = STATUS_COLORS.primary,
   height = 40,
   showTrend = true,
 }: SparklineChartProps) {
@@ -25,8 +26,8 @@ export function SparklineChart({
 
   const trendColor = showTrend && data.length >= 2
     ? data[data.length - 1].value >= data[0].value
-      ? '#22c55e'
-      : '#ef4444'
+      ? STATUS_COLORS.positive
+      : STATUS_COLORS.negative
     : color
 
   return (

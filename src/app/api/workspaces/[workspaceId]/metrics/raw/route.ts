@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { requireWorkspaceViewer } from '@/lib/permissions/workspace-middleware'
 import { PeriodType, ChannelProvider } from '@prisma/client'
 import { parseISO, startOfDay, endOfDay, format } from 'date-fns'
+import { CHANNEL_LABELS, METRIC_LABELS } from '@/constants'
 
 /**
  * Raw Metrics API for Analytics Dashboard
@@ -177,19 +178,7 @@ export async function GET(
 
 function getChannelDisplayName(provider: ChannelProvider | undefined | null): string {
   if (!provider) return 'Unknown'
-
-  const names: Record<ChannelProvider, string> = {
-    GA4: 'Google Analytics',
-    META_INSTAGRAM: 'Instagram',
-    META_FACEBOOK: 'Facebook',
-    YOUTUBE: 'YouTube',
-    SMARTSTORE: '스마트스토어',
-    COUPANG: '쿠팡',
-    GOOGLE_SEARCH_CONSOLE: 'Google Search Console',
-    NAVER_BLOG: '네이버 블로그',
-    NAVER_KEYWORDS: '네이버 키워드',
-  }
-  return names[provider] || provider
+  return CHANNEL_LABELS[provider] || provider
 }
 
 function extractAvailableMetrics(
@@ -197,32 +186,7 @@ function extractAvailableMetrics(
 ): Record<string, { label: string; channel: ChannelProvider | null }> {
   const metrics: Record<string, { label: string; channel: ChannelProvider | null }> = {}
 
-  const metricLabels: Record<string, string> = {
-    views: '조회수',
-    reach: '도달',
-    impressions: '노출',
-    engagement: '참여',
-    engagements: '참여',
-    followers: '팔로워',
-    subscriberGained: '구독자 증가',
-    subscriberCount: '구독자 수',
-    likes: '좋아요',
-    comments: '댓글',
-    shares: '공유',
-    revenue: '매출',
-    sales: '매출',
-    orders: '주문',
-    conversionRate: '전환율',
-    dau: 'DAU',
-    wau: 'WAU',
-    mau: 'MAU',
-    sessions: '세션',
-    totalUsers: '전체 사용자',
-    newUsers: '신규 사용자',
-    estimatedMinutesWatched: '시청 시간(분)',
-    averageViewDuration: '평균 시청 시간',
-    avgOrderValue: '평균 주문 금액',
-  }
+  // SSOT: METRIC_LABELS from @/constants
 
   for (const snapshot of snapshots) {
     const data = snapshot.data as Record<string, number | null>
@@ -231,7 +195,7 @@ function extractAvailableMetrics(
     for (const key of Object.keys(data)) {
       if (!metrics[key]) {
         metrics[key] = {
-          label: metricLabels[key] || key,
+          label: METRIC_LABELS[key] || key,
           channel,
         }
       }

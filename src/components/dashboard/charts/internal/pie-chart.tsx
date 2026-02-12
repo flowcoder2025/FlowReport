@@ -9,6 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import { CHART_PALETTE } from '@/constants'
 
 interface DataItem {
   name: string
@@ -24,16 +25,7 @@ interface PieChartProps {
   outerRadius?: number
 }
 
-const DEFAULT_COLORS = [
-  '#3b82f6',
-  '#ef4444',
-  '#22c55e',
-  '#f59e0b',
-  '#8b5cf6',
-  '#ec4899',
-  '#06b6d4',
-  '#84cc16',
-]
+const DEFAULT_COLORS = CHART_PALETTE
 
 export const PieChart = memo(function PieChart({
   data,

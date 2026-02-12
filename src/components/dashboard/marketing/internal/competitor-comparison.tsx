@@ -35,6 +35,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CHANNEL_LABELS, STATUS_COLORS } from '@/constants'
 import {
   useCompetitors,
   createCompetitor,
@@ -75,8 +76,8 @@ const MY_CHANNEL_DEFAULT = {
 
 // Constants
 const PLATFORM_OPTIONS = [
-  { value: 'YOUTUBE', label: 'YouTube', icon: Youtube },
-  { value: 'META_INSTAGRAM', label: 'Instagram', icon: Instagram },
+  { value: 'YOUTUBE', label: CHANNEL_LABELS.YOUTUBE, icon: Youtube },
+  { value: 'META_INSTAGRAM', label: CHANNEL_LABELS.META_INSTAGRAM, icon: Instagram },
 ]
 
 const METRIC_LABELS = {
@@ -161,21 +162,21 @@ export function CompetitorComparison({ workspaceId, myChannel = MY_CHANNEL_DEFAU
         .map((c) => ({
           name: c.name,
           value: c.metrics.followers,
-          color: c.isMe ? '#3b82f6' : undefined,
+          color: c.isMe ? STATUS_COLORS.primary : undefined,
         }))
         .sort((a, b) => b.value - a.value),
       engagementRate: allChannels
         .map((c) => ({
           name: c.name,
           value: c.metrics.engagementRate,
-          color: c.isMe ? '#3b82f6' : undefined,
+          color: c.isMe ? STATUS_COLORS.primary : undefined,
         }))
         .sort((a, b) => b.value - a.value),
       uploads: allChannels
         .map((c) => ({
           name: c.name,
           value: c.metrics.uploads,
-          color: c.isMe ? '#3b82f6' : undefined,
+          color: c.isMe ? STATUS_COLORS.primary : undefined,
         }))
         .sort((a, b) => b.value - a.value),
     }

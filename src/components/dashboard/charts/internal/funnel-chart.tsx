@@ -14,13 +14,9 @@ interface FunnelChartProps {
   showPercentage?: boolean
 }
 
-const DEFAULT_COLORS = [
-  '#3b82f6',
-  '#60a5fa',
-  '#93c5fd',
-  '#bfdbfe',
-  '#dbeafe',
-]
+import { FUNNEL_PALETTE } from '@/constants'
+
+const DEFAULT_COLORS = FUNNEL_PALETTE
 
 export function FunnelChart({
   data,

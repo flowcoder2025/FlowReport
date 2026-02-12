@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
+import { CHANNEL_LABELS } from '@/constants'
 import {
   useDashboardMetrics,
   useActionProgress,
@@ -603,8 +604,8 @@ function generateCommerceSummary(
   }
 
   const activeStores: string[] = []
-  if (channelDetails?.SMARTSTORE) activeStores.push('스마트스토어')
-  if (channelDetails?.COUPANG) activeStores.push('쿠팡')
+  if (channelDetails?.SMARTSTORE) activeStores.push(CHANNEL_LABELS.SMARTSTORE)
+  if (channelDetails?.COUPANG) activeStores.push(CHANNEL_LABELS.COUPANG)
 
   if (activeStores.length > 0) {
     parts.push(`${activeStores.join(', ')} 운영 중`)

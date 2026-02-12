@@ -9,6 +9,7 @@ import { HorizontalBarChart } from '../../charts'
 import { HighlightBanner, InstagramCard, FacebookCard, StoreCard } from '../../channel-metrics'
 import { Skeleton } from '../../skeleton'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import { CHANNEL_COLORS, CHANNEL_LABELS } from '@/constants'
 
 export function OverviewView() {
   const [isKpiExpanded, setIsKpiExpanded] = useState(false)
@@ -110,10 +111,10 @@ export function OverviewView() {
   const channelRevenueData = useMemo(() => {
     const data: Array<{ name: string; value: number; color: string }> = []
     if (channelDetails?.SMARTSTORE?.revenue) {
-      data.push({ name: '스마트스토어', value: channelDetails.SMARTSTORE.revenue, color: '#22c55e' })
+      data.push({ name: CHANNEL_LABELS.SMARTSTORE, value: channelDetails.SMARTSTORE.revenue, color: CHANNEL_COLORS.SMARTSTORE })
     }
     if (channelDetails?.COUPANG?.revenue) {
-      data.push({ name: '쿠팡', value: channelDetails.COUPANG.revenue, color: '#3b82f6' })
+      data.push({ name: CHANNEL_LABELS.COUPANG, value: channelDetails.COUPANG.revenue, color: CHANNEL_COLORS.COUPANG })
     }
     return data
   }, [channelDetails])

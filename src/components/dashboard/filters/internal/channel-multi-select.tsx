@@ -14,18 +14,9 @@ import {
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
 import { useDashboardUrl } from '@/lib/hooks/use-dashboard-url'
 import { useConnections } from '@/lib/hooks/use-connections'
+import { CHANNEL_LABELS } from '@/constants'
 
-const CHANNEL_DISPLAY_NAMES: Record<ChannelProvider, string> = {
-  GA4: 'Google Analytics',
-  META_INSTAGRAM: 'Instagram',
-  META_FACEBOOK: 'Facebook',
-  YOUTUBE: 'YouTube',
-  SMARTSTORE: '스마트스토어',
-  COUPANG: '쿠팡',
-  GOOGLE_SEARCH_CONSOLE: 'Google Search Console',
-  NAVER_BLOG: '네이버 블로그',
-  NAVER_KEYWORDS: '네이버 키워드',
-}
+const CHANNEL_DISPLAY_NAMES = CHANNEL_LABELS
 
 export function ChannelMultiSelect() {
   const { workspaceId, selectedChannels, setSelectedChannels } = useDashboardContext()

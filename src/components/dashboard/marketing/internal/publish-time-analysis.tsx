@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Clock, Youtube, Instagram, FileText, Calendar } from 'lucide-react'
+import { CHANNEL_LABELS } from '@/constants'
 
 interface ContentItem {
   id: string
@@ -56,17 +57,17 @@ const CHANNEL_CONFIG: Record<
   { label: string; icon: React.ReactNode; color: string }
 > = {
   YOUTUBE: {
-    label: 'YouTube',
+    label: CHANNEL_LABELS.YOUTUBE,
     icon: <Youtube className="h-4 w-4" />,
     color: 'text-red-600',
   },
   META_INSTAGRAM: {
-    label: 'Instagram',
+    label: CHANNEL_LABELS.META_INSTAGRAM,
     icon: <Instagram className="h-4 w-4" />,
     color: 'text-pink-600',
   },
   NAVER_BLOG: {
-    label: '네이버 블로그',
+    label: CHANNEL_LABELS.NAVER_BLOG,
     icon: <FileText className="h-4 w-4" />,
     color: 'text-green-600',
   },

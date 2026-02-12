@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { KPICard } from '../kpi-card'
 import { useDashboardMetrics, useDashboardNotes } from '@/lib/hooks/use-dashboard-data'
 import { Skeleton } from '../skeleton'
+import { CHANNEL_DOT_COLORS } from '@/constants'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import {
@@ -265,10 +266,5 @@ function SummarySkeleton() {
 }
 
 function getChannelColor(channel: string): string {
-  const colors: Record<string, string> = {
-    SMARTSTORE: 'bg-green-500',
-    COUPANG: 'bg-blue-500',
-    GA4: 'bg-purple-500',
-  }
-  return colors[channel] || 'bg-gray-500'
+  return CHANNEL_DOT_COLORS[channel] || 'bg-gray-500'
 }

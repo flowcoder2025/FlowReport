@@ -1,4 +1,5 @@
 import { ChannelProvider } from '@prisma/client'
+import { CHANNEL_LABELS } from '@/constants'
 
 export interface ChannelConnection {
   id: string
@@ -27,17 +28,7 @@ export interface SidebarToggleProps {
   onToggle: () => void
 }
 
-export const CHANNEL_DISPLAY_NAMES: Record<ChannelProvider, string> = {
-  GA4: 'Google Analytics',
-  META_INSTAGRAM: 'Instagram',
-  META_FACEBOOK: 'Facebook',
-  YOUTUBE: 'YouTube',
-  SMARTSTORE: '스마트스토어',
-  COUPANG: '쿠팡',
-  GOOGLE_SEARCH_CONSOLE: 'Google Search Console',
-  NAVER_BLOG: '네이버 블로그',
-  NAVER_KEYWORDS: '네이버 키워드',
-}
+export const CHANNEL_DISPLAY_NAMES = CHANNEL_LABELS
 
 export const CHANNEL_ICONS: Record<ChannelProvider, string> = {
   GA4: '📊',

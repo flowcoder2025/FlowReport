@@ -11,6 +11,12 @@ import {
 } from '@/components/ui/popover'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import {
+  CHANNEL_BADGE_COLORS,
+  METRIC_CATEGORIES,
+  CATEGORY_LABELS,
+  type MetricCategory,
+} from '@/constants'
 
 export interface MetricOption {
   key: string
@@ -24,67 +30,13 @@ export interface SelectedMetric {
   label: string
 }
 
-export type MetricCategory =
-  | 'engagement'
-  | 'reach'
-  | 'revenue'
-  | 'traffic'
-  | 'growth'
-  | 'content'
+export { type MetricCategory }
 
 interface MetricSelectorProps {
   availableMetrics: Record<string, { label: string; channel: ChannelProvider | null }>
   selectedMetrics: SelectedMetric[]
   onSelectionChange: (metrics: SelectedMetric[]) => void
   maxSelections?: number
-}
-
-const CATEGORY_LABELS: Record<MetricCategory, string> = {
-  engagement: '참여',
-  reach: '도달/노출',
-  revenue: '매출',
-  traffic: '트래픽',
-  growth: '성장',
-  content: '콘텐츠',
-}
-
-const METRIC_CATEGORIES: Record<string, MetricCategory> = {
-  views: 'reach',
-  reach: 'reach',
-  impressions: 'reach',
-  engagement: 'engagement',
-  engagements: 'engagement',
-  likes: 'engagement',
-  comments: 'engagement',
-  shares: 'engagement',
-  followers: 'growth',
-  subscriberGained: 'growth',
-  subscriberCount: 'growth',
-  revenue: 'revenue',
-  sales: 'revenue',
-  orders: 'revenue',
-  avgOrderValue: 'revenue',
-  conversionRate: 'revenue',
-  dau: 'traffic',
-  wau: 'traffic',
-  mau: 'traffic',
-  sessions: 'traffic',
-  totalUsers: 'traffic',
-  newUsers: 'traffic',
-  estimatedMinutesWatched: 'content',
-  averageViewDuration: 'content',
-}
-
-const CHANNEL_COLORS: Record<ChannelProvider, string> = {
-  GA4: 'bg-orange-100 text-orange-700',
-  META_INSTAGRAM: 'bg-pink-100 text-pink-700',
-  META_FACEBOOK: 'bg-blue-100 text-blue-700',
-  YOUTUBE: 'bg-red-100 text-red-700',
-  SMARTSTORE: 'bg-green-100 text-green-700',
-  COUPANG: 'bg-sky-100 text-sky-700',
-  GOOGLE_SEARCH_CONSOLE: 'bg-yellow-100 text-yellow-700',
-  NAVER_BLOG: 'bg-emerald-100 text-emerald-700',
-  NAVER_KEYWORDS: 'bg-teal-100 text-teal-700',
 }
 
 export function MetricSelector({
@@ -265,7 +217,7 @@ export function MetricSelector({
                         <span
                           className={cn(
                             'rounded px-1.5 py-0.5 text-xs',
-                            CHANNEL_COLORS[option.channel] || 'bg-gray-100 text-gray-700'
+                            CHANNEL_BADGE_COLORS[option.channel] || 'bg-gray-100 text-gray-700'
                           )}
                         >
                           {option.channel}

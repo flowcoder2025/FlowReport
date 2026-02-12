@@ -5,6 +5,7 @@ import { TrendLineChart } from '../../charts'
 import { MetricBox } from '../../channel-metrics'
 import { TrendingUp, Users, Eye, Youtube, Instagram } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CHANNEL_COLORS } from '@/constants'
 
 interface ChannelGrowthData {
   youtube?: {
@@ -39,9 +40,9 @@ export function ChannelGrowth({ data }: ChannelGrowthProps) {
   const combinedTrend = buildCombinedTrend(data)
 
   const trendLines = [
-    ...(youtube ? [{ dataKey: 'youtube', name: 'YouTube 구독자', color: '#ef4444' }] : []),
-    ...(instagram ? [{ dataKey: 'instagram', name: 'Instagram 팔로워', color: '#ec4899' }] : []),
-    ...(blog ? [{ dataKey: 'blog', name: '블로그 방문자', color: '#22c55e' }] : []),
+    ...(youtube ? [{ dataKey: 'youtube', name: 'YouTube 구독자', color: CHANNEL_COLORS.YOUTUBE }] : []),
+    ...(instagram ? [{ dataKey: 'instagram', name: 'Instagram 팔로워', color: CHANNEL_COLORS.META_INSTAGRAM }] : []),
+    ...(blog ? [{ dataKey: 'blog', name: '블로그 방문자', color: CHANNEL_COLORS.NAVER_BLOG }] : []),
   ]
 
   return (

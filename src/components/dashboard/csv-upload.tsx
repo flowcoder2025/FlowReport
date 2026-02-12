@@ -14,7 +14,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/lib/hooks/use-toast'
 import { Upload, Download, FileText, X, Loader2, CheckCircle, AlertCircle, Info, Eye } from 'lucide-react'
-import { BLOG_GUIDE } from '@/constants'
+import { BLOG_GUIDE, CHANNEL_GROUPS, CHANNEL_LABELS } from '@/constants'
 
 interface CsvUploadProps {
   workspaceId: string
@@ -41,17 +41,9 @@ interface CsvPreviewData {
   rows: string[][]
 }
 
-const CHANNELS: { value: ChannelProvider; label: string }[] = [
-  { value: 'SMARTSTORE', label: '스마트스토어' },
-  { value: 'COUPANG', label: '쿠팡' },
-  { value: 'META_INSTAGRAM', label: 'Instagram' },
-  { value: 'META_FACEBOOK', label: 'Facebook' },
-  { value: 'YOUTUBE', label: 'YouTube' },
-  { value: 'GA4', label: 'Google Analytics 4' },
-  { value: 'NAVER_BLOG', label: '네이버 블로그' },
-  { value: 'NAVER_KEYWORDS', label: '네이버 키워드' },
-  { value: 'GOOGLE_SEARCH_CONSOLE', label: 'Google Search Console' },
-]
+const CHANNELS: { value: ChannelProvider; label: string }[] = CHANNEL_GROUPS.ALL.map(
+  (ch) => ({ value: ch as ChannelProvider, label: CHANNEL_LABELS[ch as ChannelProvider] })
+)
 
 // ISS-004: Parse CSV file and extract first 5 rows for preview
 function parseCsvPreview(content: string): CsvPreviewData {

@@ -20,6 +20,7 @@ import {
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
 import { Skeleton } from '../../skeleton'
 import { BarChart3, Trophy, Video, Image, FileText, Zap } from 'lucide-react'
+import { CONTENT_TYPE_COLORS } from '@/constants'
 
 const CONTENT_TYPE_LABELS: Record<string, string> = {
   POST: '포스트',
@@ -28,15 +29,6 @@ const CONTENT_TYPE_LABELS: Record<string, string> = {
   SHORT: '쇼츠',
   VIDEO: '동영상',
   ARTICLE: '기사/블로그',
-}
-
-const CONTENT_TYPE_COLORS: Record<string, string> = {
-  POST: '#8b5cf6', // violet
-  REEL: '#ec4899', // pink
-  STORY: '#f97316', // orange
-  SHORT: '#ef4444', // red
-  VIDEO: '#dc2626', // red-600
-  ARTICLE: '#22c55e', // green
 }
 
 const CONTENT_TYPE_ICONS: Record<string, React.ReactNode> = {
