@@ -72,7 +72,7 @@ export const TrendLineChart = memo(function TrendLineChart({
             border: '1px solid hsl(var(--border))',
             borderRadius: '6px',
           }}
-          formatter={(value: number) => [formatNumber(value), '']}
+          formatter={(value: number, name: string) => [formatNumber(value), name]}
         />
         {showLegend && <Legend />}
         {lines.map((line) => (

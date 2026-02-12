@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { ChannelProvider } from '@prisma/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/lib/hooks/use-toast'
-import { Upload, Download, FileText, X, Loader2, CheckCircle, AlertCircle, Info } from 'lucide-react'
+import { Upload, Download, FileText, X, Loader2, CheckCircle, AlertCircle, Info, Eye } from 'lucide-react'
 import { BLOG_GUIDE } from '@/constants'
 
 interface CsvUploadProps {
@@ -35,6 +35,12 @@ interface UploadResult {
   errors?: string[]
 }
 
+// ISS-004: CSV Preview data type
+interface CsvPreviewData {
+  headers: string[]
+  rows: string[][]
+}
+
 const CHANNELS: { value: ChannelProvider; label: string }[] = [
   { value: 'SMARTSTORE', label: '스마트스토어' },
   { value: 'COUPANG', label: '쿠팡' },
@@ -47,6 +53,40 @@ const CHANNELS: { value: ChannelProvider; label: string }[] = [
   { value: 'GOOGLE_SEARCH_CONSOLE', label: 'Google Search Console' },
 ]
 
+// ISS-004: Parse CSV file and extract first 5 rows for preview
+function parseCsvPreview(content: string): CsvPreviewData {
+  const lines = content.split(/\r?\n/).filter(line => line.trim())
+  if (lines.length === 0) {
+    return { headers: [], rows: [] }
+  }
+
+  // Simple CSV parsing (handles basic cases)
+  const parseLine = (line: string): string[] => {
+    const result: string[] = []
+    let current = ''
+    let inQuotes = false
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i]
+      if (char === '"') {
+        inQuotes = !inQuotes
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim())
+        current = ''
+      } else {
+        current += char
+      }
+    }
+    result.push(current.trim())
+    return result
+  }
+
+  const headers = parseLine(lines[0])
+  const rows = lines.slice(1, 6).map(parseLine) // First 5 data rows
+
+  return { headers, rows }
+}
+
 export function CsvUpload({ workspaceId, onSuccess }: CsvUploadProps) {
   const { toast } = useToast()
   const [channel, setChannel] = useState<ChannelProvider | null>(null)
@@ -54,6 +94,36 @@ export function CsvUpload({ workspaceId, onSuccess }: CsvUploadProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [status, setStatus] = useState<UploadStatus>('idle')
   const [result, setResult] = useState<UploadResult | null>(null)
+  // ISS-004: CSV preview state
+  const [previewData, setPreviewData] = useState<CsvPreviewData | null>(null)
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
+
+  // ISS-004: Parse CSV file when selected
+  useEffect(() => {
+    if (!file) {
+      setPreviewData(null)
+      return
+    }
+
+    setIsLoadingPreview(true)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string
+        const preview = parseCsvPreview(content)
+        setPreviewData(preview)
+      } catch {
+        setPreviewData(null)
+      } finally {
+        setIsLoadingPreview(false)
+      }
+    }
+    reader.onerror = () => {
+      setPreviewData(null)
+      setIsLoadingPreview(false)
+    }
+    reader.readAsText(file, 'UTF-8')
+  }, [file])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -174,6 +244,7 @@ export function CsvUpload({ workspaceId, onSuccess }: CsvUploadProps) {
     setFile(null)
     setStatus('idle')
     setResult(null)
+    setPreviewData(null)
   }
 
   return (
@@ -311,6 +382,65 @@ export function CsvUpload({ workspaceId, onSuccess }: CsvUploadProps) {
             </div>
           )}
         </div>
+
+        {/* ISS-004: CSV Preview */}
+        {file && status === 'idle' && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Eye className="h-4 w-4" />
+              데이터 미리보기 (처음 5행)
+            </div>
+            {isLoadingPreview ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">파일 분석 중...</span>
+              </div>
+            ) : previewData && previewData.headers.length > 0 ? (
+              <div className="border rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        {previewData.headers.map((header, idx) => (
+                          <th
+                            key={idx}
+                            className="px-3 py-2 text-left font-medium text-muted-foreground whitespace-nowrap border-b"
+                          >
+                            {header || `(열 ${idx + 1})`}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewData.rows.map((row, rowIdx) => (
+                        <tr key={rowIdx} className="border-b last:border-b-0">
+                          {row.map((cell, cellIdx) => (
+                            <td
+                              key={cellIdx}
+                              className="px-3 py-2 whitespace-nowrap max-w-[200px] truncate"
+                              title={cell}
+                            >
+                              {cell || '-'}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {previewData.rows.length === 0 && (
+                  <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+                    데이터 행이 없습니다.
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="border rounded-lg px-3 py-4 text-center text-sm text-muted-foreground">
+                미리보기를 생성할 수 없습니다.
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Upload Button */}
         {file && status === 'idle' && (

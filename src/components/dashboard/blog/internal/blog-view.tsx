@@ -33,19 +33,7 @@ export function BlogView() {
     ['NAVER_BLOG']
   )
 
-  if (isLoading) {
-    return <BlogViewSkeleton />
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
-  }
-
-  // 블로그 메트릭 추출 (메모이제이션)
+  // 블로그 메트릭 추출 (메모이제이션) - hooks는 early return 이전에 호출해야 함
   const blogMetrics = useMemo(
     () => extractBlogMetrics(metrics),
     [metrics]
@@ -69,6 +57,19 @@ export function BlogView() {
     blogMetrics.pageviews === null &&
     blogMetrics.subscribers === null
   ), [blogMetrics])
+
+  // Early returns - hooks 이후에 위치
+  if (isLoading) {
+    return <BlogViewSkeleton />
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        데이터를 불러오는데 실패했습니다.
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

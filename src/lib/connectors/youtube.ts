@@ -11,6 +11,29 @@ export interface YouTubeCredentials {
   expiresAt?: number
 }
 
+/**
+ * YouTube 에러 타입
+ */
+export enum YouTubeErrorType {
+  TOKEN_EXPIRED = 'TOKEN_EXPIRED',
+  NEEDS_REAUTH = 'NEEDS_REAUTH',
+  INVALID_TOKEN = 'INVALID_TOKEN',
+  QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
+  CHANNEL_NOT_FOUND = 'CHANNEL_NOT_FOUND',
+  API_ERROR = 'API_ERROR',
+}
+
+export class YouTubeError extends Error {
+  constructor(
+    message: string,
+    public readonly type: YouTubeErrorType,
+    public readonly originalError?: unknown
+  ) {
+    super(message)
+    this.name = 'YouTubeError'
+  }
+}
+
 interface AnalyticsReportResponse {
   rows?: (string | number)[][]
   columnHeaders?: { name: string }[]
@@ -71,7 +94,10 @@ export class YouTubeConnector extends BaseConnector {
 
     // Token is expired, try to refresh
     if (!refreshToken) {
-      throw new Error('Access token expired and no refresh token available')
+      throw new YouTubeError(
+        '액세스 토큰이 만료되었습니다. YouTube 계정을 재연결해주세요.',
+        YouTubeErrorType.NEEDS_REAUTH
+      )
     }
 
     console.log('YouTube: Refreshing access token...')
@@ -92,7 +118,11 @@ export class YouTubeConnector extends BaseConnector {
       return tokens.access_token
     } catch (error) {
       console.error('YouTube: Failed to refresh token:', error)
-      throw new Error('Failed to refresh access token. Please reconnect your YouTube account.')
+      throw new YouTubeError(
+        '토큰 갱신에 실패했습니다. YouTube 계정을 재연결해주세요.',
+        YouTubeErrorType.TOKEN_EXPIRED,
+        error
+      )
     }
   }
 
@@ -144,7 +174,8 @@ export class YouTubeConnector extends BaseConnector {
         if (error.error?.code === 401) {
           return {
             valid: false,
-            error: 'Access token expired. Please reconnect your YouTube account.',
+            error: '액세스 토큰이 만료되었습니다. 설정에서 YouTube 계정을 재연결해주세요.',
+            errorType: YouTubeErrorType.NEEDS_REAUTH,
           }
         }
 

@@ -32,18 +32,7 @@ export function MarketingView() {
     channelsParam
   )
 
-  if (isLoading) {
-    return <MarketingSkeleton />
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
-  }
-
+  // 데이터 추출 (hooks 규칙 준수를 위해 early return 이전에 선언)
   const overview = metrics?.overview
   const previous = metrics?.previous
   const channelDetails = metrics?.channelDetails
@@ -51,7 +40,7 @@ export function MarketingView() {
   const topPosts = metrics?.sns?.topPosts || []
   const youtubeVideos = channelDetails?.YOUTUBE?.topVideos || []
 
-  // 마케팅 중심 KPIs (6개)
+  // 마케팅 중심 KPIs (6개) - hooks는 early return 이전에 호출해야 함
   const marketingKpis = useMemo(() => [
     {
       title: '총 도달',
@@ -99,6 +88,19 @@ export function MarketingView() {
     () => buildContentItems(topPosts, youtubeVideos),
     [topPosts, youtubeVideos]
   )
+
+  // Early returns - hooks 이후에 위치
+  if (isLoading) {
+    return <MarketingSkeleton />
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        데이터를 불러오는데 실패했습니다.
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

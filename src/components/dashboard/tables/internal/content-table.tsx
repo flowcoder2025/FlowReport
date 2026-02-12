@@ -109,6 +109,13 @@ export function ContentTable({
               </tr>
             </thead>
             <tbody>
+              {paginatedData.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                    콘텐츠가 없습니다.
+                  </td>
+                </tr>
+              )}
               {paginatedData.map((row) => (
                 <tr key={row.id} className="border-b hover:bg-muted/50">
                   <td className="py-2 px-2 max-w-[200px] truncate">{row.title}</td>

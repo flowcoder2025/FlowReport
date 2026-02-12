@@ -80,7 +80,10 @@ export const HorizontalBarChart = memo(function HorizontalBarChart({
             border: '1px solid hsl(var(--border))',
             borderRadius: '6px',
           }}
-          formatter={(value: number) => [formatNumber(value), '값']}
+          formatter={(value: number, _name: string, props: { payload?: { name?: string } }) => [
+            formatNumber(value),
+            props.payload?.name || ''
+          ]}
         />
         <Bar dataKey="value" radius={[0, 4, 4, 0]}>
           {data.map((entry, index) => (

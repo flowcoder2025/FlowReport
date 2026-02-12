@@ -24,7 +24,7 @@ export async function GET(request: Request) {
       const liveSnapshots = await prisma.metricSnapshot.findMany({
         where: {
           workspaceId: workspace.id,
-          periodType: 'WEEKLY',
+          periodType: { in: ['WEEKLY', 'MONTHLY'] },
         },
         include: {
           versions: {

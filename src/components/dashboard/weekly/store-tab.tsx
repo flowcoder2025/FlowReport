@@ -1,9 +1,11 @@
 'use client'
 
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { KPICard } from '../kpi-card'
 import { useDashboardMetrics } from '@/lib/hooks/use-dashboard-data'
 import { Skeleton } from '../skeleton'
+import { Upload } from 'lucide-react'
 
 interface StoreTabProps {
   workspaceId: string
@@ -132,9 +134,18 @@ export function StoreTab({ workspaceId, periodStart }: StoreTabProps) {
               </table>
             </div>
           ) : (
-            <p className="text-muted-foreground text-center py-4">
-              스토어 데이터가 없습니다. CSV를 업로드하거나 채널을 연동하세요.
-            </p>
+            <div className="text-center py-6">
+              <p className="text-muted-foreground mb-3">
+                스토어 데이터가 없습니다. CSV를 업로드하거나 채널을 연동하세요.
+              </p>
+              <Link
+                href="/settings/csv"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary border border-primary rounded-md hover:bg-primary/10 transition-colors"
+              >
+                <Upload className="h-4 w-4" />
+                CSV 업로드하기
+              </Link>
+            </div>
           )}
         </CardContent>
       </Card>

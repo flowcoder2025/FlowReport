@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
-import { useDashboardMetrics, useDashboardNotes } from '@/lib/hooks/use-dashboard-data'
+import { useDashboardMetrics, useDashboardNotes, useWorkspaceTargets } from '@/lib/hooks/use-dashboard-data'
 import { KPICardEnhanced, InsightCard, YouTubeDetailCard, HeadlineSummary } from '../../cards'
 import { ChannelSummaryTable } from '../../tables'
 import { HorizontalBarChart } from '../../charts'
@@ -28,49 +28,56 @@ export function OverviewView() {
     periodStart
   )
 
-  if (metricsLoading || notesLoading) {
-    return <OverviewSkeleton />
-  }
+  // 목표값 데이터 가져오기
+  const { data: targetsData } = useWorkspaceTargets(workspaceId)
 
-  if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
-  }
-
+  // 데이터 추출 (useMemo 의존성용)
   const overview = metrics?.overview
   const previous = metrics?.previous
-  const notes = notesData?.notes
   const channelDetails = metrics?.channelDetails
-  const highlights = metrics?.highlights
-  const snsChannels = metrics?.sns?.channels || []
 
-  // Primary KPIs (핵심 4개 - 항상 표시)
+  // store traffic 데이터 추출
+  const storeTraffic = metrics?.store?.traffic
+
+  // 목표값 추출
+  const targets = targetsData?.targetConfig
+
+  // Primary KPIs (핵심 5개 - 항상 표시)
+  // Note: 모든 useMemo는 early return 전에 호출되어야 함 (React Hooks 규칙)
   const primaryKpis = useMemo(() => [
     {
       title: '총 매출',
       value: overview?.totalRevenue ?? null,
       previousValue: previous?.totalRevenue ?? null,
       format: 'currency' as const,
+      target: targets?.revenueTarget ?? null,
     },
     {
       title: periodType === 'WEEKLY' ? 'WAU' : 'MAU',
       value: periodType === 'WEEKLY' ? overview?.wau : overview?.mau,
       previousValue: periodType === 'WEEKLY' ? previous?.wau : previous?.mau,
+      target: periodType === 'WEEKLY' ? targets?.wauTarget : targets?.mauTarget,
     },
     {
       title: '총 도달',
       value: overview?.reach ?? null,
       previousValue: previous?.reach ?? null,
+      target: targets?.reachTarget ?? null,
     },
     {
       title: '총 참여',
       value: overview?.engagement ?? null,
       previousValue: previous?.engagement ?? null,
+      target: null, // engagementTarget은 비율(%)이므로 직접 비교 불가
     },
-  ], [overview, previous, periodType])
+    {
+      title: '전환율',
+      value: storeTraffic?.conversionRate ?? null,
+      previousValue: storeTraffic?.previousConversionRate ?? null,
+      format: 'percent' as const,
+      target: targets?.conversionTarget ?? null,
+    },
+  ], [overview, previous, periodType, storeTraffic, targets])
 
   // Secondary KPIs (확장 시 표시되는 4개)
   const secondaryKpis = useMemo(() => [
@@ -111,6 +118,68 @@ export function OverviewView() {
     return data
   }, [channelDetails])
 
+  // Early returns - 모든 hooks 호출 이후에 배치
+  if (metricsLoading || notesLoading) {
+    return <OverviewSkeleton />
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        데이터를 불러오는데 실패했습니다.
+      </div>
+    )
+  }
+
+  // 나머지 데이터 추출 (hooks 아님)
+  const notes = notesData?.notes
+  const highlights = metrics?.highlights
+  const snsChannels = metrics?.sns?.channels || []
+
+  // 데이터 없음 상태 확인
+  const hasNoData =
+    !overview?.totalRevenue &&
+    !overview?.reach &&
+    !overview?.engagement &&
+    !channelDetails?.YOUTUBE &&
+    !channelDetails?.META_INSTAGRAM &&
+    !channelDetails?.SMARTSTORE &&
+    !channelDetails?.COUPANG &&
+    snsChannels.length === 0
+
+  if (hasNoData) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="text-muted-foreground mb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-16 w-16 mx-auto mb-4 opacity-50"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+            />
+          </svg>
+          <h3 className="text-lg font-medium mb-2">데이터가 없습니다</h3>
+          <p className="text-sm">
+            채널을 연동하거나 CSV 데이터를 업로드하여 대시보드를 시작하세요.
+          </p>
+        </div>
+        <a
+          href="/settings/channels"
+          className="text-sm text-primary hover:underline"
+        >
+          채널 연동하기 →
+        </a>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* 하이라이트 배너 */}
@@ -132,7 +201,7 @@ export function OverviewView() {
       {/* KPI 카드 섹션 */}
       <div className="space-y-4">
         {/* Primary KPIs - 항상 표시 */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           {primaryKpis.map((kpi, index) => (
             <KPICardEnhanced
               key={`primary-${index}`}
@@ -140,6 +209,7 @@ export function OverviewView() {
               value={kpi.value ?? null}
               previousValue={kpi.previousValue ?? null}
               format={kpi.format}
+              target={kpi.target}
             />
           ))}
         </div>

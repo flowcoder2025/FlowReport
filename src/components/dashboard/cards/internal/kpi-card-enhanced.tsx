@@ -13,6 +13,8 @@ interface KPICardEnhancedProps {
   format?: 'number' | 'currency' | 'percent'
   trendData?: { value: number }[]
   naReason?: string
+  /** 목표값 (설정 시 달성률 표시) */
+  target?: number | null
 }
 
 export const KPICardEnhanced = memo(function KPICardEnhanced({
@@ -22,6 +24,7 @@ export const KPICardEnhanced = memo(function KPICardEnhanced({
   format = 'number',
   trendData,
   naReason,
+  target,
 }: KPICardEnhancedProps) {
   if (value === null || naReason) {
     return (
@@ -47,6 +50,10 @@ export const KPICardEnhanced = memo(function KPICardEnhanced({
       : null
   const isPositive = change !== null && change > 0
   const isNegative = change !== null && change < 0
+
+  // 목표 달성률 계산
+  const achievementRate = target && target > 0 ? (value / target) * 100 : null
+  const isTargetMet = achievementRate !== null && achievementRate >= 100
 
   return (
     <Card>
@@ -76,6 +83,16 @@ export const KPICardEnhanced = memo(function KPICardEnhanced({
                   <Minus className="h-3 w-3 mr-1" />
                 )}
                 {Math.abs(change).toFixed(1)}% vs 전기
+              </div>
+            )}
+            {achievementRate !== null && (
+              <div
+                className={cn(
+                  'text-xs mt-1',
+                  isTargetMet ? 'text-blue-600' : 'text-orange-600'
+                )}
+              >
+                목표 달성 {achievementRate.toFixed(0)}%
               </div>
             )}
           </div>

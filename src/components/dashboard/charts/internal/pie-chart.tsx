@@ -82,9 +82,9 @@ export const PieChart = memo(function PieChart({
             border: '1px solid hsl(var(--border))',
             borderRadius: '6px',
           }}
-          formatter={(value: number) => [
+          formatter={(value: number, name: string) => [
             `${formatNumber(value)} (${((value / total) * 100).toFixed(1)}%)`,
-            '',
+            name,
           ]}
         />
         {showLegend && (

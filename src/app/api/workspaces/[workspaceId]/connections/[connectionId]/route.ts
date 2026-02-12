@@ -226,22 +226,31 @@ export async function DELETE(
       )
     }
 
-    // 감사 로그 먼저 기록 (연결 삭제 전)
-    await prisma.connectionAuditLog.create({
-      data: {
-        connectionId,
-        action: 'REVOKED',
-        performedBy: userId,
-        metadata: {
-          provider: connection.provider,
-          accountId: connection.accountId,
-        },
-      },
-    })
+    // 연결 삭제 전 전체 connection 정보를 metadata에 보존
+    const connectionMetadata = {
+      connectionId,
+      provider: connection.provider,
+      accountId: connection.accountId,
+      accountName: connection.accountName,
+      workspaceId: connection.workspaceId,
+      status: connection.status,
+      createdAt: connection.createdAt,
+      lastSyncAt: connection.lastSyncAt,
+    }
 
-    // 연결 삭제 (cascade로 관련 데이터도 삭제됨)
+    // 연결 삭제 (SetNull로 기존 감사 로그 보존됨)
     await prisma.channelConnection.delete({
       where: { id: connectionId },
+    })
+
+    // 삭제 감사 로그 기록 (connectionId는 null - 이미 삭제됨)
+    await prisma.connectionAuditLog.create({
+      data: {
+        connectionId: null,  // 연결이 삭제되었으므로 null
+        action: 'REVOKED',
+        performedBy: userId,
+        metadata: connectionMetadata,  // 삭제된 연결 정보 보존
+      },
     })
 
     return NextResponse.json({ success: true })

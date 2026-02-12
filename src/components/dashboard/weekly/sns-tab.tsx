@@ -3,17 +3,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useDashboardMetrics } from '@/lib/hooks/use-dashboard-data'
 import { Skeleton } from '../skeleton'
+import { ImageIcon } from 'lucide-react'
 
 interface SNSTabProps {
   workspaceId: string
   periodStart: Date
+  selectedChannels?: string[]
 }
 
-export function SNSTab({ workspaceId, periodStart }: SNSTabProps) {
+export function SNSTab({ workspaceId, periodStart, selectedChannels }: SNSTabProps) {
+  const channelsParam = selectedChannels && selectedChannels.length > 0 ? selectedChannels : undefined
   const { data: metrics, error, isLoading } = useDashboardMetrics(
     workspaceId,
     'WEEKLY',
-    periodStart
+    periodStart,
+    channelsParam
   )
 
   if (isLoading) {
@@ -28,8 +32,17 @@ export function SNSTab({ workspaceId, periodStart }: SNSTabProps) {
     )
   }
 
-  const channels = metrics?.sns?.channels ?? []
-  const topPosts = metrics?.sns?.topPosts ?? []
+  // 채널 필터 적용
+  const allChannels = metrics?.sns?.channels ?? []
+  const allTopPosts = metrics?.sns?.topPosts ?? []
+
+  const channels = selectedChannels && selectedChannels.length > 0
+    ? allChannels.filter(ch => selectedChannels.includes(ch.channel))
+    : allChannels
+
+  const topPosts = selectedChannels && selectedChannels.length > 0
+    ? allTopPosts.filter(post => selectedChannels.includes(post.channel))
+    : allTopPosts
 
   return (
     <div className="space-y-6">
@@ -106,6 +119,20 @@ export function SNSTab({ workspaceId, periodStart }: SNSTabProps) {
                 <div key={post.id} className="flex items-center justify-between py-2 border-b last:border-0">
                   <div className="flex items-center gap-4">
                     <span className="text-muted-foreground text-sm w-6">{index + 1}</span>
+                    {/* 썸네일 이미지 */}
+                    <div className="w-12 h-12 rounded overflow-hidden bg-muted flex-shrink-0">
+                      {(post as { thumbnail?: string }).thumbnail ? (
+                        <img
+                          src={(post as { thumbnail?: string }).thumbnail}
+                          alt={post.title || '게시물 썸네일'}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
                     <div>
                       <div className="font-medium">{post.title || '제목 없음'}</div>
                       <div className="text-sm text-muted-foreground">

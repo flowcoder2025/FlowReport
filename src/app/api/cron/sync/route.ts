@@ -54,6 +54,19 @@ export async function GET(request: Request) {
         const metricsResult = await connector.syncMetrics(startDate, endDate)
         const contentResult = await connector.syncContent(startDate, endDate)
 
+        // API 권한 오류로 기존 데이터 유지가 필요한 경우
+        if (metricsResult.keepExistingData) {
+          await prisma.channelConnection.update({
+            where: { id: connection.id },
+            data: {
+              status: 'ERROR',
+              lastError: metricsResult.error || 'API 권한 오류',
+            },
+          })
+          results.push({ id: connection.id, success: false, error: metricsResult.error })
+          continue  // 데이터 저장 스킵, 기존 데이터 유지
+        }
+
         if (metricsResult.success) {
           // Upsert metric snapshots to database
           if (metricsResult.metrics && metricsResult.metrics.length > 0) {

@@ -12,8 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ChannelConnectionCard } from '@/components/dashboard/channel-connection-card'
 import { AddChannelModal } from '@/components/dashboard/add-channel-modal'
 import { CsvUpload } from '@/components/dashboard/csv-upload'
+import { ReportSettingsTab } from '@/components/settings/reports'
 import { useToast } from '@/lib/hooks/use-toast'
-import { ArrowLeft, Plus, Loader2, Settings, Link2, Upload, Target } from 'lucide-react'
+import { ArrowLeft, Plus, Loader2, Settings, Link2, Upload, Target, FileText } from 'lucide-react'
 import { type TargetConfig } from '@/lib/types/targets'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
@@ -41,6 +42,8 @@ interface Workspace {
   weekStart: number
 }
 
+type WorkspaceRole = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER'
+
 export default function SettingsPage() {
   const params = useParams()
   const router = useRouter()
@@ -51,10 +54,14 @@ export default function SettingsPage() {
   const [isUpdating, setIsUpdating] = useState(false)
   const [isUpdatingTargets, setIsUpdatingTargets] = useState(false)
 
-  const { data: workspaceData, mutate: mutateWorkspace } = useSWR<{ workspace: Workspace }>(
+  const { data: workspaceData, mutate: mutateWorkspace } = useSWR<{ workspace: Workspace; userRole: WorkspaceRole }>(
     `/api/workspaces/${workspaceId}`,
     fetcher
   )
+
+  const userRole = workspaceData?.userRole
+  const isViewer = userRole === 'VIEWER'
+  const canEdit = !isViewer
 
   const { data: connectionsData, mutate: mutateConnections } = useSWR<{ connections: Connection[] }>(
     `/api/workspaces/${workspaceId}/connections`,
@@ -81,13 +88,15 @@ export default function SettingsPage() {
     conversionTarget: undefined,
   })
 
-  // Initialize form when workspace data loads
-  if (workspaceData?.workspace && !formData.name) {
-    setFormData({
-      name: workspaceData.workspace.name,
-      description: workspaceData.workspace.description || '',
-    })
-  }
+  // ISS-002 fix: Initialize form when workspace data loads using useEffect
+  useEffect(() => {
+    if (workspaceData?.workspace) {
+      setFormData({
+        name: workspaceData.workspace.name,
+        description: workspaceData.workspace.description || '',
+      })
+    }
+  }, [workspaceData])
 
   // Initialize target form when targets data loads
   useEffect(() => {
@@ -100,6 +109,16 @@ export default function SettingsPage() {
       })
     }
   }, [targetsData])
+
+  // ISS-001 fix: Reset form to original values (Cancel button handler)
+  const handleCancelWorkspaceEdit = () => {
+    if (workspaceData?.workspace) {
+      setFormData({
+        name: workspaceData.workspace.name,
+        description: workspaceData.workspace.description || '',
+      })
+    }
+  }
 
   const handleWorkspaceUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -185,7 +204,14 @@ export default function SettingsPage() {
       </Link>
 
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">워크스페이스 설정</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">워크스페이스 설정</h1>
+          {isViewer && (
+            <span className="px-2 py-1 text-xs font-medium bg-muted text-muted-foreground rounded">
+              읽기 전용
+            </span>
+          )}
+        </div>
         <p className="text-muted-foreground mt-1">
           {workspace?.name || '로딩 중...'}
         </p>
@@ -209,6 +235,10 @@ export default function SettingsPage() {
             <Upload className="h-4 w-4" />
             CSV 업로드
           </TabsTrigger>
+          <TabsTrigger value="reports" className="gap-2">
+            <FileText className="h-4 w-4" />
+            리포트
+          </TabsTrigger>
         </TabsList>
 
         {/* General Settings */}
@@ -230,6 +260,7 @@ export default function SettingsPage() {
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, name: e.target.value }))
                     }
+                    disabled={!canEdit}
                   />
                 </div>
 
@@ -241,6 +272,7 @@ export default function SettingsPage() {
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, description: e.target.value }))
                     }
+                    disabled={!canEdit}
                   />
                 </div>
 
@@ -252,8 +284,17 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={isUpdating}>
+                {/* ISS-001 fix: Added Cancel button */}
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancelWorkspaceEdit}
+                    disabled={isUpdating || !canEdit}
+                  >
+                    취소
+                  </Button>
+                  <Button type="submit" disabled={isUpdating || !canEdit}>
                     {isUpdating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                     저장
                   </Button>
@@ -292,6 +333,7 @@ export default function SettingsPage() {
                         placeholder="예: 10"
                         value={targetFormData.revenueGrowthRate ?? ''}
                         onChange={(e) => handleTargetChange('revenueGrowthRate', e.target.value)}
+                        disabled={!canEdit}
                       />
                       <p className="text-sm text-muted-foreground">
                         전년 대비 매출 성장률 목표 (0-100%)
@@ -308,6 +350,7 @@ export default function SettingsPage() {
                         placeholder="예: 100000000"
                         value={targetFormData.revenueTarget ?? ''}
                         onChange={(e) => handleTargetChange('revenueTarget', e.target.value)}
+                        disabled={!canEdit}
                       />
                       <p className="text-sm text-muted-foreground">
                         월간 매출 목표 금액
@@ -325,6 +368,7 @@ export default function SettingsPage() {
                         placeholder="예: 5"
                         value={targetFormData.engagementTarget ?? ''}
                         onChange={(e) => handleTargetChange('engagementTarget', e.target.value)}
+                        disabled={!canEdit}
                       />
                       <p className="text-sm text-muted-foreground">
                         콘텐츠 참여율 목표 (좋아요, 댓글, 공유 비율)
@@ -342,6 +386,7 @@ export default function SettingsPage() {
                         placeholder="예: 2"
                         value={targetFormData.conversionTarget ?? ''}
                         onChange={(e) => handleTargetChange('conversionTarget', e.target.value)}
+                        disabled={!canEdit}
                       />
                       <p className="text-sm text-muted-foreground">
                         방문자 대비 구매 전환율 목표
@@ -350,7 +395,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="flex justify-end pt-4 border-t">
-                    <Button type="submit" disabled={isUpdatingTargets}>
+                    <Button type="submit" disabled={isUpdatingTargets || !canEdit}>
                       {isUpdatingTargets && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                       목표값 저장
                     </Button>
@@ -372,7 +417,7 @@ export default function SettingsPage() {
                     데이터를 가져올 채널을 연결합니다.
                   </CardDescription>
                 </div>
-                <Button onClick={() => setIsAddModalOpen(true)}>
+                <Button onClick={() => setIsAddModalOpen(true)} disabled={!canEdit}>
                   <Plus className="h-4 w-4 mr-2" />
                   채널 추가
                 </Button>
@@ -384,7 +429,7 @@ export default function SettingsPage() {
                   <p className="text-muted-foreground mb-4">
                     연결된 채널이 없습니다.
                   </p>
-                  <Button onClick={() => setIsAddModalOpen(true)}>
+                  <Button onClick={() => setIsAddModalOpen(true)} disabled={!canEdit}>
                     <Plus className="h-4 w-4 mr-2" />
                     첫 채널 연결하기
                   </Button>
@@ -415,6 +460,11 @@ export default function SettingsPage() {
         {/* CSV Upload */}
         <TabsContent value="csv">
           <CsvUpload workspaceId={workspaceId} />
+        </TabsContent>
+
+        {/* Report Settings */}
+        <TabsContent value="reports">
+          <ReportSettingsTab workspaceId={workspaceId} />
         </TabsContent>
       </Tabs>
     </div>

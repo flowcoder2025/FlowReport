@@ -103,9 +103,15 @@ export async function DELETE(
   try {
     await requireWorkspaceAdmin(params.workspaceId)
 
-    await prisma.workspace.delete({
-      where: { id: params.workspaceId },
-    })
+    // Delete workspace and related RelationTuple in a transaction
+    await prisma.$transaction([
+      prisma.relationTuple.deleteMany({
+        where: { namespace: 'workspace', objectId: params.workspaceId },
+      }),
+      prisma.workspace.delete({
+        where: { id: params.workspaceId },
+      }),
+    ])
 
     return NextResponse.json({ success: true })
   } catch (error) {

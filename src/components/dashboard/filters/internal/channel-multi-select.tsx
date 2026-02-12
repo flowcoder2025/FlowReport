@@ -80,6 +80,44 @@ export function ChannelMultiSelect() {
       <DropdownMenuContent align="end" className="w-[200px]">
         <DropdownMenuLabel>채널 선택</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <div className="flex gap-1 px-2 py-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs flex-1"
+            onClick={() => {
+              setSelectedChannels(uniqueChannels)
+              updateUrl({ channels: uniqueChannels.join(',') })
+            }}
+          >
+            전체 선택
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs flex-1"
+            onClick={() => {
+              setSelectedChannels([])
+              updateUrl({ channels: undefined })
+            }}
+          >
+            전체 해제
+          </Button>
+        </div>
+        <div className="px-2 pb-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 px-2 text-xs w-full"
+            onClick={() => {
+              setSelectedChannels([])
+              updateUrl({ channels: undefined })
+            }}
+          >
+            초기화
+          </Button>
+        </div>
+        <DropdownMenuSeparator />
         {uniqueChannels.map((channel) => (
           <DropdownMenuCheckboxItem
             key={channel}

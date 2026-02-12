@@ -12,6 +12,7 @@ import { format } from 'date-fns'
 interface NotesTabProps {
   workspaceId: string
   periodStart: Date
+  canEdit?: boolean
 }
 
 interface Note {
@@ -25,7 +26,7 @@ interface ActionItem {
   status: string
 }
 
-export function NotesTab({ workspaceId, periodStart }: NotesTabProps) {
+export function NotesTab({ workspaceId, periodStart, canEdit = true }: NotesTabProps) {
   const { data, error, isLoading } = useDashboardNotes(
     workspaceId,
     'WEEKLY',
@@ -148,7 +149,7 @@ export function NotesTab({ workspaceId, periodStart }: NotesTabProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">{title}</CardTitle>
-        {minRequired > 0 && notes.filter((n) => n.content.trim()).length < minRequired && (
+        {canEdit && minRequired > 0 && notes.filter((n) => n.content.trim()).length < minRequired && (
           <span className="text-xs text-orange-600">
             최소 {minRequired}개 필요
           </span>
@@ -163,45 +164,69 @@ export function NotesTab({ workspaceId, periodStart }: NotesTabProps) {
               onChange={(e) => updateNote(setNotes, note.id, e.target.value)}
               placeholder="내용을 입력하세요..."
               className="flex-1 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              disabled={!canEdit}
+              readOnly={!canEdit}
             />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => removeNote(setNotes, note.id)}
-            >
-              <Trash2 className="h-4 w-4 text-muted-foreground" />
-            </Button>
+            {canEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => removeNote(setNotes, note.id)}
+              >
+                <Trash2 className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            )}
           </div>
         ))}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => addNote(setNotes)}
-          className="w-full"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          추가
-        </Button>
+        {canEdit && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => addNote(setNotes)}
+            className="w-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            추가
+          </Button>
+        )}
       </CardContent>
     </Card>
   )
 
+  // 최소 요건 충족 여부 확인
+  const causesCount = causes.filter((n) => n.content.trim()).length
+  const improvementsCount = improvements.filter((n) => n.content.trim()).length
+  const actionsCount = actionItems.filter((a) => a.title.trim()).length
+  const meetsMinRequirements = causesCount >= 1 && improvementsCount >= 1 && actionsCount >= 1
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end gap-2">
-        {hasChanges && (
+        {!canEdit && (
+          <span className="text-sm text-muted-foreground self-center px-2 py-1 bg-muted rounded">
+            읽기 전용
+          </span>
+        )}
+        {canEdit && !meetsMinRequirements && (
+          <span className="text-sm text-orange-600 self-center">
+            최소 입력 요건을 충족해주세요
+          </span>
+        )}
+        {canEdit && hasChanges && meetsMinRequirements && (
           <span className="text-sm text-muted-foreground self-center">변경사항 있음</span>
         )}
-        <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              저장 중...
-            </>
-          ) : (
-            '저장'
-          )}
-        </Button>
+        {canEdit && (
+          <Button onClick={handleSave} disabled={isSaving || !meetsMinRequirements}>
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                저장 중...
+              </>
+            ) : (
+              '저장'
+            )}
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -227,7 +252,7 @@ export function NotesTab({ workspaceId, periodStart }: NotesTabProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">차주 반영사항</CardTitle>
-            {actionItems.filter((a) => a.title.trim()).length < 1 && (
+            {canEdit && actionItems.filter((a) => a.title.trim()).length < 1 && (
               <span className="text-xs text-orange-600">최소 1개 필요</span>
             )}
           </CardHeader>
@@ -240,25 +265,31 @@ export function NotesTab({ workspaceId, periodStart }: NotesTabProps) {
                   onChange={(e) => updateAction(index, e.target.value)}
                   placeholder="액션 아이템을 입력하세요..."
                   className="flex-1 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={!canEdit}
+                  readOnly={!canEdit}
                 />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeAction(index)}
-                >
-                  <Trash2 className="h-4 w-4 text-muted-foreground" />
-                </Button>
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeAction(index)}
+                  >
+                    <Trash2 className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                )}
               </div>
             ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={addAction}
-              className="w-full"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              추가
-            </Button>
+            {canEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addAction}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                추가
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>

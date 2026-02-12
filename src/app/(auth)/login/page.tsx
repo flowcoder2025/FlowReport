@@ -1,13 +1,57 @@
 'use client'
 
-import { signIn } from 'next-auth/react'
+import { Suspense, useEffect } from 'react'
+import { signIn, useSession } from 'next-auth/react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AlertCircle } from 'lucide-react'
 
-export default function LoginPage() {
+const ERROR_MESSAGES: Record<string, string> = {
+  OAuthSignin: '로그인 시작 중 오류가 발생했습니다.',
+  OAuthCallback: '인증 콜백 처리 중 오류가 발생했습니다.',
+  OAuthCreateAccount: '계정 생성 중 오류가 발생했습니다.',
+  EmailCreateAccount: '이메일 계정 생성 중 오류가 발생했습니다.',
+  Callback: '콜백 처리 중 오류가 발생했습니다.',
+  OAuthAccountNotLinked: '이미 다른 방식으로 가입된 이메일입니다.',
+  EmailSignin: '이메일 로그인 중 오류가 발생했습니다.',
+  CredentialsSignin: '로그인 정보가 올바르지 않습니다.',
+  SessionRequired: '로그인이 필요합니다.',
+  Default: '로그인 중 오류가 발생했습니다. 다시 시도해 주세요.',
+}
+
+function LoginContent() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const error = searchParams.get('error')
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (status === 'authenticated' && session) {
+      router.replace('/workspaces')
+    }
+  }, [status, session, router])
+
   const handleGoogleLogin = () => {
     signIn('google', { callbackUrl: '/workspaces' })
   }
+
+  // Show loading while checking session
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-muted-foreground">로딩 중...</div>
+      </div>
+    )
+  }
+
+  // If authenticated, show nothing (will redirect)
+  if (status === 'authenticated') {
+    return null
+  }
+
+  const errorMessage = error ? (ERROR_MESSAGES[error] || ERROR_MESSAGES.Default) : null
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -18,7 +62,13 @@ export default function LoginPage() {
             주간/월간 리포트 자동화 플랫폼에 로그인하세요
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {errorMessage && (
+            <div className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
           <Button
             variant="outline"
             className="w-full"
@@ -47,5 +97,17 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-muted-foreground">로딩 중...</div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   )
 }

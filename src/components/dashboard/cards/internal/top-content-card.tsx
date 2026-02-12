@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ExternalLink } from 'lucide-react'
 
@@ -45,10 +46,13 @@ export function TopContentCard({
                 </span>
 
                 {item.thumbnail && (
-                  <img
+                  <Image
                     src={item.thumbnail}
                     alt={item.title}
-                    className="w-16 h-10 object-cover rounded flex-shrink-0"
+                    width={64}
+                    height={40}
+                    className="object-cover rounded flex-shrink-0"
+                    unoptimized
                   />
                 )}
 

@@ -26,12 +26,14 @@ export interface SyncResult {
   metrics?: MetricData[]
   contentItems?: ContentItemData[]
   error?: string
+  keepExistingData?: boolean  // API 오류 시 기존 데이터 유지 플래그
 }
 
 export interface ConnectionTestResult {
   valid: boolean
   error?: string
   accountName?: string
+  errorType?: string  // 에러 유형 구분 (TOKEN_EXPIRED, NEEDS_REAUTH 등)
 }
 
 /**
