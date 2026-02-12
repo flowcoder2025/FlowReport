@@ -82,9 +82,23 @@ export interface StoreMetrics {
   }
 }
 
+export interface FacebookMetrics {
+  impressions: number | null
+  engagement: number | null
+  fanAdds: number | null
+  pageViews: number | null
+  change: {
+    impressions: number | null
+    engagement: number | null
+    fanAdds: number | null
+    pageViews: number | null
+  }
+}
+
 export interface ChannelDetails {
   YOUTUBE?: YouTubeMetrics
   META_INSTAGRAM?: InstagramMetrics
+  META_FACEBOOK?: FacebookMetrics
   SMARTSTORE?: StoreMetrics
   COUPANG?: StoreMetrics
 }

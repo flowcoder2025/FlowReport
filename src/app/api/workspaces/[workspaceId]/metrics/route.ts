@@ -66,6 +66,19 @@ interface InstagramMetrics {
   }
 }
 
+interface FacebookMetrics {
+  impressions: number | null
+  engagement: number | null
+  fanAdds: number | null
+  pageViews: number | null
+  change: {
+    impressions: number | null
+    engagement: number | null
+    fanAdds: number | null
+    pageViews: number | null
+  }
+}
+
 interface StoreMetrics {
   revenue: number | null
   orders: number | null
@@ -87,6 +100,7 @@ interface StoreMetrics {
 interface ChannelDetails {
   YOUTUBE?: YouTubeMetrics
   META_INSTAGRAM?: InstagramMetrics
+  META_FACEBOOK?: FacebookMetrics
   SMARTSTORE?: StoreMetrics
   COUPANG?: StoreMetrics
 }
@@ -619,6 +633,31 @@ function generateChannelDetails(
           prev.engagements ?? prev.engagement
         ),
         followers: calculateSingleChange(current.followers, prev.followers),
+      },
+    }
+  }
+
+  const facebookSnapshots = currentSnapshots.filter(
+    (s) => s.connection?.provider === 'META_FACEBOOK'
+  )
+  const facebookPrevSnapshots = previousSnapshots.filter(
+    (s) => s.connection?.provider === 'META_FACEBOOK'
+  )
+
+  if (facebookSnapshots.length > 0) {
+    const current = aggregateChannelData(facebookSnapshots)
+    const prev = aggregateChannelData(facebookPrevSnapshots)
+
+    details.META_FACEBOOK = {
+      impressions: current.impressions ?? null,
+      engagement: current.engagement ?? null,
+      fanAdds: current.followers ?? null,
+      pageViews: current.profileViews ?? null,
+      change: {
+        impressions: calculateSingleChange(current.impressions, prev.impressions),
+        engagement: calculateSingleChange(current.engagement, prev.engagement),
+        fanAdds: calculateSingleChange(current.followers, prev.followers),
+        pageViews: calculateSingleChange(current.profileViews, prev.profileViews),
       },
     }
   }

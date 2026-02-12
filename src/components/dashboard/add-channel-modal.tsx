@@ -354,6 +354,21 @@ export function AddChannelModal({
                     </ul>
                   </div>
 
+                  {(selectedChannel.provider === 'META_INSTAGRAM' || selectedChannel.provider === 'META_FACEBOOK') && (
+                    <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-800 space-y-1">
+                      <p className="font-medium">사전 준비 사항</p>
+                      <ul className="list-disc list-inside space-y-1 text-xs">
+                        <li>Facebook 비즈니스 페이지가 필요합니다</li>
+                        {selectedChannel.provider === 'META_INSTAGRAM' && (
+                          <>
+                            <li>Instagram 계정이 비즈니스 또는 크리에이터 계정이어야 합니다</li>
+                            <li>Instagram 계정이 Facebook 페이지에 연결되어 있어야 합니다</li>
+                          </>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+
                   <Button
                     onClick={handleOAuthConnect}
                     disabled={isOAuthLoading}

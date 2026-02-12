@@ -20,6 +20,7 @@ const PROVIDER_CONFIGS: Record<OAuthProvider, Omit<OAuthProviderConfig, 'clientI
       'instagram_manage_insights',
       'pages_show_list',
       'pages_read_engagement',
+      'business_management',
     ],
   },
   meta_facebook: {
@@ -28,7 +29,7 @@ const PROVIDER_CONFIGS: Record<OAuthProvider, Omit<OAuthProviderConfig, 'clientI
     scopes: [
       'pages_show_list',
       'pages_read_engagement',
-      'read_insights',
+      'business_management',
     ],
   },
 }
@@ -62,7 +63,6 @@ export function getProviderConfig(provider: OAuthProvider): OAuthProviderConfig 
     throw new Error(`Unknown OAuth provider: ${provider}`)
   }
 
-  // Get credentials based on provider
   const credentials = provider === 'youtube'
     ? getGoogleCredentials()
     : getMetaCredentials()

@@ -1,145 +1,54 @@
 # FlowReport Project Memory
 
-> 마지막 업데이트: 2026-02-11
+> 마지막 업데이트: 2026-02-12
 
-## 프로젝트 개요
+## 프로젝트 정보
+- **이름**: FlowReport
+- **유형**: ReportingOps SaaS
+- **스택**: Next.js 14, Prisma, PostgreSQL (Supabase)
+- **배포**: Vercel (Hobby 플랜)
+- **운영 URL**: https://flowreport.vercel.app
 
-FlowReport는 **ReportingOps SaaS** 플랫폼입니다.
-여러 마케팅/판매 채널의 데이터를 통합하여 주간/월간 리포트를 자동화하는 대시보드 서비스.
-
-### 기술 스택
-- **Frontend**: Next.js 14, React 18, Tailwind CSS, Recharts
-- **Backend**: Next.js API Routes, Prisma ORM
-- **DB**: PostgreSQL
-- **인증**: NextAuth.js
-
-### 연동 채널
-- SNS: YouTube, Instagram, Facebook, 네이버 블로그
-- 스토어: 스마트스토어, 쿠팡
-- 분석: GA4, Google Search Console
-
-## Active Epic
-
-### blog-channel (100% 완료)
-- **상태**: ✅ 완료
-- **Phase**: 2/2 완료
-- **목표**: 블로그 채널 데이터 수집 및 분석 강화
-
-**Phase 1: 네이버 블로그 CSV 고도화 ✅**
-- blogMetricSchema 16개 필드로 확장
-- CSV 템플릿 다운로드 API
-- 블로그 대시보드 뷰 구현
-
-**Phase 2: 티스토리 GA4 연동 가이드 ✅**
-- 티스토리 Open API 종료(2024.02)로 스코프 변경
-- GA4 연동 가이드 문서 작성
-- 블로그 연동 안내 UI 개선
-
-### menu-ux-improvement (100% 완료)
-- **상태**: ✅ 완료
-- **Phase**: 4/4 완료
-- **목표**: 데이터 대시보드 → 의사결정 대시보드 전환
-
-**완료된 작업:**
-- Phase 1-2: 헤드라인 요약, 권장 조치, 경쟁사 비교, 피드백 루프
-- Phase 3: Performance-Content 통합 (메뉴 7→6개), 상관관계 차트
-- Phase 4: 권장 조치 템플릿 DB화, OpenAPI 문서화
-
-## 최근 완료된 스프린트
-
-### 성능 최적화 (2026-02-11)
-**P0 (즉시 효과):**
-- Trend API N+1 쿼리 → Promise.all 병렬화 (70-80% 단축)
-- DashboardViewRenderer 7개 뷰 dynamic import
-- 차트/카드 컴포넌트 React.memo (5개)
-
-**P1 (추가 개선):**
-- 뷰 컴포넌트 useMemo 16개 추가
-- 전역 SWRConfig + Provider 설정
-- PDF 렌더러 lazy load
-
-**P2 (기술 부채) - 완료:**
-- 채널 상수 통합 (CHANNEL_GROUPS)
-- CSV 템플릿 상수 통합
-- TargetConfig 타입 통합
-- Context 분리 (View/Filter/Workspace)
-
-### 목표값 관리 UI (2026-02-11)
-- Workspace에 targetConfig JSON 필드 추가
-- 목표값 설정 API (GET/PATCH /settings/targets)
-- Settings 페이지에 "목표" 탭 추가
-- Executive Dashboard에서 API 목표값 연동
+## 완료된 Epics
+- **Epic A: 리포트 자동화** (2026-02-12 완료)
 
 ## 아키텍처 결정
+- **모듈 구조**: index.ts (Public API) + internal/ (Private)
+- **이메일**: Resend 사용
+- **Cron**: Vercel Cron (Hobby: 하루 1회 제한)
+- **Meta OAuth**: 장기 토큰 교환 + Page Access Token 우선 사용
+- **Meta 앱 통합**: FlowReport_ins 앱 하나로 Facebook+Instagram 모두 처리 (페이지 권한 필요)
 
-### 폴더 구조 규칙
-```
-module/
-├── index.ts      # Public API (외부 노출)
-└── internal/     # Private (외부 import 금지)
-    └── *.tsx
-```
+## 주의사항
+- **React Hooks**: early return 전에 모든 hooks 호출 필수
+- **Tooltip formatter**: `(value, name) => [formattedValue, name]` 형식 사용
+- **Vercel Hobby 플랜**: cron은 하루 1회만 가능 (매시간 불가)
+- **커밋 전 확인**: 새 파일이 다른 파일에서 import되면 반드시 함께 커밋
+- **GA4 자격증명**: serviceAccountJson (문자열), serviceAccount (객체) 혼동 주의
 
-### 에이전트 모델 정책
-| 업무 유형 | 모델 |
-|----------|------|
-| 탐색/검색 | haiku |
-| 코드 작성 | **opus** |
-| 판단/의사결정 | **opus** |
+## 환경변수
+- ENCRYPTION_KEY, DATABASE_URL, NEXTAUTH_URL, NEXTAUTH_SECRET ✅
+- GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET ✅
+- META_APP_ID, META_APP_SECRET ✅ (FlowReport_ins 앱 - 907963014925273)
+- CRON_SECRET ✅ (로컬), Vercel에도 설정 필요
+- RESEND_API_KEY, EMAIL_FROM ❌ (Resend 대시보드 발급 필요)
 
-### 스프린트 워크플로우
-```
-부서 의견 수렴 (opus)
-    ↓
-개발총괄 종합
-    ↓
-CTO 기술 리뷰 (opus)
-    ↓
-공동창업자 승인 (opus)
-    ↓
-개발 (opus)
-    ↓
-CTO 코드 리뷰 (opus)
-    ↓
-배포
-```
+## 채널 연동 상태 (2026-02-12)
+| 채널 | 상태 | 비고 |
+|------|------|------|
+| GA4 | ✅ 코드 수정 완료 | 서비스 계정 JSON 필요 |
+| YouTube | ✅ 동작 | FlowCoder 채널 연결됨 |
+| Instagram | ✅ 동작 | FlowReport_ins 앱 사용 |
+| Facebook | ✅ 동작 | FlowReport_ins 앱 사용 (FlowCoder 페이지) |
+| 스마트스토어 | ✅ CSV 전용 | |
+| 쿠팡 | ✅ CSV 전용 | |
+| 네이버 블로그 | ✅ CSV 전용 | |
 
-## 완료된 Epic
+## QA 수정 (2026-02-12)
+- 28건 이슈 수정 완료 (High 4, Medium 14, Low 10)
+- SessionProvider root layout 추가
+- 감사 로그 보존 (connectionId nullable)
 
-| Epic | 완료일 | 요약 |
-|------|--------|------|
-| content-analytics | 2026-02-12 | 콘텐츠 타입별 분석, 채널별 발행 시간 |
-| commerce-enhancement | 2026-02-11 | 반품/취소 분석, 상품 TOP 5 |
-| blog-channel | 2026-02-11 | 블로그 CSV 확장, GA4 연동 가이드 |
-| menu-ux-improvement | 2026-02-11 | 의사결정 대시보드 전환, 메뉴 7→6개 |
-| dashboard-persona-refactoring | 2026-02-10 | 페르소나별 특화 대시보드 |
-| dashboard-refactoring | 2026-02-05 | 사이드패널 + 채널 메트릭 |
-
-## Lessons Learned
-
-### 2026-02-11
-1. **에이전트 모델 정책 중요**: 판단/의사결정에 haiku 사용 시 품질 저하
-2. **부서별 의견 수렴 효과적**: 4개 부서 관점으로 요구사항 명확화
-3. **CTO 코드 리뷰 필수**: 보안/타입 이슈 사전 발견
-
-### 2026-02-10
-1. **페르소나 분석 먼저**: 대시보드 설계 전 사용자 그룹 요구사항 분석 필수
-2. **병렬 개발 효과적**: 에이전트 4명 병렬 투입으로 동시 개발 성공
-
-## 다음 세션 TODO
-
-1. **다음 Epic 진행**: A. 리포트 자동화
-   - 주간/월간 자동 리포트 생성
-   - 이메일/슬랙 자동 배포
-2. **남은 기술 부채**
-   - 데이터 프리페칭 (네비게이션 체감 속도↑)
-
-## 현재 진행중인 로드맵
-
-```
-C. 커머스 고도화 ✅ 완료
-D. 콘텐츠 분석 강화 ✅ 완료
-A. 리포트 자동화 ← 다음
-B. 알림 시스템
-E. 고급 분석 도구
-```
+## 최근 작업
+- 2026-02-12: Meta 채널 연동 완료 (Facebook + Instagram 동기화 성공)
+- 2026-02-12: Facebook 카드 컴포넌트 추가, 인사이트 에러 처리 개선

@@ -6,7 +6,7 @@ import { useDashboardMetrics, useDashboardNotes, useWorkspaceTargets } from '@/l
 import { KPICardEnhanced, InsightCard, YouTubeDetailCard, HeadlineSummary } from '../../cards'
 import { ChannelSummaryTable } from '../../tables'
 import { HorizontalBarChart } from '../../charts'
-import { HighlightBanner, InstagramCard, StoreCard } from '../../channel-metrics'
+import { HighlightBanner, InstagramCard, FacebookCard, StoreCard } from '../../channel-metrics'
 import { Skeleton } from '../../skeleton'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
@@ -261,6 +261,9 @@ export function OverviewView() {
         )}
         {channelDetails?.META_INSTAGRAM && (
           <InstagramCard metrics={channelDetails.META_INSTAGRAM} />
+        )}
+        {channelDetails?.META_FACEBOOK && (
+          <FacebookCard metrics={channelDetails.META_FACEBOOK} />
         )}
         {channelDetails?.SMARTSTORE && (
           <StoreCard metrics={channelDetails.SMARTSTORE} name="스마트스토어" />

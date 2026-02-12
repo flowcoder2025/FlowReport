@@ -131,7 +131,7 @@ export class MetaConnector extends BaseConnector {
       const metricNames =
         this.provider === 'META_INSTAGRAM'
           ? 'impressions,reach,profile_views,follower_count'
-          : 'page_impressions,page_engaged_users,page_fan_adds,page_views_total'
+          : 'page_impressions,page_post_engagements,page_fan_adds,page_views_total'
 
       // Graph API insights 호출
       const insightsUrl = `${this.baseUrl}/${accountId}/insights?` +
@@ -145,16 +145,25 @@ export class MetaConnector extends BaseConnector {
 
       if (!response.ok) {
         const error = await response.json()
-        // 권한 없거나 토큰 만료인 경우 기존 데이터 유지하고 에러 반환
-        if (error.error?.code === 100 || error.error?.code === 190) {
-          console.warn('Meta insights API error:', error.error?.message)
+        console.warn('Meta insights API error:', JSON.stringify(error, null, 2))
+        console.warn('Request URL:', insightsUrl.replace(/access_token=[^&]+/, 'access_token=***'))
+
+        // 토큰 만료
+        if (error.error?.code === 190) {
           return {
             success: false,
             error: 'API 권한 오류: 재연결이 필요합니다',
-            keepExistingData: true,  // 기존 데이터 유지 플래그
+            keepExistingData: true,
             metrics: [],
           }
         }
+
+        // 잘못된 메트릭 또는 새 페이지 (데이터 없음) - 빈 데이터 반환
+        if (error.error?.code === 100) {
+          console.warn('Insights not available yet (new page or invalid metrics)')
+          return this.getEmptyMetrics(startDate, endDate)
+        }
+
         throw new Error(error.error?.message || 'Failed to fetch insights')
       }
 
@@ -324,7 +333,7 @@ export class MetaConnector extends BaseConnector {
       profile_views: 'profileViews',
       follower_count: 'followers',
       page_impressions: 'impressions',
-      page_engaged_users: 'engagement',
+      page_post_engagements: 'engagement',
       page_fan_adds: 'followers',
       page_views_total: 'profileViews',
     }
