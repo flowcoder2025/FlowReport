@@ -32,6 +32,7 @@ export interface OAuthChannelInfo {
   channelId: string
   channelName: string
   channelThumbnail?: string
+  extra?: Record<string, string>
 }
 
 export interface OAuthCallbackResult {

@@ -82,11 +82,10 @@ const CHANNEL_CONFIGS: ChannelConfig[] = [
     icon: <Instagram className="h-5 w-5 text-pink-500" />,
     credentialType: 'OAUTH_TOKEN',
     isApiSupported: true,
-    isOAuth: false, // Meta OAuth - 추후 구현
-    fields: [
-      { key: 'accountId', label: 'Instagram 계정 ID', type: 'text', required: true },
-      { key: 'accessToken', label: 'Access Token', type: 'password', required: true },
-    ],
+    isOAuth: true,
+    oAuthProvider: 'meta_instagram',
+    oAuthButtonLabel: 'Facebook 계정으로 연결',
+    fields: [], // OAuth doesn't need manual fields
   },
   {
     provider: 'META_FACEBOOK',
@@ -94,11 +93,10 @@ const CHANNEL_CONFIGS: ChannelConfig[] = [
     icon: <Facebook className="h-5 w-5 text-blue-600" />,
     credentialType: 'OAUTH_TOKEN',
     isApiSupported: true,
-    isOAuth: false, // Meta OAuth - 추후 구현
-    fields: [
-      { key: 'pageId', label: 'Facebook 페이지 ID', type: 'text', required: true },
-      { key: 'accessToken', label: 'Access Token', type: 'password', required: true },
-    ],
+    isOAuth: true,
+    oAuthProvider: 'meta_facebook',
+    oAuthButtonLabel: 'Facebook 계정으로 연결',
+    fields: [], // OAuth doesn't need manual fields
   },
   {
     provider: 'SMARTSTORE',
@@ -107,8 +105,8 @@ const CHANNEL_CONFIGS: ChannelConfig[] = [
     credentialType: 'CSV_ONLY',
     isApiSupported: false,
     fields: [
-      { key: 'storeId', label: '스토어 ID', type: 'text', required: true },
-      { key: 'storeName', label: '스토어명', type: 'text', required: true },
+      { key: 'storeId', label: '스토어 ID', type: 'text', placeholder: '스마트스토어 판매자 ID', required: true },
+      { key: 'storeName', label: '스토어명', type: 'text', placeholder: '내 스토어 이름', required: true },
     ],
   },
   {
@@ -118,8 +116,8 @@ const CHANNEL_CONFIGS: ChannelConfig[] = [
     credentialType: 'CSV_ONLY',
     isApiSupported: false,
     fields: [
-      { key: 'vendorId', label: '판매자 ID', type: 'text', required: true },
-      { key: 'vendorName', label: '판매자명', type: 'text', required: true },
+      { key: 'vendorId', label: '판매자 ID', type: 'text', placeholder: '쿠팡 판매자 ID', required: true },
+      { key: 'vendorName', label: '판매자명', type: 'text', placeholder: '판매자 이름', required: true },
     ],
   },
   {
@@ -129,7 +127,20 @@ const CHANNEL_CONFIGS: ChannelConfig[] = [
     credentialType: 'CSV_ONLY',
     isApiSupported: false,
     fields: [
-      { key: 'blogId', label: '블로그 ID', type: 'text', required: true },
+      {
+        key: 'blogId',
+        label: '블로그 ID',
+        type: 'text',
+        placeholder: 'myblogid (blog.naver.com/myblogid에서 확인)',
+        required: true,
+      },
+      {
+        key: 'blogName',
+        label: '블로그 이름',
+        type: 'text',
+        placeholder: '내 블로그 이름 (선택)',
+        required: false,
+      },
     ],
   },
 ]
@@ -212,9 +223,11 @@ export function AddChannelModal({
 
       if (selectedChannel.provider === 'GA4' && formData.serviceAccountJson) {
         try {
+          // JSON 유효성 검증만 수행 (GA4Connector는 serviceAccountJson을 문자열로 기대)
+          JSON.parse(formData.serviceAccountJson)
           credentials = {
             propertyId: formData.propertyId,
-            serviceAccount: JSON.parse(formData.serviceAccountJson),
+            serviceAccountJson: formData.serviceAccountJson,
           }
         } catch {
           toast({
@@ -241,7 +254,7 @@ export function AddChannelModal({
         body: JSON.stringify({
           provider: selectedChannel.provider,
           accountId,
-          accountName: formData.storeName || formData.vendorName || null,
+          accountName: formData.storeName || formData.vendorName || formData.blogName || formData.blogId || null,
           credentials,
           credentialType: selectedChannel.credentialType,
         }),
@@ -356,9 +369,16 @@ export function AddChannelModal({
 
               {/* CSV 전용 채널 */}
               {!selectedChannel?.isApiSupported && !selectedChannel?.isOAuth && (
-                <div className="p-3 bg-yellow-50 rounded-lg text-sm text-yellow-800">
-                  <Upload className="h-4 w-4 inline-block mr-2" />
-                  이 채널은 CSV 파일 업로드로 데이터를 가져옵니다.
+                <div className="p-3 bg-yellow-50 rounded-lg text-sm text-yellow-800 space-y-2">
+                  <div>
+                    <Upload className="h-4 w-4 inline-block mr-2" />
+                    이 채널은 CSV 파일 업로드로 데이터를 가져옵니다.
+                  </div>
+                  {selectedChannel?.provider === 'NAVER_BLOG' && (
+                    <div className="text-xs text-yellow-700">
+                      <strong>블로그 ID 확인 방법:</strong> 내 블로그 주소가 blog.naver.com/<strong>myblogid</strong> 라면 &quot;myblogid&quot;가 블로그 ID입니다.
+                    </div>
+                  )}
                 </div>
               )}
 

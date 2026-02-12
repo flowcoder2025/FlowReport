@@ -19,6 +19,8 @@ import {
   fetchMetaAccountInfo,
   isValidProvider,
   OAuthProvider,
+  OAuthTokenResponse,
+  OAuthChannelInfo,
 } from '@/lib/oauth'
 import { ChannelProvider } from '@prisma/client'
 
@@ -31,6 +33,37 @@ const PROVIDER_MAP: Record<OAuthProvider, ChannelProvider> = {
   youtube: 'YOUTUBE',
   meta_instagram: 'META_INSTAGRAM',
   meta_facebook: 'META_FACEBOOK',
+}
+
+/**
+ * Build provider-specific credentials for storage
+ */
+function buildCredentials(
+  provider: OAuthProvider,
+  tokens: OAuthTokenResponse,
+  channelInfo: OAuthChannelInfo
+): Record<string, unknown> {
+  if (provider === 'youtube') {
+    return {
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      channelId: channelInfo.channelId,
+      expiresAt: tokens.expires_in
+        ? Date.now() + tokens.expires_in * 1000
+        : undefined,
+    }
+  }
+
+  // Meta (Instagram/Facebook) - use long-lived token and proper account IDs
+  const extra = channelInfo.extra || {}
+  return {
+    accessToken: extra.longLivedToken || tokens.access_token,
+    pageId: extra.pageId,
+    pageAccessToken: extra.pageAccessToken,
+    ...(provider === 'meta_instagram'
+      ? { instagramBusinessAccountId: extra.instagramBusinessAccountId }
+      : {}),
+  }
 }
 
 function renderResultPage(result: {
@@ -167,6 +200,9 @@ export async function GET(
 
     const channelProvider = PROVIDER_MAP[provider]
 
+    // Build credentials based on provider
+    const credentials = buildCredentials(provider, tokens, channelInfo)
+
     // Check for existing connection
     const existing = await prisma.channelConnection.findUnique({
       where: {
@@ -180,15 +216,6 @@ export async function GET(
 
     if (existing) {
       // Update existing connection with new tokens
-      const credentials = {
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
-        channelId: channelInfo.channelId,
-        expiresAt: tokens.expires_in
-          ? Date.now() + tokens.expires_in * 1000
-          : undefined,
-      }
-
       await prisma.channelConnection.update({
         where: { id: existing.id },
         data: {
@@ -207,16 +234,6 @@ export async function GET(
         }),
         { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
       )
-    }
-
-    // Create new connection
-    const credentials = {
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      channelId: channelInfo.channelId,
-      expiresAt: tokens.expires_in
-        ? Date.now() + tokens.expires_in * 1000
-        : undefined,
     }
 
     const connection = await prisma.channelConnection.create({

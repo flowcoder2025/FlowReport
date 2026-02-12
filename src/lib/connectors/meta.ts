@@ -5,6 +5,7 @@ import { format, eachDayOfInterval, parseISO } from 'date-fns'
 export interface MetaCredentials {
   accessToken: string
   pageId?: string
+  pageAccessToken?: string
   instagramBusinessAccountId?: string
 }
 
@@ -59,49 +60,53 @@ export class MetaConnector extends BaseConnector {
       : this.credentials.pageId
   }
 
+  /**
+   * Get the best available access token (page token preferred)
+   */
+  private getAccessToken(): string {
+    return this.credentials.pageAccessToken || this.credentials.accessToken
+  }
+
   async testConnection(): Promise<ConnectionTestResult> {
     try {
-      if (!this.credentials.accessToken) {
+      const token = this.getAccessToken()
+      if (!token) {
         return {
           valid: false,
           error: 'Missing access token',
         }
       }
 
-      // Test the token by fetching user info
-      const response = await fetch(
-        `${this.baseUrl}/me?access_token=${this.credentials.accessToken}`
-      )
-
-      if (!response.ok) {
-        const error = await response.json()
+      const accountId = this.getAccountId()
+      if (!accountId) {
         return {
           valid: false,
-          error: error.error?.message || 'Invalid access token',
+          error: this.provider === 'META_INSTAGRAM'
+            ? 'Instagram 비즈니스 계정 ID가 없습니다. 재연결해주세요.'
+            : 'Facebook 페이지 ID가 없습니다. 재연결해주세요.',
         }
       }
 
-      const data = await response.json()
+      // 계정 접근 권한 확인
+      const fields = this.provider === 'META_INSTAGRAM'
+        ? 'id,username,name'
+        : 'id,name'
+      const accountResponse = await fetch(
+        `${this.baseUrl}/${accountId}?fields=${fields}&access_token=${token}`
+      )
 
-      // 계정 ID 확인
-      const accountId = this.getAccountId()
-      if (accountId) {
-        // 계정 접근 권한 확인
-        const accountResponse = await fetch(
-          `${this.baseUrl}/${accountId}?fields=name,username&access_token=${this.credentials.accessToken}`
-        )
-        if (accountResponse.ok) {
-          const accountData = await accountResponse.json()
-          return {
-            valid: true,
-            accountName: accountData.username || accountData.name || accountId,
-          }
+      if (!accountResponse.ok) {
+        const error = await accountResponse.json()
+        return {
+          valid: false,
+          error: error.error?.message || '계정에 접근할 수 없습니다. 재연결이 필요합니다.',
         }
       }
 
+      const accountData = await accountResponse.json()
       return {
         valid: true,
-        accountName: data.name || data.id,
+        accountName: accountData.username || accountData.name || accountId,
       }
     } catch (error) {
       return {
@@ -134,16 +139,21 @@ export class MetaConnector extends BaseConnector {
         `period=day&` +
         `since=${Math.floor(startDate.getTime() / 1000)}&` +
         `until=${Math.floor(endDate.getTime() / 1000)}&` +
-        `access_token=${this.credentials.accessToken}`
+        `access_token=${this.getAccessToken()}`
 
       const response = await fetch(insightsUrl)
 
       if (!response.ok) {
         const error = await response.json()
-        // 권한 없거나 기간 제한인 경우 빈 데이터 반환 (정상 처리)
+        // 권한 없거나 토큰 만료인 경우 기존 데이터 유지하고 에러 반환
         if (error.error?.code === 100 || error.error?.code === 190) {
           console.warn('Meta insights API error:', error.error?.message)
-          return this.getEmptyMetrics(startDate, endDate)
+          return {
+            success: false,
+            error: 'API 권한 오류: 재연결이 필요합니다',
+            keepExistingData: true,  // 기존 데이터 유지 플래그
+            metrics: [],
+          }
         }
         throw new Error(error.error?.message || 'Failed to fetch insights')
       }
@@ -181,7 +191,7 @@ export class MetaConnector extends BaseConnector {
       // 팔로워 수 조회 (Instagram만)
       if (this.provider === 'META_INSTAGRAM') {
         const followersResponse = await fetch(
-          `${this.baseUrl}/${accountId}?fields=followers_count&access_token=${this.credentials.accessToken}`
+          `${this.baseUrl}/${accountId}?fields=followers_count&access_token=${this.getAccessToken()}`
         )
         if (followersResponse.ok) {
           const followersData = await followersResponse.json()
@@ -233,7 +243,7 @@ export class MetaConnector extends BaseConnector {
           `fields=id,media_type,permalink,caption,timestamp,like_count,comments_count&` +
           `since=${Math.floor(startDate.getTime() / 1000)}&` +
           `until=${Math.floor(endDate.getTime() / 1000)}&` +
-          `access_token=${this.credentials.accessToken}`
+          `access_token=${this.getAccessToken()}`
 
         const response = await fetch(mediaUrl)
 
@@ -266,7 +276,7 @@ export class MetaConnector extends BaseConnector {
           `fields=id,permalink_url,message,created_time,reactions.summary(true),comments.summary(true),shares&` +
           `since=${Math.floor(startDate.getTime() / 1000)}&` +
           `until=${Math.floor(endDate.getTime() / 1000)}&` +
-          `access_token=${this.credentials.accessToken}`
+          `access_token=${this.getAccessToken()}`
 
         const response = await fetch(postsUrl)
 
