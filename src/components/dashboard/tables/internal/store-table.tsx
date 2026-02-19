@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils/format'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
 interface StoreRow {
@@ -163,22 +164,16 @@ function MetricCell({ value, previousValue, format = 'number' }: MetricCellProps
           )}
         >
           {isPositive ? (
-            <TrendingUp className="h-3 w-3" />
+            <TrendingUp className="h-3 w-3 mr-0.5" />
           ) : isNegative ? (
-            <TrendingDown className="h-3 w-3" />
+            <TrendingDown className="h-3 w-3 mr-0.5" />
           ) : (
-            <Minus className="h-3 w-3" />
+            <Minus className="h-3 w-3 mr-0.5" />
           )}
+          {Math.abs(change).toFixed(1)}%
         </span>
       )}
     </div>
   )
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('ko-KR', {
-    style: 'currency',
-    currency: 'KRW',
-    maximumFractionDigits: 0,
-  }).format(value)
-}

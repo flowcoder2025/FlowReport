@@ -4,15 +4,16 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
+import { formatNumber } from '@/lib/utils/format'
 
 interface ContentRow {
   id: string
   title: string
   channel: string
-  publishedAt: string
+  publishedAt?: string
   views: number
-  likes: number
-  comments: number
+  likes?: number
+  comments?: number
   engagementRate: number
   url?: string
 }
@@ -35,9 +36,16 @@ export function ContentTable({
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [page, setPage] = useState(0)
 
+  // 데이터가 있는 컬럼만 표시하기 위한 체크
+  const hasPublishedAt = data.some((row) => row.publishedAt && row.publishedAt !== '-')
+  const hasLikes = data.some((row) => row.likes != null && row.likes > 0)
+
   const sortedData = [...data].sort((a, b) => {
     const aVal = a[sortField]
     const bVal = b[sortField]
+    if (aVal == null && bVal == null) return 0
+    if (aVal == null) return 1
+    if (bVal == null) return -1
     if (typeof aVal === 'string' && typeof bVal === 'string') {
       return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
     }
@@ -65,6 +73,9 @@ export function ContentTable({
     )
   }
 
+  // 표시 컬럼 수 계산 (colspan용)
+  const visibleColumnCount = 4 + (hasPublishedAt ? 1 : 0) + (hasLikes ? 1 : 0)
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -77,13 +88,15 @@ export function ContentTable({
               <tr className="border-b">
                 <th className="text-left py-2 px-2 font-medium">제목</th>
                 <th className="text-left py-2 px-2 font-medium">채널</th>
-                <th
-                  className="text-right py-2 px-2 font-medium cursor-pointer hover:text-primary"
-                  onClick={() => handleSort('publishedAt')}
-                >
-                  게시일
-                  <SortIcon field="publishedAt" />
-                </th>
+                {hasPublishedAt && (
+                  <th
+                    className="text-right py-2 px-2 font-medium cursor-pointer hover:text-primary"
+                    onClick={() => handleSort('publishedAt')}
+                  >
+                    게시일
+                    <SortIcon field="publishedAt" />
+                  </th>
+                )}
                 <th
                   className="text-right py-2 px-2 font-medium cursor-pointer hover:text-primary"
                   onClick={() => handleSort('views')}
@@ -91,13 +104,15 @@ export function ContentTable({
                   조회수
                   <SortIcon field="views" />
                 </th>
-                <th
-                  className="text-right py-2 px-2 font-medium cursor-pointer hover:text-primary"
-                  onClick={() => handleSort('likes')}
-                >
-                  좋아요
-                  <SortIcon field="likes" />
-                </th>
+                {hasLikes && (
+                  <th
+                    className="text-right py-2 px-2 font-medium cursor-pointer hover:text-primary"
+                    onClick={() => handleSort('likes')}
+                  >
+                    좋아요
+                    <SortIcon field="likes" />
+                  </th>
+                )}
                 <th
                   className="text-right py-2 px-2 font-medium cursor-pointer hover:text-primary"
                   onClick={() => handleSort('engagementRate')}
@@ -111,24 +126,28 @@ export function ContentTable({
             <tbody>
               {paginatedData.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={visibleColumnCount} className="py-8 text-center text-muted-foreground">
                     콘텐츠가 없습니다.
                   </td>
                 </tr>
               )}
               {paginatedData.map((row) => (
                 <tr key={row.id} className="border-b hover:bg-muted/50">
-                  <td className="py-2 px-2 max-w-[200px] truncate">{row.title}</td>
+                  <td className="py-2 px-2 max-w-[300px] truncate">{row.title}</td>
                   <td className="py-2 px-2">
                     <span className="px-1.5 py-0.5 rounded bg-muted text-xs">
                       {row.channel}
                     </span>
                   </td>
-                  <td className="py-2 px-2 text-right text-muted-foreground">
-                    {row.publishedAt}
-                  </td>
+                  {hasPublishedAt && (
+                    <td className="py-2 px-2 text-right text-muted-foreground">
+                      {row.publishedAt || '-'}
+                    </td>
+                  )}
                   <td className="py-2 px-2 text-right">{formatNumber(row.views)}</td>
-                  <td className="py-2 px-2 text-right">{formatNumber(row.likes)}</td>
+                  {hasLikes && (
+                    <td className="py-2 px-2 text-right">{formatNumber(row.likes ?? 0)}</td>
+                  )}
                   <td className="py-2 px-2 text-right">{row.engagementRate.toFixed(1)}%</td>
                   <td className="py-2 px-2">
                     {row.url && (
@@ -176,10 +195,4 @@ export function ContentTable({
       </CardContent>
     </Card>
   )
-}
-
-function formatNumber(value: number): string {
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
-  return value.toLocaleString()
 }

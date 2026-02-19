@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { CHART_PALETTE } from '@/constants'
+import { formatNumber } from '@/lib/utils/format'
 
 interface DataItem {
   name: string
@@ -89,12 +90,3 @@ export const PieChart = memo(function PieChart({
   )
 })
 
-function formatNumber(value: number): string {
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`
-  }
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`
-  }
-  return value.toLocaleString()
-}

@@ -13,6 +13,7 @@ import {
   Cell,
 } from 'recharts'
 import { CHART_PALETTE } from '@/constants'
+import { formatNumber } from '@/lib/utils/format'
 
 interface BubbleDataItem {
   name: string
@@ -28,6 +29,7 @@ interface BubbleChartProps {
   yLabel?: string
   height?: number
   showGrid?: boolean
+  yAxisFormat?: (value: number) => string
 }
 
 const DEFAULT_COLORS = CHART_PALETTE
@@ -38,6 +40,7 @@ export const BubbleChart = memo(function BubbleChart({
   yLabel = 'Y',
   height = 300,
   showGrid = true,
+  yAxisFormat,
 }: BubbleChartProps) {
   if (!data || data.length === 0) {
     return (
@@ -72,7 +75,7 @@ export const BubbleChart = memo(function BubbleChart({
           tick={{ fontSize: 12 }}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `${value}%`}
+          tickFormatter={yAxisFormat || ((value) => `${value}%`)}
         />
         <ZAxis
           type="number"
@@ -87,7 +90,7 @@ export const BubbleChart = memo(function BubbleChart({
             borderRadius: '6px',
           }}
           formatter={(value: number, name: string) => {
-            if (name === yLabel) return [`${value.toFixed(1)}%`, name]
+            if (name === yLabel) return [yAxisFormat ? yAxisFormat(value) : `${value.toFixed(1)}%`, name]
             return [formatNumber(value), name]
           }}
           labelFormatter={(_, payload) => {
@@ -111,12 +114,3 @@ export const BubbleChart = memo(function BubbleChart({
   )
 })
 
-function formatNumber(value: number): string {
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`
-  }
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`
-  }
-  return value.toLocaleString()
-}

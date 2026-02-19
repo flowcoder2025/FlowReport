@@ -11,6 +11,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import { formatNumber } from '@/lib/utils/format'
 
 interface DataPoint {
   period: string
@@ -91,13 +92,3 @@ export const TrendLineChart = memo(function TrendLineChart({
     </ResponsiveContainer>
   )
 })
-
-function formatNumber(value: number): string {
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`
-  }
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`
-  }
-  return value.toLocaleString()
-}

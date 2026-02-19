@@ -1,7 +1,8 @@
 'use client'
 
-import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts'
+import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip } from 'recharts'
 import { STATUS_COLORS } from '@/constants'
+import { formatNumber } from '@/lib/utils/format'
 
 interface SparklineChartProps {
   data: { value: number }[]
@@ -34,6 +35,17 @@ export function SparklineChart({
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data}>
         <YAxis domain={[min * 0.9, max * 1.1]} hide />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: 'hsl(var(--background))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: '6px',
+            padding: '4px 8px',
+            fontSize: '12px',
+          }}
+          formatter={(value: number, name: string) => [formatNumber(value), name]}
+          labelFormatter={() => ''}
+        />
         <Line
           type="monotone"
           dataKey="value"

@@ -8,6 +8,20 @@ import { CHANNEL_LABELS } from '@/constants'
 export function StoreCard({ metrics, name }: StoreCardProps) {
   const icon = name === CHANNEL_LABELS.SMARTSTORE ? '🛒' : '🚀'
 
+  // 취소율: 취소건수 / 주문수 * 100
+  const cancelRate =
+    metrics.cancels !== null && metrics.orders !== null && metrics.orders > 0
+      ? (metrics.cancels / metrics.orders) * 100
+      : null
+
+  // 반품율: 반품건수 / 주문수 * 100
+  const refundRate =
+    metrics.refunds !== null && metrics.orders !== null && metrics.orders > 0
+      ? (metrics.refunds / metrics.orders) * 100
+      : null
+
+  const hasCancelRefundData = cancelRate !== null || refundRate !== null
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -40,6 +54,26 @@ export function StoreCard({ metrics, name }: StoreCardProps) {
             value={metrics.avgOrderValue}
             format="currency"
           />
+          {hasCancelRefundData && (
+            <>
+              {cancelRate !== null && (
+                <MetricBox
+                  label="취소율"
+                  value={cancelRate}
+                  change={metrics.change.cancels}
+                  format="percent"
+                />
+              )}
+              {refundRate !== null && (
+                <MetricBox
+                  label="반품율"
+                  value={refundRate}
+                  change={metrics.change.refunds}
+                  format="percent"
+                />
+              )}
+            </>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -2,7 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { formatNullableNumber } from '@/lib/utils/format'
 import { TrendingUp, TrendingDown } from 'lucide-react'
+import { CHANNEL_COLORS } from '@/constants'
 
 interface ChannelRow {
   channel: string
@@ -66,10 +68,19 @@ export function ChannelSummaryTable({
             <tbody>
               {channels.map((channel) => (
                 <tr key={channel.channel} className="border-b hover:bg-muted/50">
-                  <td className="py-3 px-3 font-medium">{channel.channelName}</td>
+                  <td className="py-3 px-3 font-medium">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: CHANNEL_COLORS[channel.channel as keyof typeof CHANNEL_COLORS] || '#8884d8' }}
+                        aria-hidden="true"
+                      />
+                      {channel.channelName}
+                    </div>
+                  </td>
                   {!compact && (
                     <td className="py-3 px-3 text-right">
-                      {formatValue(channel.data.uploads ?? channel.data.posts)}
+                      {formatNullableNumber(channel.data.uploads ?? channel.data.posts)}
                     </td>
                   )}
                   <td className="py-3 px-3 text-right">
@@ -111,7 +122,7 @@ export function ChannelSummaryTable({
 function MetricCell({ value, change }: { value: number | null | undefined; change: number | null | undefined }) {
   return (
     <div>
-      <div>{formatValue(value)}</div>
+      <div>{formatNullableNumber(value)}</div>
       {change !== null && change !== undefined && (
         <div
           className={cn(
@@ -131,9 +142,3 @@ function MetricCell({ value, change }: { value: number | null | undefined; chang
   )
 }
 
-function formatValue(value: number | null | undefined): string {
-  if (value === null || value === undefined) return 'N/A'
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
-  return value.toLocaleString()
-}

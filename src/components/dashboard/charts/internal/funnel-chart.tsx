@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { formatNumber } from '@/lib/utils/format'
 
 interface FunnelDataItem {
   name: string
@@ -80,12 +81,3 @@ export function FunnelChart({
   )
 }
 
-function formatNumber(value: number): string {
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`
-  }
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`
-  }
-  return value.toLocaleString()
-}

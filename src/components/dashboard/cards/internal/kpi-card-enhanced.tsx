@@ -3,6 +3,7 @@
 import { memo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { formatValue, getNAReasonText } from '@/lib/utils/format'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { SparklineChart } from '../../charts'
 
@@ -106,30 +107,3 @@ export const KPICardEnhanced = memo(function KPICardEnhanced({
     </Card>
   )
 })
-
-function formatValue(v: number, format: string): string {
-  switch (format) {
-    case 'currency':
-      return new Intl.NumberFormat('ko-KR', {
-        style: 'currency',
-        currency: 'KRW',
-        maximumFractionDigits: 0,
-      }).format(v)
-    case 'percent':
-      return `${v.toFixed(1)}%`
-    default:
-      if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`
-      if (v >= 1000) return `${(v / 1000).toFixed(1)}K`
-      return v.toLocaleString()
-  }
-}
-
-function getNAReasonText(reason: string): string {
-  const reasonMap: Record<string, string> = {
-    NOT_PROVIDED_BY_CHANNEL: '채널에서 제공하지 않음',
-    NOT_CONNECTED: '연동되지 않음',
-    NOT_UPLOADED: 'CSV 미업로드',
-    NOT_APPLICABLE: '해당 없음',
-  }
-  return reasonMap[reason] || reason
-}

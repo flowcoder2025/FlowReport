@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { formatNullableNumber, formatDurationMinutes } from '@/lib/utils/format'
 import {
   Play,
   ExternalLink,
@@ -117,21 +118,21 @@ export function YouTubeDetailCard({ metrics, defaultExpanded = false }: YouTubeD
                   <ThumbsUp className="h-4 w-4 text-blue-500" />
                   <div>
                     <div className="text-xs text-muted-foreground">좋아요</div>
-                    <div className="font-medium">{formatNumber(metrics.likes)}</div>
+                    <div className="font-medium">{formatNullableNumber(metrics.likes)}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
                   <MessageCircle className="h-4 w-4 text-green-500" />
                   <div>
                     <div className="text-xs text-muted-foreground">댓글</div>
-                    <div className="font-medium">{formatNumber(metrics.comments)}</div>
+                    <div className="font-medium">{formatNullableNumber(metrics.comments)}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
                   <Share2 className="h-4 w-4 text-purple-500" />
                   <div>
                     <div className="text-xs text-muted-foreground">공유</div>
-                    <div className="font-medium">{formatNumber(metrics.shares)}</div>
+                    <div className="font-medium">{formatNullableNumber(metrics.shares)}</div>
                   </div>
                 </div>
               </div>
@@ -146,7 +147,7 @@ export function YouTubeDetailCard({ metrics, defaultExpanded = false }: YouTubeD
                   (metrics.subscriberGained ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'
                 )}>
                   {(metrics.subscriberGained ?? 0) >= 0 ? '+' : ''}
-                  {formatNumber(metrics.subscriberGained)}
+                  {formatNullableNumber(metrics.subscriberGained)}
                 </span>
               </div>
             )}
@@ -175,7 +176,7 @@ export function YouTubeDetailCard({ metrics, defaultExpanded = false }: YouTubeD
                           {video.title || '제목 없음'}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          조회수 {formatNumber(video.views)} · 참여 {formatNumber(video.engagement)}
+                          조회수 {formatNullableNumber(video.views)} · 참여 {formatNullableNumber(video.engagement)}
                         </p>
                       </div>
                       <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
@@ -201,8 +202,8 @@ interface MetricBoxProps {
 
 function MetricBox({ icon, label, value, change, format = 'number' }: MetricBoxProps) {
   const formattedValue = format === 'duration'
-    ? formatDuration(value)
-    : formatNumber(value)
+    ? formatDurationMinutes(value)
+    : formatNullableNumber(value)
 
   return (
     <div className="p-3 rounded-lg bg-muted/50">
@@ -230,19 +231,3 @@ function MetricBox({ icon, label, value, change, format = 'number' }: MetricBoxP
   )
 }
 
-function formatNumber(value: number | null): string {
-  if (value === null) return '-'
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
-  return value.toLocaleString()
-}
-
-function formatDuration(minutes: number | null): string {
-  if (minutes === null) return '-'
-  if (minutes >= 60) {
-    const hours = Math.floor(minutes / 60)
-    const mins = Math.round(minutes % 60)
-    return `${hours}시간 ${mins}분`
-  }
-  return `${Math.round(minutes)}분`
-}

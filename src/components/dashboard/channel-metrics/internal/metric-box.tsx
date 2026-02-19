@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { formatValue as sharedFormatValue, formatDurationMinutes } from '@/lib/utils/format'
 import { MetricBoxProps } from '../types'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
@@ -54,25 +55,11 @@ function formatValue(value: number | null, format: string): string {
     return '-'
   }
 
-  switch (format) {
-    case 'currency':
-      return new Intl.NumberFormat('ko-KR', {
-        style: 'currency',
-        currency: 'KRW',
-        maximumFractionDigits: 0,
-      }).format(value)
-    case 'percent':
-      return `${value.toFixed(1)}%`
-    case 'duration':
-      const hours = Math.floor(value / 60)
-      const minutes = Math.round(value % 60)
-      if (hours > 0) {
-        return `${hours}시간 ${minutes}분`
-      }
-      return `${minutes}분`
-    default:
-      return new Intl.NumberFormat('ko-KR').format(value)
+  if (format === 'duration') {
+    return formatDurationMinutes(value)
   }
+
+  return sharedFormatValue(value, format as 'number' | 'currency' | 'percent' | 'compact')
 }
 
 function formatChange(change: number): string {

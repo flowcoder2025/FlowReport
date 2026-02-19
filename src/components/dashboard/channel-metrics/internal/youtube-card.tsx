@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { YouTubeCardProps } from '../types'
+import { formatNullableNumber } from '@/lib/utils/format'
 import { MetricBox } from './metric-box'
 import { Play, ExternalLink } from 'lucide-react'
 
@@ -62,7 +63,7 @@ export function YouTubeCard({ metrics }: YouTubeCardProps) {
                       {video.title || '제목 없음'}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      조회수 {formatNumber(video.views)} · 참여 {formatNumber(video.engagement)}
+                      조회수 {formatNullableNumber(video.views)} · 참여 {formatNullableNumber(video.engagement)}
                     </p>
                   </div>
                   <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -76,7 +77,3 @@ export function YouTubeCard({ metrics }: YouTubeCardProps) {
   )
 }
 
-function formatNumber(value: number | null): string {
-  if (value === null) return '-'
-  return new Intl.NumberFormat('ko-KR').format(value)
-}

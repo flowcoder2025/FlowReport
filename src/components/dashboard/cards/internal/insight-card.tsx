@@ -117,6 +117,7 @@ export function InsightCard({
                           size="icon"
                           variant="ghost"
                           className="h-6 w-6"
+                          aria-label="편집"
                           onClick={() => handleStartEdit(index)}
                         >
                           <Edit2 className="h-3 w-3" />
@@ -125,6 +126,7 @@ export function InsightCard({
                           size="icon"
                           variant="ghost"
                           className="h-6 w-6 text-destructive"
+                          aria-label="삭제"
                           onClick={() => handleRemoveItem(index)}
                         >
                           <X className="h-3 w-3" />

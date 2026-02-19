@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { formatNumber } from '@/lib/utils/format'
 import { ExternalLink } from 'lucide-react'
 
 interface ContentItem {
@@ -83,10 +84,4 @@ export function TopContentCard({
       </CardContent>
     </Card>
   )
-}
-
-function formatNumber(value: number): string {
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
-  return value.toLocaleString()
 }

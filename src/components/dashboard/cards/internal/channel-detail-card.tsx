@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { formatValue } from '@/lib/utils/format'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
 interface MetricItem {
@@ -86,25 +87,4 @@ function MetricRow({ label, value, previousValue, format = 'number' }: MetricIte
       </div>
     </div>
   )
-}
-
-function formatValue(v: number, format: string): string {
-  switch (format) {
-    case 'currency':
-      return new Intl.NumberFormat('ko-KR', {
-        style: 'currency',
-        currency: 'KRW',
-        maximumFractionDigits: 0,
-      }).format(v)
-    case 'percent':
-      return `${v.toFixed(1)}%`
-    case 'duration':
-      const minutes = Math.floor(v / 60)
-      const seconds = Math.floor(v % 60)
-      return `${minutes}:${seconds.toString().padStart(2, '0')}`
-    default:
-      if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`
-      if (v >= 1000) return `${(v / 1000).toFixed(1)}K`
-      return v.toLocaleString()
-  }
 }
