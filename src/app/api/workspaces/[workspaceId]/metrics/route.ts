@@ -26,6 +26,8 @@ interface HighlightItem {
   change: number
   direction: 'up' | 'down'
   severity: 'positive' | 'negative' | 'neutral'
+  currentValue?: number | null
+  previousValue?: number | null
 }
 
 interface YouTubeMetrics {
@@ -377,7 +379,9 @@ function aggregateByChannel(
     const existing = channelMap.get(provider) || {
       current: {},
       previous: {},
-      name: snapshot.connection.accountName || getChannelDisplayName(provider),
+      name: snapshot.connection.accountName
+            ? `${CHANNEL_LABELS[provider]} (${snapshot.connection.accountName})`
+            : getChannelDisplayName(provider),
     }
 
     const data = snapshot.data as Record<string, number | null>
@@ -478,12 +482,19 @@ function generateHighlights(
       const label = METRIC_LABELS[metricKey]
       if (!label) continue
 
+      const currentVal = channel.data[metricKey] ?? null
+      const previousVal = currentVal !== null && changeValue !== 0
+        ? currentVal / (1 + changeValue / 100)
+        : null
+
       highlights.push({
         channel: channel.channelName,
         metric: label,
         change: Math.round(changeValue * 10) / 10,
         direction: changeValue > 0 ? 'up' : 'down',
         severity: getMetricSeverity(metricKey, changeValue),
+        currentValue: currentVal,
+        previousValue: previousVal !== null ? Math.round(previousVal) : null,
       })
     }
   }

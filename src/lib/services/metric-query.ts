@@ -249,7 +249,9 @@ function aggregateByChannel(
     const existing = channelMap.get(provider) || {
       current: {},
       previous: {},
-      name: snapshot.connection.accountName || getChannelDisplayName(provider),
+      name: snapshot.connection.accountName
+            ? `${CHANNEL_LABELS[provider]} (${snapshot.connection.accountName})`
+            : getChannelDisplayName(provider),
     }
 
     const data = snapshot.data as Record<string, number | null>

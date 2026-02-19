@@ -24,6 +24,8 @@ export interface HighlightItem {
   change: number
   direction: 'up' | 'down'
   severity: 'positive' | 'negative' | 'neutral'
+  currentValue?: number | null
+  previousValue?: number | null
 }
 
 export interface YouTubeMetrics {

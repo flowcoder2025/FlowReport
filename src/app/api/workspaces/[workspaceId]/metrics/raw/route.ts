@@ -113,7 +113,9 @@ export async function GET(
         periodStart: snapshot.periodStart.toISOString(),
         periodEnd: snapshot.periodEnd.toISOString(),
         channel: snapshot.connection?.provider ?? ('UNKNOWN' as ChannelProvider),
-        channelName: snapshot.connection?.accountName ?? getChannelDisplayName(snapshot.connection?.provider),
+        channelName: snapshot.connection?.accountName
+              ? `${CHANNEL_LABELS[snapshot.connection.provider]} (${snapshot.connection.accountName})`
+              : getChannelDisplayName(snapshot.connection?.provider),
       }
 
       // Add metric values
