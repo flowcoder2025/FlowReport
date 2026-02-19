@@ -12,6 +12,7 @@ export interface RecommendedAction {
   department: 'marketing' | 'commerce' | 'overall'
   departmentUrl: string
   steps?: string[]
+  deadline?: string
 }
 
 export interface RiskAlert {
@@ -22,6 +23,9 @@ export interface RiskAlert {
   metric?: string
   value?: number
   threshold?: number
+  currentValue?: number | null
+  previousValue?: number | null
+  dataSource?: string
   department?: 'marketing' | 'commerce' | 'overall'
   actionUrl?: string
   recommendedAction?: RecommendedAction

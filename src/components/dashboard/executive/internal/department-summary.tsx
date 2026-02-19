@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { formatMetricByLabel } from '@/lib/utils/format'
 import { TrendingUp, TrendingDown, Minus, ChevronRight, Megaphone, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
 import { DepartmentMetrics, DEPARTMENT_STATUS_STYLES } from './types'
@@ -72,7 +73,7 @@ function DepartmentCard({ department }: DepartmentCardProps) {
           <div className="text-sm text-muted-foreground">{keyMetric.label}</div>
           <div className="font-semibold">
             {keyMetric.value !== null
-              ? formatMetricValue(keyMetric.value, keyMetric.label)
+              ? formatMetricByLabel(keyMetric.value, keyMetric.label)
               : 'N/A'}
           </div>
           {change !== null && (
@@ -112,20 +113,3 @@ function getStatusLabel(status: 'good' | 'warning' | 'critical'): string {
   return labels[status] || status
 }
 
-function formatMetricValue(value: number, label: string): string {
-  const lowerLabel = label.toLowerCase()
-
-  if (lowerLabel.includes('율') || lowerLabel.includes('rate') || lowerLabel.includes('%')) {
-    return `${value.toFixed(1)}%`
-  }
-
-  if (lowerLabel.includes('매출') || lowerLabel.includes('revenue') || lowerLabel.includes('금액')) {
-    if (value >= 100000000) return `${(value / 100000000).toFixed(1)}억`
-    if (value >= 10000) return `${(value / 10000).toFixed(0)}만원`
-    return `${value.toLocaleString()}원`
-  }
-
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
-  return value.toLocaleString()
-}

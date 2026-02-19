@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { AlertTriangle, AlertCircle, Info, ChevronRight } from 'lucide-react'
+import { formatMetricByLabel, formatNumber, formatCurrency } from '@/lib/utils/format'
+import { AlertTriangle, AlertCircle, Info, ChevronRight, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { RiskAlert, RiskLevel, RISK_LEVEL_STYLES } from './types'
 
@@ -11,16 +13,17 @@ interface RiskAlertsProps {
 }
 
 export function RiskAlerts({ alerts, maxVisible = 5 }: RiskAlertsProps) {
+  const [showAll, setShowAll] = useState(false)
+
   if (!alerts || alerts.length === 0) {
     return (
-      <div className="rounded-lg border bg-card p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <AlertCircle className="h-5 w-5 text-green-600" />
-          <h3 className="font-semibold">위험 신호</h3>
-        </div>
-        <div className="text-center py-4 text-muted-foreground">
-          <p className="text-sm">현재 감지된 위험 신호가 없습니다.</p>
-          <p className="text-xs mt-1">모든 지표가 정상 범위 내에 있습니다.</p>
+      <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800 p-6">
+        <div className="flex items-center gap-3">
+          <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0" />
+          <div>
+            <p className="font-medium text-green-800 dark:text-green-300">전 부서 정상 운영 중</p>
+            <p className="text-sm text-green-700 dark:text-green-400 mt-0.5">모든 지표가 정상 범위 내에 있습니다.</p>
+          </div>
         </div>
       </div>
     )
@@ -32,7 +35,7 @@ export function RiskAlerts({ alerts, maxVisible = 5 }: RiskAlertsProps) {
     return order[a.level] - order[b.level]
   })
 
-  const visibleAlerts = sortedAlerts.slice(0, maxVisible)
+  const visibleAlerts = showAll ? sortedAlerts : sortedAlerts.slice(0, maxVisible)
   const hiddenCount = sortedAlerts.length - maxVisible
 
   return (
@@ -54,11 +57,26 @@ export function RiskAlerts({ alerts, maxVisible = 5 }: RiskAlertsProps) {
         ))}
       </div>
 
-      {hiddenCount > 0 && (
+      {hiddenCount > 0 && !showAll && (
         <div className="mt-4 pt-3 border-t">
-          <button className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+          <button
+            onClick={() => setShowAll(true)}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
             +{hiddenCount}개 더 보기
-            <ChevronRight className="h-4 w-4" />
+            <ChevronDown className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {showAll && hiddenCount > 0 && (
+        <div className="mt-4 pt-3 border-t">
+          <button
+            onClick={() => setShowAll(false)}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            접기
+            <ChevronUp className="h-4 w-4" />
           </button>
         </div>
       )}
@@ -118,6 +136,8 @@ function RiskAlertItem({ alert }: RiskAlertItemProps) {
         'flex items-start gap-3 p-3 rounded-lg border transition-colors',
         styles.bg,
         styles.border,
+        alert.level === 'critical' && 'border-l-4 border-l-red-500',
+        alert.level === 'warning' && 'border-l-4 border-l-yellow-500',
         alert.actionUrl && 'hover:opacity-90 cursor-pointer'
       )}
     >
@@ -133,18 +153,45 @@ function RiskAlertItem({ alert }: RiskAlertItemProps) {
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">{alert.description}</p>
         {alert.metric && alert.value !== undefined && (
-          <div className="flex items-center gap-2 mt-2 text-xs">
-            <span className="text-muted-foreground">{alert.metric}:</span>
-            <span className={cn('font-medium', styles.text)}>
-              {formatAlertValue(alert.value, alert.metric)}
-            </span>
-            {alert.threshold !== undefined && (
-              <>
-                <span className="text-muted-foreground">/</span>
+          <div className="mt-2 space-y-1">
+            {alert.previousValue != null && alert.currentValue != null ? (
+              <div className="flex items-center gap-1.5 text-xs">
                 <span className="text-muted-foreground">
-                  임계값: {formatAlertValue(alert.threshold, alert.metric)}
+                  {formatRiskValue(alert.previousValue, alert.metric)}
                 </span>
-              </>
+                <span className="text-muted-foreground">→</span>
+                <span className={cn('font-semibold', styles.text)}>
+                  {formatRiskValue(alert.currentValue, alert.metric)}
+                </span>
+                <span className={cn('font-medium', styles.text)}>
+                  ({alert.value > 0 ? '+' : ''}{alert.value.toFixed(1)}%)
+                </span>
+              </div>
+            ) : alert.currentValue != null ? (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground">{alert.metric}:</span>
+                <span className={cn('font-semibold', styles.text)}>
+                  {formatRiskValue(alert.currentValue, alert.metric)}
+                </span>
+                {alert.threshold !== undefined && (
+                  <>
+                    <span className="text-muted-foreground">/</span>
+                    <span className="text-muted-foreground">
+                      임계값: {formatMetricByLabel(alert.threshold, alert.metric)}
+                    </span>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground">{alert.metric}:</span>
+                <span className={cn('font-medium', styles.text)}>
+                  {formatMetricByLabel(alert.value, alert.metric)}
+                </span>
+              </div>
+            )}
+            {alert.dataSource && (
+              <p className="text-[10px] text-muted-foreground/70">{alert.dataSource}</p>
             )}
           </div>
         )}
@@ -171,20 +218,14 @@ function getDepartmentLabel(department: string): string {
   return labels[department] || department
 }
 
-function formatAlertValue(value: number, metric: string): string {
-  const lowerMetric = metric.toLowerCase()
-
-  if (lowerMetric.includes('율') || lowerMetric.includes('rate') || lowerMetric.includes('%')) {
+function formatRiskValue(value: number, metric: string): string {
+  const lower = metric.toLowerCase()
+  if (lower.includes('매출') || lower.includes('revenue') || lower.includes('금액')) {
+    return formatCurrency(value)
+  }
+  if (lower.includes('전환율') || lower.includes('rate')) {
     return `${value.toFixed(1)}%`
   }
-
-  if (lowerMetric.includes('매출') || lowerMetric.includes('revenue') || lowerMetric.includes('금액')) {
-    if (value >= 100000000) return `${(value / 100000000).toFixed(1)}억`
-    if (value >= 10000) return `${(value / 10000).toFixed(0)}만원`
-    return `${value.toLocaleString()}원`
-  }
-
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
-  return value.toLocaleString()
+  return formatNumber(value)
 }
+

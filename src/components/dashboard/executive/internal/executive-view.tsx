@@ -1,8 +1,11 @@
 'use client'
 
 import { useMemo } from 'react'
+import Link from 'next/link'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
 import { CHANNEL_LABELS } from '@/constants'
+import { cn } from '@/lib/utils'
+import { ErrorState } from '@/components/common'
 import {
   useDashboardMetrics,
   useActionProgress,
@@ -24,7 +27,7 @@ import {
   RiskLevel,
   RecommendedAction,
 } from './types'
-import { Clock, RefreshCw } from 'lucide-react'
+import { Clock, RefreshCw, CheckCircle, AlertTriangle, AlertCircle, FileText } from 'lucide-react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { DEFAULT_TARGETS } from '@/constants/targets'
@@ -162,6 +165,9 @@ export function ExecutiveView() {
           metric: '매출 변화율',
           value: revenueChange,
           threshold: THRESHOLDS.REVENUE_DECLINE_CRITICAL,
+          currentValue: overview.totalRevenue,
+          previousValue: previous.totalRevenue,
+          dataSource: '전 채널 합산 매출 · 전기 대비',
           department: 'commerce',
           actionUrl: '/dashboard?view=commerce',
           recommendedAction: buildRecommendedAction(
@@ -192,6 +198,9 @@ export function ExecutiveView() {
           metric: '매출 변화율',
           value: revenueChange,
           threshold: THRESHOLDS.REVENUE_DECLINE_WARNING,
+          currentValue: overview.totalRevenue,
+          previousValue: previous.totalRevenue,
+          dataSource: '전 채널 합산 매출 · 전기 대비',
           department: 'commerce',
           actionUrl: '/dashboard?view=commerce',
           recommendedAction: buildRecommendedAction(
@@ -230,6 +239,9 @@ export function ExecutiveView() {
           metric: '참여 변화율',
           value: engagementChange,
           threshold: THRESHOLDS.ENGAGEMENT_DECLINE_CRITICAL,
+          currentValue: overview.engagement,
+          previousValue: previous.engagement,
+          dataSource: '전 채널 합산 참여 · 전기 대비',
           department: 'marketing',
           actionUrl: '/dashboard?view=performance',
           recommendedAction: buildRecommendedAction(
@@ -260,6 +272,9 @@ export function ExecutiveView() {
           metric: '참여 변화율',
           value: engagementChange,
           threshold: THRESHOLDS.ENGAGEMENT_DECLINE_WARNING,
+          currentValue: overview.engagement,
+          previousValue: previous.engagement,
+          dataSource: '전 채널 합산 참여 · 전기 대비',
           department: 'marketing',
           actionUrl: '/dashboard?view=performance',
           recommendedAction: buildRecommendedAction(
@@ -298,6 +313,8 @@ export function ExecutiveView() {
           metric: '전환율',
           value: convRate,
           threshold: THRESHOLDS.CONVERSION_CRITICAL,
+          currentValue: convRate,
+          dataSource: '스마트스토어 전환율 · 절대값 기준',
           department: 'commerce',
           actionUrl: '/dashboard?view=commerce',
           recommendedAction: buildRecommendedAction(
@@ -328,6 +345,8 @@ export function ExecutiveView() {
           metric: '전환율',
           value: convRate,
           threshold: THRESHOLDS.CONVERSION_WARNING,
+          currentValue: convRate,
+          dataSource: '스마트스토어 전환율 · 절대값 기준',
           department: 'commerce',
           actionUrl: '/dashboard?view=commerce',
           recommendedAction: buildRecommendedAction(
@@ -358,8 +377,11 @@ export function ExecutiveView() {
           level: isWarning ? 'warning' : 'info',
           title: `${highlight.channel} ${highlight.metric} 하락`,
           description: `${highlight.metric}이(가) ${Math.abs(highlight.change).toFixed(0)}% 감소했습니다.`,
-          metric: highlight.metric,
+          metric: `${highlight.metric} 변화율`,
           value: highlight.change,
+          currentValue: highlight.currentValue ?? null,
+          previousValue: highlight.previousValue ?? null,
+          dataSource: `${highlight.channel} · 전기 대비`,
           department: dept,
           recommendedAction: isWarning ? {
             id: `action-highlight-${idx}`,
@@ -431,21 +453,45 @@ export function ExecutiveView() {
     ]
   }, [metrics])
 
+  // Derive overall health from risk alerts (must be before early returns)
+  const overallHealth = useMemo((): 'good' | 'warning' | 'critical' => {
+    if (riskAlerts.some((a) => a.level === 'critical')) return 'critical'
+    if (riskAlerts.some((a) => a.level === 'warning')) return 'warning'
+    return 'good'
+  }, [riskAlerts])
+
   if (isLoading) {
     return <ExecutiveSkeleton />
   }
 
   if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
+
+  const healthConfig = {
+    good: {
+      icon: <CheckCircle className="h-5 w-5" />,
+      label: '양호',
+      className: 'bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    },
+    warning: {
+      icon: <AlertCircle className="h-5 w-5" />,
+      label: '주의',
+      className: 'bg-yellow-50 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    },
+    critical: {
+      icon: <AlertTriangle className="h-5 w-5" />,
+      label: '위험',
+      className: 'bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    },
+  }
+
+  const health = healthConfig[overallHealth]
+  const riskCount = riskAlerts.length
 
   return (
     <div className="space-y-6">
-      {/* 헤더: 마지막 업데이트 시간 + 새로고침 */}
+      {/* 헤더: 마지막 업데이트 시간 + 새로고침 + 리포트 내보내기 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Clock className="h-4 w-4" />
@@ -453,13 +499,30 @@ export function ExecutiveView() {
             {format(periodStart, 'yyyy년 M월 d일', { locale: ko })} 기준
           </span>
         </div>
-        <button
-          onClick={() => mutate()}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <RefreshCw className="h-4 w-4" />
-          새로고침
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/reports"
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors bg-secondary px-3 py-1.5 rounded-lg"
+          >
+            <FileText className="h-4 w-4" />
+            리포트 내보내기
+          </Link>
+          <button
+            onClick={() => mutate()}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <RefreshCw className="h-4 w-4" />
+            새로고침
+          </button>
+        </div>
+      </div>
+
+      {/* 건강도 배너 - 1-line summary */}
+      <div className={cn(
+        'rounded-lg p-3 flex items-center gap-2 text-sm font-medium',
+        health.className,
+      )}>
+        {health.icon} 비즈니스 상태: {health.label} | 리스크 {riskCount}건
       </div>
 
       {/* 핵심 KPI 3개 - 가장 먼저 눈에 들어옴 */}
@@ -468,18 +531,18 @@ export function ExecutiveView() {
       {/* 위험 신호 - 즉시 주의가 필요한 항목 */}
       <RiskAlerts alerts={riskAlerts} />
 
+      {/* 권장 조치 - 위험 신호에 대한 대응 방안 */}
+      <RecommendedActions alerts={riskAlerts} />
+
+      {/* 부서별 요약 - 드릴다운 링크 포함 */}
+      <DepartmentSummary departments={departments} />
+
       {/* 이전 기간 액션 달성률 - 학습 피드백 루프 */}
       <ActionProgressCard
         data={actionProgressData}
         isLoading={isActionProgressLoading}
         periodType={periodType}
       />
-
-      {/* 권장 조치 - 위험 신호에 대한 대응 방안 */}
-      <RecommendedActions alerts={riskAlerts} />
-
-      {/* 부서별 요약 - 드릴다운 링크 포함 */}
-      <DepartmentSummary departments={departments} />
 
       {/* 빠른 액션 버튼 */}
       <div className="flex flex-wrap gap-3 pt-4 border-t">
@@ -490,11 +553,6 @@ export function ExecutiveView() {
         <QuickActionButton
           href="/dashboard?view=content"
           label="콘텐츠 분석"
-        />
-        <QuickActionButton
-          href="/reports"
-          label="리포트 내보내기"
-          variant="secondary"
         />
       </div>
     </div>
@@ -628,9 +686,9 @@ function QuickActionButton({ href, label, variant = 'primary' }: QuickActionButt
   }
 
   return (
-    <a href={href} className={`${baseStyles} ${variantStyles[variant]}`}>
+    <Link href={href} className={`${baseStyles} ${variantStyles[variant]}`}>
       {label}
-    </a>
+    </Link>
   )
 }
 

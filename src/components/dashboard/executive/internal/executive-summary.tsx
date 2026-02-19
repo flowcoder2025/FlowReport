@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { formatValue } from '@/lib/utils/format'
 import { TrendingUp, TrendingDown, Minus, Target } from 'lucide-react'
 import { ExecutiveKPI } from './types'
 
@@ -131,27 +132,4 @@ function ExecutiveKPICard({ kpi }: ExecutiveKPICardProps) {
       </CardContent>
     </Card>
   )
-}
-
-function formatValue(v: number, format: 'currency' | 'number' | 'percent'): string {
-  switch (format) {
-    case 'currency':
-      if (v >= 100000000) {
-        return `${(v / 100000000).toFixed(1)}억`
-      }
-      if (v >= 10000) {
-        return `${(v / 10000).toFixed(0)}만원`
-      }
-      return new Intl.NumberFormat('ko-KR', {
-        style: 'currency',
-        currency: 'KRW',
-        maximumFractionDigits: 0,
-      }).format(v)
-    case 'percent':
-      return `${v.toFixed(1)}%`
-    default:
-      if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`
-      if (v >= 1000) return `${(v / 1000).toFixed(1)}K`
-      return v.toLocaleString()
-  }
 }

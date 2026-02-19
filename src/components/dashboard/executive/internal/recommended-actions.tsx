@@ -9,7 +9,8 @@ import {
   ChevronUp,
   Target,
   Users,
-  ShoppingCart
+  ShoppingCart,
+  CalendarClock
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -82,8 +83,13 @@ export function RecommendedActions({ alerts, maxVisible = 3 }: RecommendedAction
     return order[a.priority] - order[b.priority]
   })
 
-  const visibleActions = showAll ? sortedActions : sortedActions.slice(0, maxVisible)
-  const hiddenCount = sortedActions.length - maxVisible
+  // High-priority actions are always visible; medium/low collapse after maxVisible
+  const highPriorityActions = sortedActions.filter((a) => a.priority === 'high')
+  const otherActions = sortedActions.filter((a) => a.priority !== 'high')
+  const remainingSlots = Math.max(0, maxVisible - highPriorityActions.length)
+  const visibleOtherActions = showAll ? otherActions : otherActions.slice(0, remainingSlots)
+  const visibleActions = [...highPriorityActions, ...visibleOtherActions]
+  const hiddenCount = otherActions.length - remainingSlots
 
   const toggleExpand = (actionId: string) => {
     setExpandedActionId((current) => (current === actionId ? null : actionId))
@@ -235,6 +241,14 @@ function ActionItem({ action, isExpanded, onToggle }: ActionItemProps) {
                     </li>
                   ))}
                 </ol>
+              </div>
+            )}
+
+            {/* 마감일 */}
+            {action.deadline && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-background/50 rounded-lg px-3 py-2">
+                <CalendarClock className="h-4 w-4 flex-shrink-0" />
+                <span>마감: {action.deadline}</span>
               </div>
             )}
 
