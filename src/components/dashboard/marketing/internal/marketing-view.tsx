@@ -2,10 +2,11 @@
 
 import { useMemo } from 'react'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
-import { useDashboardMetrics, useDashboardTrendData, ChannelTrendMetrics } from '@/lib/hooks/use-dashboard-data'
+import { useDashboardMetrics, useDashboardTrendData, useWorkspaceTargets, ChannelTrendMetrics } from '@/lib/hooks/use-dashboard-data'
 import { KPICardEnhanced } from '../../cards'
 import { YouTubeDetailCard } from '../../cards'
 import { InstagramCard, HighlightBanner } from '../../channel-metrics'
+import { ErrorState } from '@/components/common'
 import { Skeleton } from '../../skeleton'
 import { ChannelGrowth } from './channel-growth'
 import { ContentTypeAnalysis } from './content-type-analysis'
@@ -32,6 +33,10 @@ export function MarketingView() {
     channelsParam
   )
 
+  // 목표값 데이터 가져오기
+  const { data: targetsData } = useWorkspaceTargets(workspaceId)
+  const targets = targetsData?.targetConfig
+
   // 데이터 추출 (hooks 규칙 준수를 위해 early return 이전에 선언)
   const overview = metrics?.overview
   const previous = metrics?.previous
@@ -41,11 +46,20 @@ export function MarketingView() {
   const youtubeVideos = channelDetails?.YOUTUBE?.topVideos || []
 
   // 마케팅 중심 KPIs (6개) - hooks는 early return 이전에 호출해야 함
+  // 전략적 순서: 매출 > 도달 > 참여 > 팔로워 > 활성사용자 > 회원가입
   const marketingKpis = useMemo(() => [
+    {
+      title: '총 매출',
+      value: overview?.totalRevenue ?? null,
+      previousValue: previous?.totalRevenue ?? null,
+      format: 'currency' as const,
+      target: targets?.revenueTarget ?? null,
+    },
     {
       title: '총 도달',
       value: overview?.reach ?? null,
       previousValue: previous?.reach ?? null,
+      target: targets?.reachTarget ?? null,
     },
     {
       title: '총 참여',
@@ -58,21 +72,17 @@ export function MarketingView() {
       previousValue: previous?.followers ?? null,
     },
     {
-      title: '콘텐츠 업로드',
-      value: overview?.uploads ?? null,
-      previousValue: previous?.uploads ?? null,
-    },
-    {
       title: periodType === 'WEEKLY' ? 'WAU' : 'MAU',
       value: periodType === 'WEEKLY' ? overview?.wau : overview?.mau,
       previousValue: periodType === 'WEEKLY' ? previous?.wau : previous?.mau,
+      target: periodType === 'WEEKLY' ? targets?.wauTarget : targets?.mauTarget,
     },
     {
       title: '회원가입',
       value: overview?.signups ?? null,
       previousValue: previous?.signups ?? null,
     },
-  ], [overview, previous, periodType])
+  ], [overview, previous, periodType, targets])
 
   // 채널 성장 데이터 구성 (트렌드 데이터 포함)
   const channelGrowthData = useMemo(
@@ -95,12 +105,15 @@ export function MarketingView() {
   }
 
   if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
+
+  const sections = [
+    { id: 'kpi', label: 'KPI' },
+    { id: 'channel-growth', label: '채널 성장' },
+    { id: 'content-analysis', label: '콘텐츠 분석' },
+    { id: 'competitors', label: '경쟁사 비교' },
+  ]
 
   return (
     <div className="space-y-6">
@@ -117,25 +130,42 @@ export function MarketingView() {
         </div>
       </div>
 
+      {/* 섹션 네비게이션 */}
+      <div className="flex gap-2 border-b pb-2 mb-4 overflow-x-auto">
+        {sections.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth' })}
+            className="text-sm px-3 py-1 rounded-full bg-muted hover:bg-muted/80 whitespace-nowrap transition-colors"
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
       {/* 하이라이트 배너 */}
       {highlights && highlights.length > 0 && (
         <HighlightBanner highlights={highlights} />
       )}
 
       {/* 마케팅 KPI 카드 */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div id="kpi" className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {marketingKpis.map((kpi, index) => (
           <KPICardEnhanced
             key={index}
             title={kpi.title}
             value={kpi.value ?? null}
             previousValue={kpi.previousValue ?? null}
+            format={kpi.format}
+            target={kpi.target}
           />
         ))}
       </div>
 
       {/* 채널별 성장 섹션 */}
-      <ChannelGrowth data={channelGrowthData} />
+      <div id="channel-growth">
+        <ChannelGrowth data={channelGrowthData} />
+      </div>
 
       {/* 채널 상세 카드 (확장 가능) */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -150,14 +180,19 @@ export function MarketingView() {
         )}
       </div>
 
-      {/* 콘텐츠 타입별 성과 분석 */}
-      <ContentTypeAnalysis />
+      {/* 콘텐츠 분석 섹션 */}
+      <div id="content-analysis" className="space-y-6">
+        {/* 콘텐츠 타입별 성과 분석 */}
+        <ContentTypeAnalysis />
 
-      {/* 콘텐츠 하이라이트 */}
-      <ContentHighlights items={contentItems} maxItems={6} />
+        {/* 콘텐츠 하이라이트 */}
+        <ContentHighlights items={contentItems} maxItems={6} />
+      </div>
 
       {/* 경쟁사 비교 분석 */}
-      <CompetitorComparison workspaceId={workspaceId} />
+      <div id="competitors">
+        <CompetitorComparison workspaceId={workspaceId} />
+      </div>
     </div>
   )
 }

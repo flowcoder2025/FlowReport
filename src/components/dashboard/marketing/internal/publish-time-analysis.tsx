@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Clock, Youtube, Instagram, FileText, Calendar } from 'lucide-react'
 import { CHANNEL_LABELS } from '@/constants'
+import { formatNumber } from '@/lib/utils/format'
 
 interface ContentItem {
   id: string
@@ -44,10 +45,14 @@ interface ChannelAnalysis {
 }
 
 const TIME_SLOTS = [
-  { label: '새벽 (0-6시)', start: 0, end: 6 },
-  { label: '오전 (6-12시)', start: 6, end: 12 },
-  { label: '오후 (12-18시)', start: 12, end: 18 },
-  { label: '저녁 (18-24시)', start: 18, end: 24 },
+  { label: '새벽 (0-3시)', start: 0, end: 3 },
+  { label: '새벽 (3-6시)', start: 3, end: 6 },
+  { label: '오전 (6-9시)', start: 6, end: 9 },
+  { label: '오전 (9-12시)', start: 9, end: 12 },
+  { label: '오후 (12-15시)', start: 12, end: 15 },
+  { label: '오후 (15-18시)', start: 15, end: 18 },
+  { label: '저녁 (18-21시)', start: 18, end: 21 },
+  { label: '밤 (21-24시)', start: 21, end: 24 },
 ]
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -257,8 +262,3 @@ function ChannelTimeCard({ analysis }: ChannelTimeCardProps) {
   )
 }
 
-function formatNumber(value: number): string {
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
-  return value.toLocaleString()
-}

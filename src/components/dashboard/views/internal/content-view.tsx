@@ -5,6 +5,7 @@ import { useDashboardMetrics } from '@/lib/hooks/use-dashboard-data'
 import { TopContentCard } from '../../cards'
 import { BubbleChart } from '../../charts'
 import { ContentTable } from '../../tables'
+import { ErrorState } from '@/components/common'
 import { Skeleton } from '../../skeleton'
 import { getChannelColor, CHANNEL_LABELS } from '@/constants'
 
@@ -24,11 +25,7 @@ export function ContentView() {
   }
 
   if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
 
   const topPosts = metrics?.sns?.topPosts || []
@@ -63,10 +60,7 @@ export function ContentView() {
     id: `content-${index}`,
     title: item.title,
     channel: item.channel,
-    publishedAt: '-',
     views: item.views,
-    likes: 0,
-    comments: 0,
     engagementRate: item.engagementRate,
     url: item.url,
   }))

@@ -9,6 +9,7 @@ import { TopContentCard } from '../../cards'
 import { ChannelSummaryTable, ContentTable } from '../../tables'
 import { TrendLineChart, BubbleChart } from '../../charts'
 import { InstagramCard, StoreCard } from '../../channel-metrics'
+import { ErrorState } from '@/components/common'
 import { Skeleton } from '../../skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getChannelColor, CHANNEL_LABELS, METRIC_LABELS, METRIC_TREND_COLORS } from '@/constants'
@@ -74,11 +75,7 @@ export function PerformanceView({ defaultTab }: PerformanceViewProps) {
   }
 
   if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
 
   const channelDetails = metrics?.channelDetails

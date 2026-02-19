@@ -1,10 +1,12 @@
 'use client'
 
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { TrendLineChart } from '../../charts'
 import { MetricBox } from '../../channel-metrics'
 import { TrendingUp, Users, Eye, Youtube, Instagram } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { formatNullableNumber as formatNumber } from '@/lib/utils/format'
 import { CHANNEL_COLORS } from '@/constants'
 
 interface ChannelGrowthData {
@@ -35,14 +37,34 @@ interface ChannelGrowthProps {
 
 export function ChannelGrowth({ data }: ChannelGrowthProps) {
   const { youtube, instagram, blog } = data
+  const [normalized, setNormalized] = useState(false)
 
   // 통합 성장 추이 데이터
   const combinedTrend = buildCombinedTrend(data)
 
+  // 정규화 데이터 (첫 기간 = 100 기준 인덱스)
+  const displayTrend = useMemo(() => {
+    if (!normalized || combinedTrend.length === 0) return combinedTrend
+    const firstValues: Record<string, number> = {}
+    return combinedTrend.map((point) => {
+      const result: Record<string, string | number | undefined> = { period: point.period }
+      for (const key of ['youtube', 'instagram', 'blog'] as const) {
+        const val = point[key]
+        if (val != null) {
+          if (firstValues[key] == null) {
+            firstValues[key] = val || 1
+          }
+          result[key] = Math.round((val / firstValues[key]) * 100)
+        }
+      }
+      return result as { period: string; youtube?: number; instagram?: number; blog?: number }
+    })
+  }, [combinedTrend, normalized])
+
   const trendLines = [
-    ...(youtube ? [{ dataKey: 'youtube', name: 'YouTube 구독자', color: CHANNEL_COLORS.YOUTUBE }] : []),
-    ...(instagram ? [{ dataKey: 'instagram', name: 'Instagram 팔로워', color: CHANNEL_COLORS.META_INSTAGRAM }] : []),
-    ...(blog ? [{ dataKey: 'blog', name: '블로그 방문자', color: CHANNEL_COLORS.NAVER_BLOG }] : []),
+    ...(youtube ? [{ dataKey: 'youtube', name: normalized ? 'YouTube (인덱스)' : 'YouTube 구독자', color: CHANNEL_COLORS.YOUTUBE }] : []),
+    ...(instagram ? [{ dataKey: 'instagram', name: normalized ? 'Instagram (인덱스)' : 'Instagram 팔로워', color: CHANNEL_COLORS.META_INSTAGRAM }] : []),
+    ...(blog ? [{ dataKey: 'blog', name: normalized ? '블로그 (인덱스)' : '블로그 방문자', color: CHANNEL_COLORS.NAVER_BLOG }] : []),
   ]
 
   return (
@@ -96,14 +118,45 @@ export function ChannelGrowth({ data }: ChannelGrowthProps) {
       {combinedTrend.length > 0 && trendLines.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <TrendingUp className="h-5 w-5" />
-              채널별 성장 추이
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <TrendingUp className="h-5 w-5" />
+                채널별 성장 추이
+              </CardTitle>
+              <div className="flex items-center rounded-lg border bg-muted p-0.5">
+                <button
+                  onClick={() => setNormalized(false)}
+                  className={cn(
+                    'px-3 py-1 text-xs rounded-md transition-colors',
+                    !normalized
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  절대값
+                </button>
+                <button
+                  onClick={() => setNormalized(true)}
+                  className={cn(
+                    'px-3 py-1 text-xs rounded-md transition-colors',
+                    normalized
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  상대값(인덱스)
+                </button>
+              </div>
+            </div>
+            {normalized && (
+              <p className="text-xs text-muted-foreground mt-1">
+                첫 기간 = 100 기준으로 각 채널의 상대적 성장률을 비교합니다.
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             <TrendLineChart
-              data={combinedTrend}
+              data={displayTrend}
               lines={trendLines}
               height={280}
               showLegend={true}
@@ -224,9 +277,3 @@ function buildCombinedTrend(data: ChannelGrowthData): Array<{
     .sort((a, b) => a.period.localeCompare(b.period))
 }
 
-function formatNumber(value: number | null): string {
-  if (value === null) return '-'
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
-  return value.toLocaleString()
-}

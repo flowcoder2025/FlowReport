@@ -3,6 +3,8 @@
 import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { ErrorState } from '@/components/common'
+import { formatNumber } from '@/lib/utils/format'
 import {
   BarChart,
   Bar,
@@ -87,9 +89,7 @@ export function ContentTypeAnalysis() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            데이터를 불러오는데 실패했습니다.
-          </div>
+          <ErrorState />
         </CardContent>
       </Card>
     )
@@ -245,8 +245,3 @@ function ContentTypeCard({ stats, rank }: ContentTypeCardProps) {
   )
 }
 
-function formatNumber(value: number): string {
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
-  return value.toLocaleString()
-}

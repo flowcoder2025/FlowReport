@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
 import { useDashboardMetrics, useDashboardTrendData } from '@/lib/hooks/use-dashboard-data'
+import { ErrorState } from '@/components/common'
 import { Skeleton } from '../../skeleton'
 import { BlogKPICards } from './blog-kpi-cards'
 import { TrafficSourceChart } from './traffic-source-chart'
@@ -64,11 +65,7 @@ export function BlogView() {
   }
 
   if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
 
   return (
@@ -148,6 +145,9 @@ export function BlogView() {
                 value={blogMetrics?.socialVisitors}
                 suffix="명"
               />
+            </div>
+            <div className="text-xs text-muted-foreground mt-4 pt-3 border-t">
+              * 블로그 전환 추적은 GA4 연동 시 자동으로 활성화됩니다
             </div>
           </CardContent>
         </Card>

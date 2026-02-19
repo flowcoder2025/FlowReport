@@ -21,6 +21,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { ErrorState } from '@/components/common'
+import { formatNumber } from '@/lib/utils/format'
 import { HorizontalBarChart } from '../../charts'
 import {
   Users,
@@ -288,12 +290,7 @@ export function CompetitorComparison({ workspaceId, myChannel = MY_CHANNEL_DEFAU
 
         {/* 에러 상태 */}
         {error && !isLoading && (
-          <div className="py-8 text-center text-destructive">
-            <p>데이터를 불러오는데 실패했습니다.</p>
-            <Button variant="outline" size="sm" className="mt-2" onClick={() => mutate()}>
-              다시 시도
-            </Button>
-          </div>
+          <ErrorState onRetry={() => mutate()} />
         )}
 
         {/* 경쟁사 목록 */}
@@ -365,6 +362,21 @@ export function CompetitorComparison({ workspaceId, myChannel = MY_CHANNEL_DEFAU
               icon={<Upload className="h-4 w-4" />}
               valueFormatter={(v) => `${v}개`}
             />
+          </div>
+        )}
+
+        {/* 추이 비교 (준비 중) */}
+        {!isLoading && !error && competitors.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="flex items-center gap-2 text-sm font-medium">
+              <TrendingUp className="h-4 w-4" />
+              추이 비교 (준비 중)
+            </h4>
+            <div className="flex items-center justify-center py-6 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20">
+              <p className="text-sm text-muted-foreground">
+                경쟁사 팔로워/구독자 추이 비교 기능이 곧 추가됩니다.
+              </p>
+            </div>
           </div>
         )}
 
@@ -518,9 +530,3 @@ function MetricComparisonChart({ title, data, icon, valueFormatter }: MetricComp
   )
 }
 
-// 숫자 포맷팅 유틸
-function formatNumber(value: number): string {
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
-  return value.toLocaleString()
-}

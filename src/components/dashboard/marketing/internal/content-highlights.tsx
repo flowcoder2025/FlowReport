@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { PublishTimeAnalysis } from './publish-time-analysis'
 import { cn } from '@/lib/utils'
+import { formatNumber } from '@/lib/utils/format'
 import { CHANNEL_LABELS } from '@/constants'
 
 interface ContentItem {
@@ -253,12 +254,6 @@ function getChannelConfig(channel: string) {
       badgeClass: 'border-gray-200 text-gray-700',
     }
   )
-}
-
-function formatNumber(value: number): string {
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
-  return value.toLocaleString()
 }
 
 function formatDate(dateString: string): string {

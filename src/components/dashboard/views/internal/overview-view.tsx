@@ -2,11 +2,12 @@
 
 import { useState, useMemo } from 'react'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
-import { useDashboardMetrics, useDashboardNotes, useWorkspaceTargets } from '@/lib/hooks/use-dashboard-data'
+import { useDashboardMetrics, useDashboardNotes, useDashboardTrendData, useWorkspaceTargets } from '@/lib/hooks/use-dashboard-data'
 import { KPICardEnhanced, InsightCard, YouTubeDetailCard, HeadlineSummary } from '../../cards'
 import { ChannelSummaryTable } from '../../tables'
 import { HorizontalBarChart } from '../../charts'
 import { HighlightBanner, InstagramCard, FacebookCard, StoreCard } from '../../channel-metrics'
+import { ErrorState } from '@/components/common'
 import { Skeleton } from '../../skeleton'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { CHANNEL_COLORS, CHANNEL_LABELS } from '@/constants'
@@ -32,6 +33,14 @@ export function OverviewView() {
   // 목표값 데이터 가져오기
   const { data: targetsData } = useWorkspaceTargets(workspaceId)
 
+  // 트렌드 데이터 (스파크라인용)
+  const { data: trendData } = useDashboardTrendData(
+    workspaceId,
+    periodType,
+    8,
+    channelsParam
+  )
+
   // 데이터 추출 (useMemo 의존성용)
   const overview = metrics?.overview
   const previous = metrics?.previous
@@ -43,6 +52,17 @@ export function OverviewView() {
   // 목표값 추출
   const targets = targetsData?.targetConfig
 
+  // 스파크라인 데이터 구성
+  const sparklines = useMemo(() => {
+    const periods = trendData?.periods
+    if (!periods || periods.length < 2) return {}
+    return {
+      revenue: periods.map((p) => ({ value: (p.revenue as number) ?? 0 })),
+      reach: periods.map((p) => ({ value: (p.reach as number) ?? 0 })),
+      engagement: periods.map((p) => ({ value: (p.engagement as number) ?? 0 })),
+    }
+  }, [trendData])
+
   // Primary KPIs (핵심 5개 - 항상 표시)
   // Note: 모든 useMemo는 early return 전에 호출되어야 함 (React Hooks 규칙)
   const primaryKpis = useMemo(() => [
@@ -52,6 +72,7 @@ export function OverviewView() {
       previousValue: previous?.totalRevenue ?? null,
       format: 'currency' as const,
       target: targets?.revenueTarget ?? null,
+      trendData: sparklines.revenue,
     },
     {
       title: periodType === 'WEEKLY' ? 'WAU' : 'MAU',
@@ -64,12 +85,14 @@ export function OverviewView() {
       value: overview?.reach ?? null,
       previousValue: previous?.reach ?? null,
       target: targets?.reachTarget ?? null,
+      trendData: sparklines.reach,
     },
     {
       title: '총 참여',
       value: overview?.engagement ?? null,
       previousValue: previous?.engagement ?? null,
       target: null, // engagementTarget은 비율(%)이므로 직접 비교 불가
+      trendData: sparklines.engagement,
     },
     {
       title: '전환율',
@@ -78,7 +101,7 @@ export function OverviewView() {
       format: 'percent' as const,
       target: targets?.conversionTarget ?? null,
     },
-  ], [overview, previous, periodType, storeTraffic, targets])
+  ], [overview, previous, periodType, storeTraffic, targets, sparklines])
 
   // Secondary KPIs (확장 시 표시되는 4개)
   const secondaryKpis = useMemo(() => [
@@ -125,11 +148,7 @@ export function OverviewView() {
   }
 
   if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
 
   // 나머지 데이터 추출 (hooks 아님)
@@ -211,6 +230,7 @@ export function OverviewView() {
               previousValue={kpi.previousValue ?? null}
               format={kpi.format}
               target={kpi.target}
+              trendData={kpi.trendData}
             />
           ))}
         </div>
