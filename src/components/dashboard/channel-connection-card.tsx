@@ -5,6 +5,7 @@ import { ChannelProvider, ConnectionStatus } from '@prisma/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
+import { AlertDialog } from '@/components/ui/alert-dialog'
 import { useToast } from '@/lib/hooks/use-toast'
 import {
   Loader2,
@@ -91,6 +92,7 @@ export function ChannelConnectionCard({
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const statusConfig = STATUS_CONFIG[connection.status]
 
@@ -210,11 +212,8 @@ export function ChannelConnectionCard({
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm(`${connection.providerDisplayName} 연결을 삭제하시겠습니까?\n관련 데이터도 함께 삭제됩니다.`)) {
-      return
-    }
-
+  const handleDeleteConfirm = async () => {
+    setShowDeleteDialog(false)
     setIsDeleting(true)
     try {
       const response = await fetch(
@@ -331,7 +330,7 @@ export function ChannelConnectionCard({
           <Button
             variant="outline"
             size="sm"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteDialog(true)}
             disabled={isDeleting}
             className="text-red-600 hover:text-red-700 hover:bg-red-50"
           >
@@ -343,6 +342,16 @@ export function ChannelConnectionCard({
             삭제
           </Button>
         </div>
+
+        <AlertDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          title="연결 삭제"
+          description={`${connection.providerDisplayName} 연결을 삭제하시겠습니까? 관련 데이터도 함께 삭제됩니다.`}
+          confirmLabel="삭제"
+          onConfirm={handleDeleteConfirm}
+          isLoading={isDeleting}
+        />
       </CardContent>
     </Card>
   )

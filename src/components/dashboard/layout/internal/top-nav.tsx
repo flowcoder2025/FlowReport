@@ -6,13 +6,13 @@ import { useDashboardUrl } from '@/lib/hooks/use-dashboard-url'
 
 const NAV_ITEMS: { value: DashboardView; label: string; group?: 'default' | 'persona' }[] = [
   // 기본 뷰
-  { value: 'overview', label: 'Overview', group: 'default' },
-  { value: 'performance', label: 'Performance', group: 'default' },
+  { value: 'overview', label: '전체 보기', group: 'default' },
+  { value: 'performance', label: '성과 분석', group: 'default' },
   // Content는 Performance에 통합됨 (?tab=content)
-  { value: 'commerce', label: 'Commerce', group: 'default' },
+  { value: 'commerce', label: '커머스', group: 'default' },
   { value: 'blog', label: '블로그', group: 'default' },
   // 페르소나 뷰
-  { value: 'executive', label: '경영진', group: 'persona' },
+  { value: 'executive', label: '경영 현황', group: 'persona' },
   { value: 'marketing', label: '마케팅', group: 'persona' },
   { value: 'analytics', label: '분석', group: 'persona' },
 ]
@@ -27,7 +27,7 @@ export function TopNav() {
   }
 
   return (
-    <nav className="flex items-center gap-1 border-b bg-background px-4">
+    <nav role="tablist" className="flex items-center gap-1 border-b bg-background px-4 overflow-x-auto">
       {NAV_ITEMS.map((item, index) => {
         // 그룹 구분선: 'default' 그룹의 마지막 아이템 다음에 표시
         const isGroupBoundary =
@@ -38,9 +38,11 @@ export function TopNav() {
         return (
           <div key={item.value} className="flex items-center">
             <button
+              role="tab"
+              aria-selected={activeView === item.value}
               onClick={() => handleClick(item.value)}
               className={cn(
-                'relative px-4 py-3 text-sm font-medium transition-colors',
+                'relative whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors',
                 'hover:text-foreground',
                 activeView === item.value
                   ? 'text-foreground'

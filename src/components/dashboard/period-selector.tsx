@@ -69,7 +69,7 @@ export function PeriodSelector({
 
   return (
     <div className="flex items-center gap-2">
-      <Button variant="outline" size="icon" onClick={handlePrev}>
+      <Button variant="outline" size="icon" aria-label="이전 기간" onClick={handlePrev}>
         <ChevronLeft className="h-4 w-4" />
       </Button>
 
@@ -78,7 +78,7 @@ export function PeriodSelector({
         <span className="font-medium">{formatPeriod()}</span>
       </div>
 
-      <Button variant="outline" size="icon" onClick={handleNext}>
+      <Button variant="outline" size="icon" aria-label="다음 기간" onClick={handleNext}>
         <ChevronRight className="h-4 w-4" />
       </Button>
 

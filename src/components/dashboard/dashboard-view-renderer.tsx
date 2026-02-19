@@ -30,8 +30,8 @@ const PerformanceView = dynamic(
   { loading: () => <ViewSkeleton /> }
 )
 
-const CommerceView = dynamic(
-  () => import('./views').then((mod) => ({ default: mod.CommerceView })),
+const CommerceDashboardView = dynamic(
+  () => import('./commerce').then((mod) => ({ default: mod.CommerceDashboardView })),
   { loading: () => <ViewSkeleton /> }
 )
 
@@ -67,7 +67,7 @@ export function DashboardViewRenderer() {
       // 하위 호환성: content 뷰는 Performance 뷰의 콘텐츠 분석 탭으로 리다이렉트
       return <PerformanceView defaultTab="content" />
     case 'commerce':
-      return <CommerceView />
+      return <CommerceDashboardView />
     // 페르소나 뷰
     case 'executive':
       return <ExecutiveView />

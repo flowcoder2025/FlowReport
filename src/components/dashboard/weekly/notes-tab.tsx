@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, Trash2, Loader2 } from 'lucide-react'
+import { ErrorState } from '@/components/common'
 import { useDashboardNotes, saveDashboardNotes } from '@/lib/hooks/use-dashboard-data'
 import { Skeleton } from '../skeleton'
 import { mutate } from 'swr'
@@ -128,11 +129,7 @@ export function NotesTab({ workspaceId, periodStart, canEdit = true }: NotesTabP
   }
 
   if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
 
   const NoteSection = ({

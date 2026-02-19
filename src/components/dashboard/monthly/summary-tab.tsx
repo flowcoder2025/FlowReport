@@ -1,7 +1,8 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { KPICard } from '../kpi-card'
+import { KPICardEnhanced as KPICard } from '../cards'
+import { ErrorState } from '@/components/common'
 import { useDashboardMetrics, useDashboardNotes } from '@/lib/hooks/use-dashboard-data'
 import { Skeleton } from '../skeleton'
 import { CHANNEL_DOT_COLORS } from '@/constants'
@@ -37,11 +38,7 @@ export function SummaryTab({ workspaceId, periodStart }: SummaryTabProps) {
   }
 
   if (metricsError) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
 
   const overview = metrics?.overview

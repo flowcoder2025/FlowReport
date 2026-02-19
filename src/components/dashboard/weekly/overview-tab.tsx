@@ -1,9 +1,11 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { KPICard } from '../kpi-card'
+import { KPICardEnhanced as KPICard } from '../cards'
+import { ErrorState } from '@/components/common'
 import { useDashboardMetrics, useDashboardNotes } from '@/lib/hooks/use-dashboard-data'
 import { Skeleton } from '../skeleton'
+import { CheckCircle, Circle } from 'lucide-react'
 import {
   HighlightBanner,
   YouTubeCard,
@@ -34,11 +36,7 @@ export function OverviewTab({ workspaceId, periodStart }: OverviewTabProps) {
   }
 
   if (metricsError) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
 
   const overview = metrics?.overview
@@ -159,12 +157,11 @@ export function OverviewTab({ workspaceId, periodStart }: OverviewTabProps) {
               {(notesData?.actions?.length ?? 0) > 0 ? (
                 notesData!.actions.slice(0, 3).map((action) => (
                   <li key={action.id} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="rounded"
-                      checked={action.status === 'COMPLETED'}
-                      readOnly
-                    />
+                    {action.status === 'COMPLETED' ? (
+                      <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                    )}
                     <span>{action.title}</span>
                   </li>
                 ))

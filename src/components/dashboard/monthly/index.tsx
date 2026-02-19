@@ -4,11 +4,12 @@ import { useState, useCallback } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PeriodSelector } from '../period-selector'
 import { SummaryTab } from './summary-tab'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Download, Loader2 } from 'lucide-react'
+import { Download, Loader2, Construction } from 'lucide-react'
 import { format } from 'date-fns'
 import { generateAndDownloadPNG } from '@/lib/export/png-generator'
+import { useToast } from '@/lib/hooks/use-toast'
 
 interface MonthlyDashboardProps {
   workspaceId: string
@@ -17,6 +18,7 @@ interface MonthlyDashboardProps {
 export function MonthlyDashboard({ workspaceId }: MonthlyDashboardProps) {
   const [periodStart, setPeriodStart] = useState(() => new Date())
   const [isExportingPDF, setIsExportingPDF] = useState(false)
+  const { toast } = useToast()
 
   const handleExportPDF = useCallback(async () => {
     setIsExportingPDF(true)
@@ -41,11 +43,15 @@ export function MonthlyDashboard({ workspaceId }: MonthlyDashboardProps) {
       window.URL.revokeObjectURL(url)
     } catch (error) {
       console.error('PDF export error:', error)
-      // TODO: Show toast notification
+      toast({
+        title: 'PDF 내보내기 실패',
+        description: error instanceof Error ? error.message : 'PDF 생성 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      })
     } finally {
       setIsExportingPDF(false)
     }
-  }, [workspaceId, periodStart])
+  }, [workspaceId, periodStart, toast])
 
   const handleExportPNG = async () => {
     const filename = `monthly-report-${format(periodStart, 'yyyy-MM')}.png`
@@ -54,7 +60,7 @@ export function MonthlyDashboard({ workspaceId }: MonthlyDashboardProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-2">
         <div className="flex items-center gap-4">
           <h2 className="text-lg font-semibold">월간 리포트</h2>
           <PeriodSelector
@@ -85,7 +91,7 @@ export function MonthlyDashboard({ workspaceId }: MonthlyDashboardProps) {
           <TabsTrigger value="keyword">키워드</TabsTrigger>
           <TabsTrigger value="sns">SNS</TabsTrigger>
           <TabsTrigger value="blog">블로그</TabsTrigger>
-          <TabsTrigger value="store">Store</TabsTrigger>
+          <TabsTrigger value="store">스토어</TabsTrigger>
           <TabsTrigger value="plan">익월 계획</TabsTrigger>
         </TabsList>
 
@@ -95,92 +101,56 @@ export function MonthlyDashboard({ workspaceId }: MonthlyDashboardProps) {
 
         <TabsContent value="keyword">
           <Card>
-            <CardHeader>
-              <CardTitle>키워드 성과</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                키워드 데이터를 CSV로 업로드하거나 Google Search Console을 연동하세요.
-              </p>
+            <CardContent className="pt-6">
+              <UnimplementedTabPlaceholder />
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="sns">
           <Card>
-            <CardHeader>
-              <CardTitle>SNS 상세</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                월간 SNS 성과 상세 데이터가 표시됩니다.
-              </p>
+            <CardContent className="pt-6">
+              <UnimplementedTabPlaceholder />
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="blog">
           <Card>
-            <CardHeader>
-              <CardTitle>블로그</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                블로그 데이터를 CSV로 업로드하세요.
-              </p>
+            <CardContent className="pt-6">
+              <UnimplementedTabPlaceholder />
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="store">
           <Card>
-            <CardHeader>
-              <CardTitle>Store 상세</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                월간 스토어 성과 상세 데이터가 표시됩니다.
-              </p>
+            <CardContent className="pt-6">
+              <UnimplementedTabPlaceholder />
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="plan">
           <Card>
-            <CardHeader>
-              <CardTitle>익월 반영사항 및 계획</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-2">목표</h4>
-                  <textarea
-                    className="w-full px-3 py-2 border rounded-md text-sm"
-                    rows={3}
-                    placeholder="익월 목표를 입력하세요..."
-                  />
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">실행 항목</h4>
-                  <textarea
-                    className="w-full px-3 py-2 border rounded-md text-sm"
-                    rows={3}
-                    placeholder="실행 계획을 입력하세요..."
-                  />
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">리스크</h4>
-                  <textarea
-                    className="w-full px-3 py-2 border rounded-md text-sm"
-                    rows={3}
-                    placeholder="예상되는 리스크를 입력하세요..."
-                  />
-                </div>
-              </div>
+            <CardContent className="pt-6">
+              <UnimplementedTabPlaceholder />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+    </div>
+  )
+}
+
+function UnimplementedTabPlaceholder() {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <Construction className="h-10 w-10 text-muted-foreground/50 mb-3" />
+      <p className="text-sm font-medium text-muted-foreground">준비 중인 기능입니다</p>
+      <p className="text-xs text-muted-foreground/70 mt-1">
+        곧 업데이트될 예정입니다
+      </p>
     </div>
   )
 }

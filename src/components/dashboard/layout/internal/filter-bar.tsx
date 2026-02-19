@@ -41,12 +41,12 @@ export function FilterBar() {
   }
 
   return (
-    <div className="flex items-center justify-between border-b bg-muted/30 px-4 py-2">
+    <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/30 px-4 py-2">
       <div className="flex items-center gap-3">
         <PeriodDropdown />
 
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handlePrev}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="이전 기간" onClick={handlePrev}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
 
@@ -55,7 +55,7 @@ export function FilterBar() {
             {formatPeriodLabel()}
           </Button>
 
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleNext}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="다음 기간" onClick={handleNext}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

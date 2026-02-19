@@ -1,6 +1,8 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ErrorState } from '@/components/common'
+import { formatNullableNumber } from '@/lib/utils/format'
 import { useDashboardMetrics } from '@/lib/hooks/use-dashboard-data'
 import { Skeleton } from '../skeleton'
 import { ImageIcon } from 'lucide-react'
@@ -26,11 +28,7 @@ export function SNSTab({ workspaceId, periodStart, selectedChannels }: SNSTabPro
   }
 
   if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
 
   // 채널 필터 적용
@@ -71,16 +69,16 @@ export function SNSTab({ workspaceId, periodStart, selectedChannels }: SNSTabPro
                     <tr key={channel.channel} className="border-b">
                       <td className="py-3 px-4 font-medium">{channel.channelName}</td>
                       <td className="py-3 px-4 text-right">
-                        {formatValue(channel.data.uploads ?? channel.data.posts)}
+                        {formatNullableNumber(channel.data.uploads ?? channel.data.posts)}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <div>{formatValue(channel.data.views ?? channel.data.impressions)}</div>
+                        <div>{formatNullableNumber(channel.data.views ?? channel.data.impressions)}</div>
                         {renderChange(channel.change.views ?? channel.change.impressions)}
                       </td>
                       <td className="py-3 px-4 text-right">
                         {channel.data.reach !== null ? (
                           <>
-                            <div>{formatValue(channel.data.reach)}</div>
+                            <div>{formatNullableNumber(channel.data.reach)}</div>
                             {renderChange(channel.change.reach)}
                           </>
                         ) : (
@@ -88,11 +86,11 @@ export function SNSTab({ workspaceId, periodStart, selectedChannels }: SNSTabPro
                         )}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <div>{formatValue(channel.data.engagement ?? channel.data.engagements)}</div>
+                        <div>{formatNullableNumber(channel.data.engagement ?? channel.data.engagements)}</div>
                         {renderChange(channel.change.engagement ?? channel.change.engagements)}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <div>{formatValue(channel.data.followers)}</div>
+                        <div>{formatNullableNumber(channel.data.followers)}</div>
                         {renderChange(channel.change.followers)}
                       </td>
                     </tr>
@@ -170,11 +168,6 @@ function SNSSkeleton() {
       <Skeleton className="h-[250px]" />
     </div>
   )
-}
-
-function formatValue(value: number | null | undefined): string {
-  if (value === null || value === undefined) return 'N/A'
-  return value.toLocaleString()
 }
 
 function renderChange(change: number | null | undefined) {

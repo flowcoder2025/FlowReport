@@ -28,10 +28,10 @@ export function WeeklyDashboard({ workspaceId }: WeeklyDashboardProps) {
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="overview">전체 보기</TabsTrigger>
           <TabsTrigger value="sns">SNS</TabsTrigger>
-          <TabsTrigger value="store">Store</TabsTrigger>
-          <TabsTrigger value="notes">Notes</TabsTrigger>
+          <TabsTrigger value="store">스토어</TabsTrigger>
+          <TabsTrigger value="notes">메모</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">

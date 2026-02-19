@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { KPICard } from '../kpi-card'
+import { KPICardEnhanced as KPICard } from '../cards'
+import { ErrorState } from '@/components/common'
 import { useDashboardMetrics } from '@/lib/hooks/use-dashboard-data'
 import { Skeleton } from '../skeleton'
 import { Upload } from 'lucide-react'
@@ -24,11 +25,7 @@ export function StoreTab({ workspaceId, periodStart }: StoreTabProps) {
   }
 
   if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
 
   const traffic = metrics?.store?.traffic
