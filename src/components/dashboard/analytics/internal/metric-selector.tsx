@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import {
   CHANNEL_BADGE_COLORS,
+  CHANNEL_LABELS,
   METRIC_CATEGORIES,
   CATEGORY_LABELS,
   type MetricCategory,
@@ -220,7 +221,7 @@ export function MetricSelector({
                             CHANNEL_BADGE_COLORS[option.channel] || 'bg-gray-100 text-gray-700'
                           )}
                         >
-                          {option.channel}
+                          {CHANNEL_LABELS[option.channel as keyof typeof CHANNEL_LABELS] || option.channel}
                         </span>
                       )}
                     </button>

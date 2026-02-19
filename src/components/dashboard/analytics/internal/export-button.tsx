@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { Download, Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/use-toast'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +38,7 @@ export function ExportButton({
   disabled = false,
 }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false)
+  const { toast } = useToast()
 
   const handleExport = useCallback(
     async (exportFormat: ExportFormat) => {
@@ -102,12 +104,16 @@ export function ExportButton({
         }
       } catch (error) {
         console.error('Export error:', error)
-        // TODO: Show toast notification
+        toast({
+          variant: 'destructive',
+          title: '내보내기 실패',
+          description: '데이터를 내보내는 중 오류가 발생했습니다. 다시 시도해 주세요.',
+        })
       } finally {
         setIsExporting(false)
       }
     },
-    [workspaceId, startDate, endDate, periodType, selectedChannels, selectedMetrics, maxRows]
+    [workspaceId, startDate, endDate, periodType, selectedChannels, selectedMetrics, maxRows, toast]
   )
 
   return (

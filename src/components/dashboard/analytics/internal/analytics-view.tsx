@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar, type DateRange as CalendarDateRange } from '@/components/ui/calendar'
 import { Skeleton } from '../../../dashboard/skeleton'
+import { ErrorState } from '@/components/common'
 import { cn } from '@/lib/utils'
 
 import { MetricSelector, type SelectedMetric } from './metric-selector'
@@ -133,10 +134,17 @@ export function AnalyticsView() {
       return null
     }
 
-    const stats: Record<string, { sum: number; avg: number; min: number; max: number; count: number }> = {}
+    const stats: Record<string, {
+      sum: number; avg: number; min: number; max: number
+      median: number; stddev: number; count: number
+      values: number[]
+    }> = {}
 
     for (const metric of selectedMetrics) {
-      stats[metric.key] = { sum: 0, avg: 0, min: Infinity, max: -Infinity, count: 0 }
+      stats[metric.key] = {
+        sum: 0, avg: 0, min: Infinity, max: -Infinity,
+        median: 0, stddev: 0, count: 0, values: [],
+      }
     }
 
     for (const row of data.rows) {
@@ -147,28 +155,36 @@ export function AnalyticsView() {
           stats[metric.key].count += 1
           stats[metric.key].min = Math.min(stats[metric.key].min, value)
           stats[metric.key].max = Math.max(stats[metric.key].max, value)
+          stats[metric.key].values.push(value)
         }
       }
     }
 
-    // Calculate averages
+    // Calculate averages, median, stddev
     for (const key of Object.keys(stats)) {
-      if (stats[key].count > 0) {
-        stats[key].avg = stats[key].sum / stats[key].count
+      const s = stats[key]
+      if (s.count > 0) {
+        s.avg = s.sum / s.count
+
+        // Median
+        const sorted = [...s.values].sort((a, b) => a - b)
+        const mid = Math.floor(sorted.length / 2)
+        s.median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
+
+        // Standard deviation
+        s.stddev = Math.sqrt(
+          s.values.reduce((sum, v) => sum + Math.pow(v - s.avg, 2), 0) / s.count
+        )
       }
-      if (stats[key].min === Infinity) stats[key].min = 0
-      if (stats[key].max === -Infinity) stats[key].max = 0
+      if (s.min === Infinity) s.min = 0
+      if (s.max === -Infinity) s.max = 0
     }
 
     return stats
   }, [data?.rows, selectedMetrics])
 
   if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
 
   return (
@@ -272,32 +288,36 @@ export function AnalyticsView() {
 
       {/* Summary Statistics */}
       {summaryStats && selectedMetrics.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {selectedMetrics.slice(0, 4).map((metric) => {
-            const stats = summaryStats[metric.key]
-            if (!stats) return null
+        <div className="overflow-x-auto">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" style={{ minWidth: selectedMetrics.length > 4 ? `${selectedMetrics.length * 250}px` : undefined }}>
+            {selectedMetrics.map((metric) => {
+              const stats = summaryStats[metric.key]
+              if (!stats) return null
 
-            return (
-              <Card key={metric.key}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{metric.label}</CardTitle>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {stats.sum.toLocaleString(undefined, {
-                      maximumFractionDigits: 0,
-                    })}
-                  </div>
-                  <div className="flex gap-4 text-xs text-muted-foreground mt-1">
-                    <span>평균: {stats.avg.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>
-                    <span>최소: {stats.min.toLocaleString()}</span>
-                    <span>최대: {stats.max.toLocaleString()}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
+              return (
+                <Card key={metric.key}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{metric.label}</CardTitle>
+                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.sum.toLocaleString(undefined, {
+                        maximumFractionDigits: 0,
+                      })}
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
+                      <span>평균: {stats.avg.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>
+                      <span>중앙값: {stats.median.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>
+                      <span>최소: {stats.min.toLocaleString()}</span>
+                      <span>최대: {stats.max.toLocaleString()}</span>
+                      <span>표준편차: {stats.stddev.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
         </div>
       )}
 
@@ -354,7 +374,7 @@ export function AnalyticsView() {
             data={data?.rows || []}
             selectedMetrics={selectedMetrics}
             isLoading={isLoading}
-            pageSize={20}
+            initialPageSize={20}
           />
         )}
       </div>

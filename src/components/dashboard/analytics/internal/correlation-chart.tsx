@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   ScatterChart,
   Scatter,
@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { formatNumber } from '@/lib/utils/format'
 import { CHANNEL_COLORS } from '@/constants'
 import type { SelectedMetric } from './metric-selector'
 import type { RawMetricData } from './data-explorer'
@@ -153,16 +154,6 @@ function interpretCorrelation(r: number): {
   }
 }
 
-function formatNumber(value: number): string {
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`
-  }
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`
-  }
-  return value.toLocaleString(undefined, { maximumFractionDigits: 0 })
-}
-
 export function CorrelationChart({
   data,
   selectedMetrics,
@@ -177,7 +168,7 @@ export function CorrelationChart({
   )
 
   // 선택된 메트릭이 변경되면 축 메트릭도 업데이트
-  useMemo(() => {
+  useEffect(() => {
     if (selectedMetrics.length >= 2) {
       if (!selectedMetrics.find((m) => m.key === xMetricKey)) {
         setXMetricKey(selectedMetrics[0].key)
@@ -186,7 +177,7 @@ export function CorrelationChart({
         setYMetricKey(selectedMetrics[1].key)
       }
     }
-  }, [selectedMetrics, xMetricKey, yMetricKey])
+  }, [selectedMetrics]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const xMetric = selectedMetrics.find((m) => m.key === xMetricKey)
   const yMetric = selectedMetrics.find((m) => m.key === yMetricKey)
@@ -218,10 +209,12 @@ export function CorrelationChart({
   }, [data, xMetricKey, yMetricKey, xMetric, yMetric])
 
   // 상관계수 및 회귀선 계산
-  const { correlation, regression, interpretation } = useMemo(() => {
+  const { correlation, rSquared, sampleSize, regression, interpretation } = useMemo(() => {
     if (scatterData.length < 2) {
       return {
         correlation: 0,
+        rSquared: 0,
+        sampleSize: scatterData.length,
         regression: { slope: 0, intercept: 0 },
         interpretation: interpretCorrelation(0),
       }
@@ -235,6 +228,8 @@ export function CorrelationChart({
 
     return {
       correlation: r,
+      rSquared: r * r,
+      sampleSize: scatterData.length,
       regression: reg,
       interpretation: interpretCorrelation(r),
     }
@@ -318,10 +313,18 @@ export function CorrelationChart({
         <div className="ml-auto flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
           <Info className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm">
-            상관계수 (r):{' '}
+            r ={' '}
             <span className={cn('font-bold', interpretation.color)}>
               {correlation.toFixed(3)}
             </span>
+          </span>
+          <span className="text-sm text-muted-foreground">|</span>
+          <span className="text-sm">
+            R&sup2; = <span className="font-semibold">{rSquared.toFixed(3)}</span>
+          </span>
+          <span className="text-sm text-muted-foreground">|</span>
+          <span className="text-sm">
+            n = <span className="font-semibold">{sampleSize}</span>
           </span>
           <span className="text-xs text-muted-foreground">
             ({interpretation.description})

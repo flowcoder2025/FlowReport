@@ -31,7 +31,7 @@ export interface DataExplorerProps {
   data: RawMetricData[]
   selectedMetrics: SelectedMetric[]
   isLoading?: boolean
-  pageSize?: number
+  initialPageSize?: number
 }
 
 type SortDirection = 'asc' | 'desc'
@@ -44,13 +44,14 @@ export function DataExplorer({
   data,
   selectedMetrics,
   isLoading = false,
-  pageSize = 20,
+  initialPageSize = 20,
 }: DataExplorerProps) {
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: 'date',
     direction: 'desc',
   })
   const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(initialPageSize)
 
   const sortedData = useMemo(() => {
     if (!data || data.length === 0) return []
@@ -85,6 +86,7 @@ export function DataExplorer({
       key,
       direction: prev.key === key && prev.direction === 'desc' ? 'asc' : 'desc',
     }))
+    setCurrentPage(1)
   }
 
   const formatMetricValue = (value: string | number | null): string => {
@@ -192,12 +194,26 @@ export function DataExplorer({
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t px-4 py-3">
+      <div className="flex items-center justify-between border-t px-4 py-3">
+        <div className="flex items-center gap-3">
           <div className="text-sm text-muted-foreground">
             {sortedData.length}개 중 {(currentPage - 1) * pageSize + 1}-
             {Math.min(currentPage * pageSize, sortedData.length)}개 표시
           </div>
+          <select
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value))
+              setCurrentPage(1)
+            }}
+            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+          >
+            <option value={20}>20개</option>
+            <option value={50}>50개</option>
+            <option value={100}>100개</option>
+          </select>
+        </div>
+        {totalPages > 1 && (
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -219,8 +235,8 @@ export function DataExplorer({
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
