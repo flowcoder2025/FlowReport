@@ -3,6 +3,7 @@
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
 import { useDashboardMetrics, useDashboardNotes } from '@/lib/hooks/use-dashboard-data'
 import { InsightCard } from '../../cards'
+import { ErrorState } from '@/components/common'
 import { Skeleton } from '../../skeleton'
 import { SalesKPISection } from './sales-kpi-section'
 import { StoreComparison } from './store-comparison'
@@ -45,11 +46,7 @@ export function CommerceDashboardView() {
 
   // 에러 상태
   if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
 
   // 데이터 추출
@@ -107,7 +104,7 @@ export function CommerceDashboardView() {
 
       {/* 3. 상품 순위 & 인사이트 */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <ProductRanking title="상품 판매 순위 (TOP 5)" />
+        <ProductRanking title="상품 판매 순위" />
 
         <div className="space-y-4">
           <InsightCard

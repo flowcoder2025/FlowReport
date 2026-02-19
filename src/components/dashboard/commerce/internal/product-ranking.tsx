@@ -1,11 +1,28 @@
 'use client'
 
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Package, TrendingUp, TrendingDown, ExternalLink } from 'lucide-react'
+import { Package, TrendingUp, TrendingDown, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
 import { useDashboardProducts, ProductRankingItem } from '@/lib/hooks/use-dashboard-data'
 import { useDashboardContext } from '@/lib/contexts/dashboard-context'
 import { Skeleton } from '../../skeleton'
 import { CHANNEL_LABELS } from '@/constants'
+import { ErrorState } from '@/components/common'
+import { formatCurrency } from '@/lib/utils/format'
+
+type SortKey = 'revenue' | 'units' | 'change'
+
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'revenue', label: '매출순' },
+  { key: 'units', label: '판매수량순' },
+  { key: 'change', label: '변화율순' },
+]
+
+const CHANNEL_FILTER_OPTIONS = [
+  { value: 'ALL', label: '전체' },
+  { value: 'SMARTSTORE', label: CHANNEL_LABELS.SMARTSTORE },
+  { value: 'COUPANG', label: CHANNEL_LABELS.COUPANG },
+]
 
 interface ProductRankingProps {
   title?: string
@@ -13,24 +30,59 @@ interface ProductRankingProps {
 }
 
 /**
- * 상품 판매 순위 TOP 5
+ * 상품 판매 순위
  *
  * 상품별 판매 데이터를 표시
- * - 데이터 있을 때: 실제 순위 표시
+ * - 데이터 있을 때: 실제 순위 표시 (기본 TOP 5, 더보기 가능)
  * - 데이터 없을 때: placeholder 안내
+ * - 채널 필터: 전체/스마트스토어/쿠팡
+ * - 정렬: 매출순/판매수량순/변화율순
  */
 export function ProductRanking({
-  title = '상품 판매 순위 (TOP 5)',
+  title = '상품 판매 순위',
   limit = 5,
 }: ProductRankingProps) {
   const { workspaceId, periodType, periodStart } = useDashboardContext()
+  const [showAll, setShowAll] = useState(false)
+  const [channelFilter, setChannelFilter] = useState<string>('ALL')
+  const [sortKey, setSortKey] = useState<SortKey>('revenue')
 
+  // Fetch enough data to support "show all" - request higher limit
   const { data, isLoading, error } = useDashboardProducts(
     workspaceId,
     periodType,
     periodStart,
-    limit
+    50
   )
+
+  const products = data?.products ?? []
+
+  // Apply channel filter
+  const filteredProducts = useMemo(() => {
+    if (channelFilter === 'ALL') return products
+    return products.filter((p) => p.channel === channelFilter)
+  }, [products, channelFilter])
+
+  // Apply sorting
+  const sortedProducts = useMemo(() => {
+    return [...filteredProducts].sort((a, b) => {
+      switch (sortKey) {
+        case 'revenue':
+          return b.revenue - a.revenue
+        case 'units':
+          return b.units - a.units
+        case 'change':
+          return (b.change ?? -Infinity) - (a.change ?? -Infinity)
+        default:
+          return 0
+      }
+    })
+  }, [filteredProducts, sortKey])
+
+  // Apply limit unless showAll
+  const displayProducts = showAll ? sortedProducts : sortedProducts.slice(0, limit)
+  const hasMore = sortedProducts.length > limit
+  const hasData = products.length > 0
 
   if (isLoading) {
     return (
@@ -62,16 +114,11 @@ export function ProductRanking({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-muted-foreground">
-            데이터를 불러오는데 실패했습니다.
-          </div>
+          <ErrorState />
         </CardContent>
       </Card>
     )
   }
-
-  const products = data?.products ?? []
-  const hasData = products.length > 0
 
   return (
     <Card>
@@ -80,13 +127,60 @@ export function ProductRanking({
           <Package className="h-4 w-4" />
           {title}
         </CardTitle>
+        {hasData && (
+          <div className="flex items-center gap-2 mt-2">
+            {/* Channel filter */}
+            <select
+              value={channelFilter}
+              onChange={(e) => setChannelFilter(e.target.value)}
+              className="text-xs border rounded px-2 py-1 bg-background text-foreground"
+            >
+              {CHANNEL_FILTER_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            {/* Sort options */}
+            <select
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value as SortKey)}
+              className="text-xs border rounded px-2 py-1 bg-background text-foreground"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         {hasData ? (
           <div className="space-y-3">
-            {products.map((product, index) => (
+            {displayProducts.map((product, index) => (
               <ProductRow key={product.id} product={product} rank={index + 1} />
             ))}
+            {/* Show more / show less toggle */}
+            {hasMore && (
+              <button
+                onClick={() => setShowAll((prev) => !prev)}
+                className="w-full flex items-center justify-center gap-1 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors border-t mt-2 pt-3"
+              >
+                {showAll ? (
+                  <>
+                    <ChevronUp className="h-4 w-4" />
+                    접기
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4" />
+                    더보기 ({sortedProducts.length - limit}개 더)
+                  </>
+                )}
+              </button>
+            )}
           </div>
         ) : (
           <ProductPlaceholder />
@@ -205,10 +299,3 @@ function ProductPlaceholder() {
   )
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('ko-KR', {
-    style: 'currency',
-    currency: 'KRW',
-    maximumFractionDigits: 0,
-  }).format(value)
-}

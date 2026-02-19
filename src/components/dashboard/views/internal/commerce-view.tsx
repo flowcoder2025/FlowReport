@@ -5,6 +5,7 @@ import { useDashboardMetrics, useDashboardNotes } from '@/lib/hooks/use-dashboar
 import { KPICardEnhanced, InsightCard } from '../../cards'
 import { FunnelChart, PieChart } from '../../charts'
 import { StoreTable } from '../../tables'
+import { ErrorState } from '@/components/common'
 import { Skeleton } from '../../skeleton'
 import { CHANNEL_COLORS, CHANNEL_LABELS } from '@/constants'
 
@@ -30,11 +31,7 @@ export function CommerceView() {
   }
 
   if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        데이터를 불러오는데 실패했습니다.
-      </div>
-    )
+    return <ErrorState />
   }
 
   const overview = metrics?.overview
@@ -57,7 +54,7 @@ export function CommerceView() {
   const funnelData = [
     { name: '방문자', value: traffic?.users || 0 },
     { name: '세션', value: traffic?.sessions || 0 },
-    { name: '장바구니', value: Math.floor((traffic?.sessions || 0) * 0.3) },
+    { name: '장바구니 (추정)', value: Math.floor((traffic?.sessions || 0) * 0.3) },
     { name: '결제완료', value: totalOrders },
   ]
 
@@ -77,8 +74,8 @@ export function CommerceView() {
       previousRevenue: channelDetails.SMARTSTORE.change?.revenue ? (channelDetails.SMARTSTORE.revenue || 0) / (1 + channelDetails.SMARTSTORE.change.revenue / 100) : undefined,
       orders: channelDetails.SMARTSTORE.orders || 0,
       aov: channelDetails.SMARTSTORE.avgOrderValue || 0,
-      cancels: 0,
-      refunds: 0,
+      cancels: channelDetails.SMARTSTORE.cancels ?? null,
+      refunds: channelDetails.SMARTSTORE.refunds ?? null,
     })
   }
   if (channelDetails?.COUPANG) {
@@ -88,8 +85,8 @@ export function CommerceView() {
       previousRevenue: channelDetails.COUPANG.change?.revenue ? (channelDetails.COUPANG.revenue || 0) / (1 + channelDetails.COUPANG.change.revenue / 100) : undefined,
       orders: channelDetails.COUPANG.orders || 0,
       aov: channelDetails.COUPANG.avgOrderValue || 0,
-      cancels: 0,
-      refunds: 0,
+      cancels: channelDetails.COUPANG.cancels ?? null,
+      refunds: channelDetails.COUPANG.refunds ?? null,
     })
   }
 

@@ -1,11 +1,12 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { FunnelChart, PieChart } from '../../charts'
+import { FunnelChart, PieChart, HorizontalBarChart } from '../../charts'
 import { StoreTable } from '../../tables'
 import type { StoreMetrics } from '@/lib/hooks/use-dashboard-data'
-import { XCircle, RotateCcw, AlertTriangle } from 'lucide-react'
+import { XCircle, RotateCcw, AlertTriangle, Banknote } from 'lucide-react'
 import { CHANNEL_LABELS, CHANNEL_COLORS } from '@/constants'
+import { formatCurrency } from '@/lib/utils/format'
 
 interface StoreComparisonProps {
   smartstoreMetrics: StoreMetrics | undefined
@@ -30,6 +31,8 @@ interface StoreTableRow {
   cancels: number | null
   /** 반품 건수 (null: 데이터 미제공) */
   refunds: number | null
+  /** 반품 금액 (null: 데이터 미제공) */
+  refundAmount: number | null
 }
 
 /**
@@ -51,7 +54,7 @@ export function StoreComparison({
   const funnelData = [
     { name: '방문자', value: trafficData?.users || 0 },
     { name: '세션', value: trafficData?.sessions || 0 },
-    { name: '장바구니', value: Math.floor((trafficData?.sessions || 0) * 0.3) },
+    { name: '장바구니 (추정)', value: Math.floor((trafficData?.sessions || 0) * 0.3) },
     { name: '결제완료', value: totalOrders },
   ]
 
@@ -88,6 +91,7 @@ export function StoreComparison({
       aov: smartstoreMetrics.avgOrderValue || 0,
       cancels: smartstoreMetrics.cancels ?? null,
       refunds: smartstoreMetrics.refunds ?? null,
+      refundAmount: smartstoreMetrics.refundAmount ?? null,
     })
   }
 
@@ -104,6 +108,7 @@ export function StoreComparison({
       aov: coupangMetrics.avgOrderValue || 0,
       cancels: coupangMetrics.cancels ?? null,
       refunds: coupangMetrics.refunds ?? null,
+      refundAmount: coupangMetrics.refundAmount ?? null,
     })
   }
 
@@ -130,7 +135,33 @@ export function StoreComparison({
           </CardHeader>
           <CardContent>
             {pieData.length > 0 ? (
-              <PieChart data={pieData} height={250} />
+              pieData.length === 2 ? (
+                <div>
+                  <HorizontalBarChart data={pieData} height={120} />
+                  <div className="mt-3 space-y-1">
+                    {pieData.map((item) => {
+                      const total = pieData.reduce((s, d) => s + d.value, 0)
+                      const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0'
+                      return (
+                        <div key={item.name} className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="inline-block w-3 h-3 rounded-full"
+                              style={{ backgroundColor: item.color }}
+                            />
+                            <span>{item.name}</span>
+                          </div>
+                          <span className="font-medium">
+                            {formatCurrency(item.value)} ({pct}%)
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <PieChart data={pieData} height={250} />
+              )
             ) : (
               <div className="h-[250px] flex items-center justify-center text-muted-foreground">
                 데이터가 없습니다
@@ -163,8 +194,10 @@ export function StoreComparison({
 function RefundCancelSummary({ data }: { data: StoreTableRow[] }) {
   const totalCancels = data.reduce((sum, r) => sum + (r.cancels ?? 0), 0)
   const totalRefunds = data.reduce((sum, r) => sum + (r.refunds ?? 0), 0)
+  const totalRefundAmount = data.reduce((sum, r) => sum + (r.refundAmount ?? 0), 0)
   const totalOrders = data.reduce((sum, r) => sum + r.orders, 0)
   const hasData = data.some((r) => r.cancels !== null || r.refunds !== null)
+  const hasRefundAmount = data.some((r) => r.refundAmount !== null)
 
   // 손실률 계산 (취소+반품 / 총주문)
   const lossRate =
@@ -197,7 +230,7 @@ function RefundCancelSummary({ data }: { data: StoreTableRow[] }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className={`grid gap-4 ${hasRefundAmount ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
           {/* 취소 건수 */}
           <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
             <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30">
@@ -223,6 +256,21 @@ function RefundCancelSummary({ data }: { data: StoreTableRow[] }) {
               </p>
             </div>
           </div>
+
+          {/* 반품 금액 */}
+          {hasRefundAmount && (
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30">
+                <Banknote className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">반품 금액</p>
+                <p className="text-lg font-semibold">
+                  {formatCurrency(totalRefundAmount)}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* 손실률 */}
           <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
@@ -252,6 +300,9 @@ function RefundCancelSummary({ data }: { data: StoreTableRow[] }) {
                   <span>
                     취소 {row.cancels?.toLocaleString() ?? '-'}건 / 반품{' '}
                     {row.refunds?.toLocaleString() ?? '-'}건
+                    {row.refundAmount !== null && (
+                      <> / {formatCurrency(row.refundAmount)}</>
+                    )}
                   </span>
                 </div>
               ))}
@@ -262,3 +313,4 @@ function RefundCancelSummary({ data }: { data: StoreTableRow[] }) {
     </Card>
   )
 }
+
