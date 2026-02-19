@@ -9,6 +9,19 @@ export function formatNumber(value: number, options?: Intl.NumberFormatOptions):
   return new Intl.NumberFormat('ko-KR', options).format(value)
 }
 
+/**
+ * 차트 축/라벨용 축약 포맷 (1K, 1.2M 등)
+ */
+export function formatCompactNumber(value: number): string {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)}M`
+  }
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}K`
+  }
+  return value.toLocaleString(undefined, { maximumFractionDigits: 0 })
+}
+
 export function formatCurrency(value: number): string {
   return formatNumber(value, { style: 'currency', currency: 'KRW' })
 }
